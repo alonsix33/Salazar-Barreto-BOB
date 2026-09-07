@@ -11,11 +11,11 @@ import type { Departamento, DptoId, GastoFijo, MesId } from './tipos'
 export const DPTOS: readonly Departamento[] = [
   { id: '101', nombre: 'Irallys y Aaron', flat: 11.72, piso: 1 },
   { id: '201', nombre: 'Carlos Mori', flat: 10.21, piso: 2 },
-  { id: '202', nombre: 'Renzo', flat: 20.12, piso: 2 },
+  { id: '202', nombre: 'Renzo', flat: 20.11, piso: 2 },
   { id: '301', nombre: 'Deborah y Oscar', flat: 10.21, piso: 3 },
   { id: '401', nombre: 'Alonso y Julisa', flat: 10.21, piso: 4 },
   { id: '501', nombre: 'Inmobiliaria', flat: 17.31, piso: 5 },
-  { id: '502', nombre: 'Yara y Gianpierre', flat: 20.22, piso: 5 },
+  { id: '502', nombre: 'Yara y Gianpierre', flat: 20.23, piso: 5 },
 ] as const
 
 export const DPTO_IDS: readonly DptoId[] = DPTOS.map((d) => d.id)

@@ -29,6 +29,38 @@ Si Node es más viejo, instálalo desde [nodejs.org](https://nodejs.org) y vuelv
 
 ---
 
+## Tabla de claves · de dónde sale cada una y dónde va
+
+Trece variables. Solo cinco son obligatorias para que la app arranque; las demás
+tienen un valor por defecto sensato o se pueden dejar vacías.
+
+| Variable | ¿De dónde la saco? | ¿Dónde la configuro? | ¿Obligatoria? |
+|---|---|---|---|
+| `DATABASE_URL` | Railway → servicio Postgres → pestaña **Variables** → `DATABASE_URL`. Al final le añades `?pgbouncer=true&connection_limit=1` | `.env` local **y** Vercel | **Sí** |
+| `DIRECT_URL` | La misma de Railway, **sin** el `?pgbouncer=...` | `.env` local **y** Vercel | **Sí** |
+| `ADMIN_PIN` | Lo eliges tú. Cuatro dígitos | `.env` local **y** Vercel | **Sí** |
+| `ADMIN_SECRETO` | Lo generas: `openssl rand -base64 32` | `.env` local **y** Vercel | **Sí** |
+| `NEXT_PUBLIC_APP_URL` | La URL que te da Vercel al desplegar | `.env` local **y** Vercel | **Sí** |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `npx web-push generate-vapid-keys` → mitad **pública** | `.env` local **y** Vercel | No (sin ella no hay push) |
+| `VAPID_PRIVATE_KEY` | El mismo comando → mitad **privada** | `.env` local **y** Vercel. **Nunca** con `NEXT_PUBLIC_` | No (sin ella no hay push) |
+| `VAPID_SUBJECT` | Un `mailto:` tuyo de contacto | `.env` local **y** Vercel | No (por defecto vale) |
+| `BOB_MODO` | Lo eliges: `determinista` (sin coste) o `deepseek` | `.env` local **y** Vercel | No (`determinista` por defecto) |
+| `DEEPSEEK_API_KEY` | platform.deepseek.com → API keys. Solo si `BOB_MODO=deepseek` | `.env` local **y** Vercel | No |
+| `DEEPSEEK_MODELO` | Déjala vacía salvo que quieras fijar una versión | `.env` local **y** Vercel | No |
+| `DEEPSEEK_URL` | Déjala vacía. Solo para apuntar a un simulador | `.env` local | No |
+| `PERMITIR_RESEMBRADO` | **Déjala vacía en producción.** Con valor, abre una ruta que borra la base entera | `.env` local, solo para pruebas | No |
+
+**La regla de oro del prefijo:** `NEXT_PUBLIC_` significa "esto viaja al navegador
+del vecino". Solo lo llevan las dos que no son secretas: la URL de la app y la
+clave **pública** de push. Si le pones ese prefijo al PIN, a `ADMIN_SECRETO` o a
+`VAPID_PRIVATE_KEY`, dejan de ser secretos y cualquiera los lee. Hay un chequeo
+que revienta el despliegue si eso pasa (`node scripts/verificar-secretos.mjs`).
+
+**Dónde se pegan en Vercel:** panel del proyecto → *Settings* → *Environment
+Variables* → una por una, marcando los tres entornos (Production, Preview,
+Development). Después de añadirlas hay que **volver a desplegar** para que las
+tome.
+
 ## Paso 1 · El código en tu computadora
 
 ```bash

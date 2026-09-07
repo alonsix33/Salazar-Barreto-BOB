@@ -87,3 +87,31 @@ Todo con `tsc` limpio, tokens sin huérfanos, y prueba negativa donde aplica.
   cuota en contra. Si el seed/Railway no tiene los pagos cargados, un depto puede
   aparecer «te toca poner» de más. Es la verdad del dato, no un error del cálculo:
   se corrige cargando los pagos reales.
+
+## Corrección del flat del 202 y del 502 · la escritura manda
+
+**Qué cambió.** El porcentaje de metraje del 202 pasó de `20.12` a `20.11`, y el
+del 502 de `20.22` a `20.23`. Los dos juntos siguen sumando 40.34, así que el
+total de los siete sigue siendo exactamente 100.00 (hay un test que lo exige).
+
+**Por qué.** El Excel que lleva la administración —y la escritura de la que sale—
+usa 20.11 y 20.23. El mockup del handoff arrastraba el mismo dato transcrito con
+un redondeo distinto (20.12 / 20.22), y la app lo había copiado de ahí. Como la
+escritura es la fuente por encima del mockup, se corrigió **en las dos fuentes de
+datos** (`lib/calculo/constantes.ts` y `mockup/.../datos-edificio.js`) y se
+regeneró el golden con `node scripts/generar-golden.mjs`. Así la fidelidad al
+céntimo entre la app y el motor del mockup se mantiene, ahora los dos con el
+valor correcto.
+
+**Cuánta plata mueve.** Un céntimo de porcentaje sobre una base de ~S/ 3 000 son
+**~S/ 0.30 al mes**, y se compensan entre esos dos departamentos: el 502 paga
+S/ 0.30 más y el 202, S/ 0.30 menos. Verificado rederivando sobre junio de 2026:
+el mantenimiento del 502 pasa de 605.18 a 605.48 y su cuota total de 675.43 a
+675.73.
+
+**Un efecto secundario que valía la pena.** El test que probaba que
+`round(base × flat) / 100` **no** es lo mismo que `round2(base × flat / 100)`
+usaba justo el par (2925, 20.22), uno de los pocos donde las dos formas difieren.
+Con el flat corregido las dos formas coincidían, así que el test habría seguido
+en verde **sin probar nada**. Se cambió a (2850, 20.23), que sí difiere
+(576.56 vs 576.55), para que siga discriminando con un flat vigente.

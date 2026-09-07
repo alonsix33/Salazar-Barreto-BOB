@@ -296,26 +296,30 @@ describe('el redondeo del mantenimiento conserva la forma del original', () => {
   it('round(baseMant × flat) / 100 no es lo mismo que round2(baseMant × flat / 100)', () => {
     // El motor promete que no se mueve ningún redondeo de sitio. Este caso fija
     // que las dos formas **no** son intercambiables: difieren en un céntimo.
-    const baseMant = 2925.0
-    const flat = 20.22
+    // El caso va atado a un flat **vigente** (502 = 20.23, el de la escritura).
+    // Antes usaba 20.22 y, al corregir el flat a la escritura, este par dejaba
+    // de diferir: el test habría seguido en verde sin probar ya nada.
+    const baseMant = 2850.0
+    const flat = 20.23
     const formaOriginal = Math.round(baseMant * flat) / 100
     const formaIngenua = Math.round((baseMant * flat) / 100 * 100) / 100
-    expect(formaOriginal).toBe(591.44)
-    expect(formaIngenua).toBe(591.43)
+    expect(formaOriginal).toBe(576.56)
+    expect(formaIngenua).toBe(576.55)
     expect(formaOriginal).not.toBe(formaIngenua)
   })
 
   it('el motor usa la forma del original', () => {
-    // Se construye un mes cuyo baseMant es exactamente 2925.00 y se comprueba
-    // que la cuota del 502 (flat 20.22) sale con la forma original.
+    // Se construye un mes cuyo baseMant es exactamente 2850.00 y se comprueba
+    // que la cuota del 502 (flat 20.23) sale con la forma original. Con la
+    // forma ingenua saldría 576.55: un céntimo de diferencia que este test ve.
     const entradas = entradasDe('2026-06')
     const c = calcularMes(entradas, {
       fijos: Object.fromEntries(GASTOS_FIJOS.map((g) => [g.concepto, null])),
-      // totalMes = agua (325) + luz (2925) ⇒ baseMant = totalMes − agua = 2925
-      recibo: { aguaM3: 78, aguaMonto: 325, luz: 2925 },
+      // totalMes = agua (325) + luz (2850) ⇒ baseMant = totalMes − agua = 2850
+      recibo: { aguaM3: 78, aguaMonto: 325, luz: 2850 },
     })
-    expect(c.baseMant).toBe(2925.0)
-    expect(c.cuotas['502'].mantenimiento).toBe(591.44)
+    expect(c.baseMant).toBe(2850.0)
+    expect(c.cuotas['502'].mantenimiento).toBe(576.56)
   })
 })
 

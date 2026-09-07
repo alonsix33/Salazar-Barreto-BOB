@@ -128,10 +128,10 @@
      "lecturaActual": 131.513
     },
     "202": {
-     "mantenimiento": 596.29,
+     "mantenimiento": 596,
      "agua": 8.5,
      "credito": 0,
-     "total": 604.79,
+     "total": 604.5,
      "m3": 2.04,
      "m3medidos": 2.04,
      "lavado": 0,
@@ -172,10 +172,10 @@
      "lecturaActual": 218.16
     },
     "502": {
-     "mantenimiento": 599.26,
+     "mantenimiento": 599.55,
      "agua": 85.34,
      "credito": 0,
-     "total": 684.6,
+     "total": 684.89,
      "m3": 20.49,
      "m3medidos": 20.49,
      "lavado": 0,
@@ -308,10 +308,10 @@
      "lecturaActual": 141.739
     },
     "202": {
-     "mantenimiento": 597.4,
+     "mantenimiento": 597.1,
      "agua": 10.68,
      "credito": 0,
-     "total": 608.08,
+     "total": 607.78,
      "m3": 2.56,
      "m3medidos": 2.56,
      "lavado": 0,
@@ -352,10 +352,10 @@
      "lecturaActual": 220.823
     },
     "502": {
-     "mantenimiento": 600.37,
+     "mantenimiento": 600.67,
      "agua": 101.76,
      "credito": 0,
-     "total": 702.13,
+     "total": 702.43,
      "m3": 24.39,
      "m3medidos": 24.39,
      "lavado": 0,
@@ -378,7 +378,7 @@
    "factor": 1,
    "montoComun": 12.98,
    "sumaAgua": 304.13,
-   "sumaCuotas": 3269.92,
+   "sumaCuotas": 3269.93,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -488,10 +488,10 @@
      "lecturaActual": 151.132
     },
     "202": {
-     "mantenimiento": 596.71,
+     "mantenimiento": 596.42,
      "agua": 9.35,
      "credito": 0,
-     "total": 606.06,
+     "total": 605.77,
      "m3": 2.24,
      "m3medidos": 2.24,
      "lavado": 0,
@@ -532,10 +532,10 @@
      "lecturaActual": 223.278
     },
     "502": {
-     "mantenimiento": 599.68,
+     "mantenimiento": 599.98,
      "agua": 91.75,
      "credito": 0,
-     "total": 691.43,
+     "total": 691.73,
      "m3": 21.99,
      "m3medidos": 21.99,
      "lavado": 0,
@@ -668,10 +668,10 @@
      "lecturaActual": 159.803
     },
     "202": {
-     "mantenimiento": 598.16,
+     "mantenimiento": 597.87,
      "agua": 8.93,
      "credito": 0,
-     "total": 607.09,
+     "total": 606.8,
      "m3": 2.14,
      "m3medidos": 2.14,
      "lavado": 0,
@@ -712,10 +712,10 @@
      "lecturaActual": 225.526
     },
     "502": {
-     "mantenimiento": 601.14,
+     "mantenimiento": 601.43,
      "agua": 84.91,
      "credito": 0,
-     "total": 686.05,
+     "total": 686.34,
      "m3": 20.34,
      "m3medidos": 20.34,
      "lavado": 0,
@@ -738,7 +738,7 @@
    "factor": 1,
    "montoComun": 6.39,
    "sumaAgua": 301.29,
-   "sumaCuotas": 3252.06,
+   "sumaCuotas": 3252.05,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -848,10 +848,10 @@
      "lecturaActual": 168.458
     },
     "202": {
-     "mantenimiento": 593.7,
+     "mantenimiento": 593.4,
      "agua": 29.39,
      "credito": 0,
-     "total": 623.09,
+     "total": 622.79,
      "m3": 7.45,
      "m3medidos": 7.45,
      "lavado": 0,
@@ -892,10 +892,10 @@
      "lecturaActual": 227.941
     },
     "502": {
-     "mantenimiento": 596.65,
+     "mantenimiento": 596.94,
      "agua": 85.36,
      "credito": 0,
-     "total": 682.01,
+     "total": 682.3,
      "m3": 21.64,
      "m3medidos": 21.64,
      "lavado": 0,
@@ -1028,10 +1028,10 @@
      "lecturaActual": 177.387
     },
     "202": {
-     "mantenimiento": 602.19,
+     "mantenimiento": 601.89,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.9,
+     "total": 634.6,
      "m3": 7.85,
      "m3medidos": 7.85,
      "lavado": 0,
@@ -1072,10 +1072,10 @@
      "lecturaActual": 230.386
     },
     "502": {
-     "mantenimiento": 605.18,
+     "mantenimiento": 605.48,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.43,
+     "total": 675.73,
      "m3": 16.86,
      "m3medidos": 16.86,
      "lavado": 0,
@@ -1098,7 +1098,7 @@
    "factor": 1,
    "montoComun": 6.77,
    "sumaAgua": 331.83,
-   "sumaCuotas": 3367.59,
+   "sumaCuotas": 3367.6,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -1208,10 +1208,10 @@
      "lecturaActual": 185.256
     },
     "202": {
-     "mantenimiento": 610.8,
+     "mantenimiento": 610.5,
      "agua": 72.74,
      "credito": 0,
-     "total": 683.54,
+     "total": 683.24,
      "m3": 17.4,
      "m3medidos": 17.4,
      "lavado": 0,
@@ -1252,10 +1252,10 @@
      "lecturaActual": 232.826
     },
     "502": {
-     "mantenimiento": 613.83,
+     "mantenimiento": 614.14,
      "agua": 49.87,
      "credito": 0,
-     "total": 663.7,
+     "total": 664.01,
      "m3": 11.93,
      "m3medidos": 11.93,
      "lavado": 0,
@@ -1296,10 +1296,10 @@
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 602.19,
+     "mantenimiento": 601.89,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.9,
+     "total": 634.6,
      "m3": 7.85
     },
     "301": {
@@ -1324,10 +1324,10 @@
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 605.18,
+     "mantenimiento": 605.48,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.43,
+     "total": 675.73,
      "m3": 16.86
     }
    }
@@ -1362,10 +1362,10 @@
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 602.19,
+     "mantenimiento": 601.89,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.9,
+     "total": 634.6,
      "m3": 7.85
     },
     "301": {
@@ -1390,10 +1390,10 @@
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 605.18,
+     "mantenimiento": 605.48,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.43,
+     "total": 675.73,
      "m3": 16.86
     }
    }
@@ -1428,10 +1428,10 @@
      "m3": 1.19
     },
     "202": {
-     "mantenimiento": 602.19,
+     "mantenimiento": 601.89,
      "agua": 34.13,
      "credito": 0,
-     "total": 636.32,
+     "total": 636.02,
      "m3": 1.05
     },
     "301": {
@@ -1456,10 +1456,10 @@
      "m3": 0.33
     },
     "502": {
-     "mantenimiento": 605.18,
+     "mantenimiento": 605.48,
      "agua": 73.13,
      "credito": 0,
-     "total": 678.31,
+     "total": 678.61,
      "m3": 2.25
     }
    }
@@ -1494,10 +1494,10 @@
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 602.19,
+     "mantenimiento": 601.89,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.9,
+     "total": 634.6,
      "m3": 7.85
     },
     "301": {
@@ -1522,10 +1522,10 @@
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 605.18,
+     "mantenimiento": 605.48,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.43,
+     "total": 675.73,
      "m3": 16.86
     }
    }
@@ -1560,10 +1560,10 @@
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 743.03,
+     "mantenimiento": 742.66,
      "agua": 32.71,
      "credito": 0,
-     "total": 775.74,
+     "total": 775.37,
      "m3": 7.85
     },
     "301": {
@@ -1588,10 +1588,10 @@
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 746.72,
+     "mantenimiento": 747.09,
      "agua": 70.25,
      "credito": 0,
-     "total": 816.97,
+     "total": 817.34,
      "m3": 16.86
     }
    }
@@ -1626,10 +1626,10 @@
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 64.06,
+     "mantenimiento": 64.03,
      "agua": 32.71,
      "credito": 0,
-     "total": 96.77,
+     "total": 96.74,
      "m3": 7.85
     },
     "301": {
@@ -1654,10 +1654,10 @@
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 64.38,
+     "mantenimiento": 64.41,
      "agua": 70.25,
      "credito": 0,
-     "total": 134.63,
+     "total": 134.66,
      "m3": 16.86
     }
    }
@@ -1683,10 +1683,10 @@
   {
    "mes": "2026-03",
    "corto": "MAR",
-   "recibido": 3269.92,
+   "recibido": 3269.93,
    "gastado": 3282.88,
-   "delta": -12.96,
-   "saldo": 5077.88
+   "delta": -12.95,
+   "saldo": 5077.89
   },
   {
    "mes": "2026-04",
@@ -1694,14 +1694,14 @@
    "recibido": 3258.08,
    "gastado": 3269.38,
    "delta": -11.3,
-   "saldo": 5066.58
+   "saldo": 5066.59
   },
   {
    "mes": "2026-05",
    "corto": "MAY",
-   "recibido": 3252.06,
+   "recibido": 3252.05,
    "gastado": 3258.45,
-   "delta": -6.39,
+   "delta": -6.4,
    "saldo": 5060.19
   },
   {

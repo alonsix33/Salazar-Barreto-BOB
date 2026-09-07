@@ -83,7 +83,9 @@ describe('los meses cerrados de la semilla, desde la base', () => {
     expect(r.valido).toBe(true)
     expect(r.totalMes).toBe(3317.98)
     expect(r.cuotas['401'].total).toBe(384.33)
-    expect(r.cuotas['502'].total).toBe(675.43)
+    // 675.73 y no 675.43: el flat del 502 se corrigió a la escritura
+    // (20.22 → 20.23), lo que mueve su mantenimiento de 605.18 a 605.48.
+    expect(r.cuotas['502'].total).toBe(675.73)
     expect(r.facturaAgua).toBe(325)
     expect(r.comunReal).toBe(1.62)
   })
