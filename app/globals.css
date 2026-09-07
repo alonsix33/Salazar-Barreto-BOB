@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+/* La capa de movimiento del avatar de Bob. Solo la usan los blobatars con
+   `animate`, y ella misma apaga todo con `prefers-reduced-motion`. */
+@import 'blobatar/motion.css';
 
 /* ══════════════════════════════════════════════════════════════════════════
    Tokens · transcritos de mockup/02-sistema-de-diseno.md §1–§3.
@@ -703,25 +706,10 @@
   }
 }
 
-/* El avatar de Bob · §5 */
-.avatar .avatar-cuerpo {
-  fill: var(--color-ambar);
-}
-.avatar .avatar-ojo {
-  fill: var(--color-crema);
-}
-.avatar .avatar-boca {
-  stroke: var(--color-crema);
-}
-.avatar-invertido .avatar-cuerpo {
-  fill: var(--color-crema);
-}
-.avatar-invertido .avatar-ojo {
-  fill: var(--color-ambar);
-}
-.avatar-invertido .avatar-boca {
-  stroke: var(--color-ambar);
-}
+/* El avatar de Bob · §5
+   Los colores ya no viven aquí: el generador los recibe como `palette` desde
+   `lib/bob-cara.ts`, porque el SVG se arma en el servidor y ahí no hay CSS.
+   `lib/__tests__/bob-cara.test.ts` comprueba que son estos mismos tokens. */
 
 /* ══════════════════════════════════════════════════════════════════════════
    Hojas modales · §4.8

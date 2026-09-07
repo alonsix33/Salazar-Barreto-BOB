@@ -29,8 +29,10 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@blobatar/react": "^2.7.0",
     "@prisma/client": "^6.19.3",
     "@tanstack/react-query": "^5.102.8",
+    "blobatar": "^2.7.0",
     "decimal.js": "^10.6.0",
     "exceljs": "^4.4.0",
     "next": "^15.5.25",

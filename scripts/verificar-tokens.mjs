@@ -63,6 +63,14 @@ const EXCEPCION_TEMA = 'lib/tema.ts'
  */
 const EXENTOS = [
   [
+    'lib/bob-cara.ts',
+    ['hex'],
+    'el generador del avatar de Bob recibe los colores como cadenas en el momento de armar el ' +
+      'SVG, y eso pasa en el servidor, donde no hay hoja de estilos que resolver una variable. ' +
+      'Solo se le perdona `hex`: las otras seis reglas se le siguen exigiendo. ' +
+      'lib/__tests__/bob-cara.test.ts comprueba que cada color es el token de globals.css',
+  ],
+  [
     'scripts/verificar-tokens.mjs',
     null, // todas: contiene los patrones que busca, así que se encuentra a sí mismo
     'es este chequeo',
@@ -310,6 +318,10 @@ if (!ES_FIXTURE) {
   }
   if (!fs.existsSync(path.join(RAIZ, 'lib/__tests__/tema.test.ts'))) {
     console.error('verificar-tokens: falta el test que ata lib/tema.ts a los tokens.')
+    process.exit(2)
+  }
+  if (!fs.existsSync(path.join(RAIZ, 'lib/__tests__/bob-cara.test.ts'))) {
+    console.error('verificar-tokens: falta el test que ata lib/bob-cara.ts a los tokens.')
     process.exit(2)
   }
 }

@@ -91,14 +91,39 @@ test.describe('la hoja de Bob', () => {
     expect(html, 'chispas o iconografía de IA').not.toMatch(/[✨🤖🪄🔮]/u)
     expect(html.toLowerCase(), 'no se habla de "IA"').not.toMatch(/\b(inteligencia artificial|powered by)\b/)
 
-    // Ninguna animación en bucle dentro de la hoja.
-    const enBucle = await hoja.evaluate((raiz) =>
+    /**
+     * Ninguna animación en bucle dentro de la hoja, **salvo el avatar**.
+     *
+     * Lo que `05` §6 prohíbe es fingir que se piensa: puntos pulsando, texto
+     * que aparece letra por letra, una barra que no mide nada. El avatar de Bob
+     * respira y parpadea en bucle a propósito —es su cara, no un indicador de
+     * proceso— y eso no dice nada falso sobre lo que está pasando.
+     *
+     * La exención es del avatar y de nada más: un bucle en cualquier otro sitio
+     * de la hoja sigue poniendo esto en rojo, que es lo que la regla protege.
+     */
+    const enBucleFuera = await hoja.evaluate((raiz) =>
       [raiz, ...raiz.querySelectorAll('*')].filter((el) => {
         const e = getComputedStyle(el as Element)
-        return e.animationIterationCount.split(',').some((v) => v.trim() === 'infinite')
+        const gira = e.animationIterationCount.split(',').some((v) => v.trim() === 'infinite')
+        if (!gira) return false
+        return !(el as Element).closest('.avatar, .avatar-invertido')
       }).length,
     )
-    expect(enBucle, 'algo se anima en bucle dentro de la hoja de Bob').toBe(0)
+    expect(enBucleFuera, 'algo se anima en bucle en la hoja, fuera del avatar').toBe(0)
+
+    // Y el avatar sí late: si dejara de hacerlo, la exención de arriba estaría
+    // tapando un avatar roto en vez de permitiendo uno vivo.
+    const avatarLate = await hoja.evaluate((raiz) => {
+      const svg = raiz.querySelector('.avatar, .avatar-invertido')
+      if (!svg) return false
+      return [svg, ...svg.querySelectorAll('*')].some((el) =>
+        getComputedStyle(el as Element)
+          .animationIterationCount.split(',')
+          .some((v) => v.trim() === 'infinite'),
+      )
+    })
+    expect(avatarLate, 'el avatar de Bob debería estar latiendo').toBe(true)
 
     // Ningún degradado (los morados de "IA" entran por aquí).
     const conDegradado = await hoja.evaluate((raiz) =>

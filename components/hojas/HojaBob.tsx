@@ -23,6 +23,12 @@ import { mensajeDeError } from '@/lib/errores-ui'
  *    hay una línea de estado quieta, no una animación de puntos en bucle.
  *  - Chispas, gradientes morados, iconografía de «IA». El avatar es la forma
  *    ámbar de `02` §5 y no hay nada más.
+ *
+ *    El avatar **sí** late: respira y parpadea en bucle, porque es un blobatar
+ *    y esa es su cara. No es una excepción a la regla de arriba: lo que se
+ *    prohíbe es fingir que se piensa —un indicador que dice algo falso sobre lo
+ *    que está pasando—, y un gesto de vida no afirma nada. `bob.spec.ts` lo
+ *    tiene acotado: cualquier bucle fuera del avatar pone el test en rojo.
  *  - Burbuja flotante en la esquina: Bob se abre desde la navegación.
  *  - Disculpas y meta-comentarios sobre lo que Bob es o deja de ser.
  *
