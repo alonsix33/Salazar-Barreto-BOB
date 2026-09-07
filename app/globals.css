@@ -1,0 +1,2822 @@
+@import 'tailwindcss';
+/* La capa de movimiento del avatar de Bob. Solo la usan los blobatars con
+   `animate`, y ella misma apaga todo con `prefers-reduced-motion`. */
+@import 'blobatar/motion.css';
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Tokens · transcritos de mockup/02-sistema-de-diseno.md §1–§3.
+   Este archivo es el ÚNICO sitio del proyecto donde puede aparecer un color,
+   un radio, una sombra o una medida literal. scripts/verificar-tokens.mjs
+   falla el build si aparece uno fuera de aquí.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── §1 · Paleta · los 18 colores ────────────────────────────────────── */
+  --color-crema: #f7f4ee;          /* Fondo de la app. El único fondo. */
+  --color-papel: #ffffff;          /* Tarjetas elevadas */
+  --color-noche: #17172b;          /* El protagonista. Un bloque por pantalla. */
+  --color-terra: #c9773a;          /* Acento de marca, dato activo, barra destacada */
+  --color-terra-oscuro: #a85f2a;   /* Texto terracota sobre fondo claro */
+  --color-terra-texto: #7a4a1e;    /* Texto de aviso sobre fondo ámbar suave */
+  --color-verde: #2d7a4f;          /* Resuelto, al día, cuadra */
+  --color-verde-oscuro: #1e5637;   /* Texto verde sobre fondo verde suave */
+  --color-ambar: #c07a1a;          /* Pendiente, atención. Nunca rojo. */
+  --color-agua: #3e93b8;           /* TODO lo relacionado con agua */
+  --color-agua-claro: #8ecbe4;     /* Agua sobre fondo noche */
+  --color-tinta: #0e0e0e;          /* Texto principal */
+  --color-gris: #7a7570;           /* Texto de contexto */
+  --color-gris-claro: #a8a29c;     /* Texto terciario */
+  --color-apagado: #c4bfb8;        /* Deshabilitado */
+  --color-linea: rgb(14 14 14 / 0.08);         /* Divisorias */
+  --color-borde-tarjeta: rgb(14 14 14 / 0.06); /* Borde sutil de tarjeta blanca */
+  --color-escritorio: #e9e5dd;     /* Fondo fuera del marco (solo escritorio) */
+
+  /* ── §4.2 · La "versión clara" de los estados sobre fondo noche ───────
+     02 §4.2 dice que sobre noche el texto usa la versión clara, sin dar el
+     valor. Estos son los del prototipo. Ver docs/PLAN.md §5. */
+  --color-verde-claro: #7bd3a0;
+  --color-ambar-claro: #e8a94a;
+
+  /* ── §1 · Fondos suaves ──────────────────────────────────────────────── */
+  --color-verde-suave: rgb(45 122 79 / 0.1);
+  --color-ambar-suave: rgb(192 122 26 / 0.12);
+  --color-agua-suave: rgb(62 147 184 / 0.12);
+  --color-terra-suave: rgb(201 119 58 / 0.12);
+  --color-neutro-suave: rgb(14 14 14 / 0.06);
+
+  /* Variantes de opacidad que el prototipo usa en barras, iconos y realces. */
+  --color-terra-tenue: rgb(201 119 58 / 0.09);
+  --color-terra-apenas: rgb(201 119 58 / 0.07);
+  --color-terra-media: rgb(201 119 58 / 0.5);
+  --color-ambar-punto: rgb(192 122 26 / 0.3);
+  --color-neutro-barra: rgb(14 14 14 / 0.12);
+  --color-neutro-pista: rgb(14 14 14 / 0.07);
+  --color-neutro-vacio: rgb(14 14 14 / 0.05);
+  --color-neutro-apenas: rgb(14 14 14 / 0.03);
+  --color-verde-tira: rgb(45 122 79 / 0.18);
+  --color-ambar-tira: rgb(192 122 26 / 0.25);
+  --color-velo: rgb(14 14 14 / 0.34);
+  --color-asa: rgb(14 14 14 / 0.14);
+  --color-velo-numpad: rgb(14 14 14 / 0.42);
+  --color-campana: rgb(255 255 255 / 0.7);
+  --color-degradado-cabecera: #f3e6d8;
+  --color-agua-realce: rgb(62 147 184 / 0.07);
+  --color-agua-realce-fuerte: rgb(62 147 184 / 0.1);
+  --color-agua-texto: #1e5a73;
+  --color-verde-linea: rgb(45 122 79 / 0.25);
+
+  /* ── §1 · Sobre fondo noche ──────────────────────────────────────────── */
+  --color-sobre-noche: #f7f4ee;
+  --color-sobre-noche-etiqueta: rgb(247 244 238 / 0.5);
+  --color-sobre-noche-contexto: rgb(247 244 238 / 0.55);
+  --color-sobre-noche-terciario: rgb(247 244 238 / 0.45);
+  --color-sobre-noche-cuerpo: rgb(247 244 238 / 0.75);
+  --color-sobre-noche-divisoria: rgb(247 244 238 / 0.12);
+  --color-sobre-noche-divisoria-sutil: rgb(247 244 238 / 0.08);
+  --color-sobre-noche-boton: rgb(247 244 238 / 0.1);
+  --color-sobre-noche-activo: rgb(247 244 238 / 0.12);
+
+  /* Píldoras de estado sobre noche · §4.2 */
+  --color-pildora-dia: rgb(123 211 160 / 0.14);
+  --color-pildora-sin: rgb(232 169 74 / 0.15);
+  --color-pildora-verificacion: rgb(142 203 228 / 0.15);
+
+  /* ── §2 · Tipografía ─────────────────────────────────────────────────── */
+  --font-titulo: var(--fuente-syne), sans-serif;
+  --font-cuerpo: var(--fuente-dm-sans), sans-serif;
+  --font-mono: var(--fuente-jetbrains-mono), monospace;
+
+  /* ── §3 · Radios · los nueve ─────────────────────────────────────────── */
+  --radius-marco: 38px;          /* Marco del dispositivo y esquina inferior de las hojas */
+  --radius-hoja: 32px;           /* Esquina superior de las hojas */
+  --radius-noche: 24px;          /* Tarjeta noche */
+  --radius-tarjeta-grande: 22px; /* Tarjeta blanca grande */
+  --radius-tarjeta: 20px;        /* Tarjeta blanca mediana */
+  --radius-bloque: 18px;         /* Bloque interno */
+  --radius-icono: 14px;          /* Contenedor de icono */
+  --radius-chico: 12px;          /* Iconos pequeños */
+  --radius-mini: 8px;            /* Casillas */
+  --radius-tira: 5px;            /* Tramos de la tira de pagos */
+  --radius-barra: 4px;           /* Barras de un gráfico */
+  --radius-pildora: 999px;       /* Píldoras, botones, navegación, avatares */
+
+  /* ── §3 · Sombras · casi ninguna ─────────────────────────────────────── */
+  --shadow-marco: 0 24px 60px rgb(14 14 14 / 0.13);
+  --shadow-hoja: 0 -8px 40px rgb(14 14 14 / 0.2);
+  --shadow-bob: 0 4px 14px rgb(192 122 26 / 0.32);
+
+  /* ── §3 · Espaciado ──────────────────────────────────────────────────── */
+  --spacing-pantalla: 24px;         /* Margen lateral de contenido */
+  --spacing-tarjetas: 20px;         /* Margen lateral de tarjetas */
+  --spacing-onboarding: 32px;       /* Margen lateral del onboarding */
+  --spacing-seccion: 30px;          /* Entre secciones */
+  --spacing-seccion-corta: 26px;
+  --spacing-seccion-media: 28px;
+  --spacing-interior-grande: 24px;  /* Interior de tarjeta grande */
+  --spacing-interior: 18px;         /* Interior de tarjeta mediana */
+  --spacing-interior-chico: 16px;
+  --spacing-fila: 13px;             /* Fila de lista, vertical */
+  --spacing-fila-alta: 14px;
+  --spacing-fila-x: 12px;           /* Separación entre las celdas de una fila */
+  --spacing-pildora-x: 11px;        /* Píldora de estado · §4.2 */
+  --spacing-pildora-y: 6px;
+  --spacing-bajo-nav: calc(88px + var(--bot)); /* Espacio bajo el contenido */
+
+  /* Geometría de componentes · §4 */
+  --spacing-nav: 62px;              /* Alto de la píldora de navegación y del botón de Bob */
+  --spacing-toque: 44px;            /* Área táctil mínima */
+  --spacing-boton: 54px;            /* Alto del botón principal */
+  --spacing-boton-x: 20px;          /* Relleno lateral de un botón que no es de ancho completo */
+  --spacing-boton-medio: 46px;
+  --spacing-campo: 50px;            /* Alto del campo de Bob */
+  --spacing-campo-x: 20px;          /* Relleno lateral del campo de Bob */
+  --spacing-chat-x: 22px;           /* Margen lateral de la conversación de Bob · §5 */
+  --spacing-burbuja-y: 13px;        /* Interior de una burbuja de la conversación */
+  --spacing-burbuja-x: 16px;
+  --spacing-burbuja: 12px;          /* Entre dos burbujas */
+  --spacing-burbuja-max: 82%;       /* Lo ancho que llega a ser una burbuja */
+  --spacing-cerrar: 30px;           /* Botón de cerrar de la cabecera de Bob */
+  --spacing-grafico-mes: 132px;     /* Alto del gráfico de barras en El mes */
+  --spacing-grafico-edificio: 100px;
+  --spacing-grafico-tira: 56px;
+  --spacing-segmento: 5px;          /* Alto de la barra segmentada */
+  --spacing-segmentos: 4px;         /* Separación entre los siete tramos */
+  --spacing-barras: 7px;            /* Separación entre barras del gráfico */
+  --spacing-eje: 9px;               /* Del gráfico a sus etiquetas */
+  --spacing-gasto: 14px;            /* Entre las barras de "en qué se gastó" */
+  --spacing-leyenda: 16px;          /* Entre las entradas de la leyenda */
+  --spacing-acciones: 8px;          /* Entre los botones del pie de la tarjeta noche */
+  --spacing-etiqueta: 8px;          /* Entre un concepto y su etiqueta ANUAL ÷ 12 */
+  --spacing-etiqueta-larga: 11px;   /* Entre un icono y su texto en una fila */
+  --spacing-tira: 5px;              /* Entre los doce tramos de una tira anual */
+  --spacing-aviso: 10px;            /* Entre el título de un aviso y su hora */
+  --spacing-barra-gasto: 4px;
+  --spacing-asa: 4px;               /* Alto del asa de arrastre */
+  --spacing-asa-ancho: 40px;
+  --spacing-avatar-nav: 38px;
+  --spacing-avatar-cabecera: 42px;
+  --spacing-avatar-tarjeta: 24px;
+  --spacing-avatar-linea: 20px;
+  --spacing-icono-aviso: 34px;
+  --spacing-circulo: 32px;          /* Círculo de flecha atrás y de enlace */
+  --spacing-punto: 7px;             /* Punto de estado */
+  --spacing-cifra: 6px;             /* Entre el símbolo S/ y la cifra */
+  --spacing-cifra-chica: 5px;
+  --spacing-columna-dpto: 34px;     /* Ancho de la columna del número de dpto */
+  --spacing-app: 390px;             /* Ancho del marco en escritorio */
+  --spacing-app-alto: 844px;
+  --spacing-app-ancha: 430px;       /* Columna en pantalla baja */
+
+  /* ── §6 · Movimiento ─────────────────────────────────────────────────── */
+  --ease-entrada: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-hoja: cubic-bezier(0.2, 0.85, 0.3, 1);
+  --duracion-entrada: 0.34s;
+  --duracion-hoja: 0.32s;
+  --duracion-mes: 0.2s;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   §7 · Las tres variables del dispositivo.
+   El marco de 390×844 del prototipo existía para poder verse en un navegador
+   de escritorio. En producción solo sobrevive en tablet y escritorio.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Teléfono vertical: la app ocupa la pantalla. Es el caso por defecto. */
+  --top: calc(30px + env(safe-area-inset-top));
+  --bot: calc(18px + env(safe-area-inset-bottom));
+  --rad: 0px;
+  color-scheme: light;
+}
+
+/* Pantalla baja (teléfono horizontal, ventana chica): columna a altura completa. */
+@media (max-height: 560px) {
+  :root {
+    --top: calc(22px + env(safe-area-inset-top));
+    --bot: calc(14px + env(safe-area-inset-bottom));
+    --rad: 0px;
+  }
+}
+
+/* Tablet y escritorio: marco centrado. */
+@media (min-width: 541px) and (min-height: 561px) {
+  :root {
+    --top: 38px;
+    --bot: 20px;
+    --rad: var(--radius-marco);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   §2 · La escala tipográfica, como utilidades componibles.
+   Cada rol con su tamaño, peso, interlineado y letter-spacing exactos.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@utility tipo-titulo-pantalla {
+  font: 800 27px/1 var(--font-titulo);
+  letter-spacing: -0.02em;
+}
+@utility tipo-titulo-grande {
+  font: 800 30px/1.14 var(--font-titulo);
+  letter-spacing: -0.02em;
+}
+@utility tipo-titulo-hoja {
+  font: 800 26px/1.15 var(--font-titulo);
+  letter-spacing: -0.02em;
+}
+@utility tipo-titulo-bob {
+  font: 700 17px/1.2 var(--font-titulo);
+}
+/* La conversación de Bob · §5 */
+@utility tipo-burbuja {
+  font: 400 14px/1.5 var(--font-cuerpo);
+}
+@utility tipo-chip {
+  font: 400 12.5px/1 var(--font-cuerpo);
+}
+@utility tipo-campo {
+  font: 300 14px/1 var(--font-cuerpo);
+}
+@utility tipo-cifra-protagonista {
+  font: 500 46px/1 var(--font-mono);
+  letter-spacing: -0.03em;
+}
+@utility tipo-cifra-secundaria {
+  font: 500 42px/1 var(--font-mono);
+  letter-spacing: -0.03em;
+}
+@utility tipo-cifra-secundaria-menor {
+  font: 500 40px/1 var(--font-mono);
+  letter-spacing: -0.03em;
+}
+@utility tipo-cifra-tarjeta {
+  font: 500 32px/1 var(--font-mono);
+  letter-spacing: -0.02em;
+}
+@utility tipo-cifra-tarjeta-media {
+  font: 500 28px/1 var(--font-mono);
+}
+@utility tipo-cifra-tarjeta-chica {
+  font: 500 27px/1 var(--font-mono);
+}
+@utility tipo-cifra-bloque {
+  font: 500 20px/1 var(--font-mono);
+}
+@utility tipo-simbolo-grande {
+  font: 400 22px/1 var(--font-mono);
+}
+@utility tipo-simbolo {
+  font: 400 20px/1 var(--font-mono);
+}
+@utility tipo-simbolo-chico {
+  font: 400 16px/1 var(--font-mono);
+}
+@utility tipo-simbolo-mini {
+  font: 400 15px/1 var(--font-mono);
+}
+/* El sello visual de la app. Encabeza casi todas las secciones. */
+@utility tipo-etiqueta-seccion {
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+@utility tipo-etiqueta-pequena {
+  font: 500 9px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+@utility tipo-etiqueta-anual {
+  font: 500 8px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+}
+@utility tipo-pildora {
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+@utility tipo-cuerpo {
+  font: 300 15px/1.5 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-medio {
+  font: 300 14px/1.45 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-chico {
+  font: 300 13.5px/1.35 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-menor {
+  font: 300 13px/1.45 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-destacado {
+  font: 400 14px/1.3 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-destacado-medio {
+  font: 500 14px/1.25 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-lista {
+  font: 400 14.5px/1.3 var(--font-cuerpo);
+}
+@utility tipo-cuerpo-enlace {
+  font: 400 13px/1.3 var(--font-cuerpo);
+}
+@utility tipo-contexto {
+  font: 300 12.5px/1.4 var(--font-cuerpo);
+}
+@utility tipo-contexto-chico {
+  font: 300 12px/1.4 var(--font-cuerpo);
+}
+@utility tipo-contexto-mini {
+  font: 300 11.5px/1.3 var(--font-cuerpo);
+}
+@utility tipo-subtitulo-grupo {
+  font: 400 11px/1.3 var(--font-cuerpo);
+}
+@utility tipo-monto-lista {
+  font: 400 14px/1 var(--font-mono);
+}
+@utility tipo-monto-lista-chico {
+  font: 400 13.5px/1 var(--font-mono);
+}
+@utility tipo-monto-destacado {
+  font: 500 18px/1 var(--font-mono);
+}
+@utility tipo-monto-columna {
+  font: 500 17px/1 var(--font-mono);
+}
+@utility tipo-monto-fila {
+  font: 500 15px/1 var(--font-mono);
+}
+@utility tipo-numero-dpto {
+  font: 500 14px/1 var(--font-mono);
+}
+@utility tipo-lectura {
+  font: 500 19px/1 var(--font-mono);
+}
+@utility tipo-mono-chico {
+  font: 500 13px/1 var(--font-mono);
+}
+@utility tipo-mono-mini {
+  font: 500 12px/1 var(--font-mono);
+}
+@utility tipo-mono-etiqueta {
+  font: 400 11px/1 var(--font-mono);
+}
+@utility tipo-mono-marca {
+  font: 400 10px/1 var(--font-mono);
+}
+@utility tipo-mono-eje {
+  font: 400 9px/1 var(--font-mono);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Base
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--color-crema);
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-crema);
+    color: var(--color-tinta);
+    font-family: var(--font-cuerpo);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* En escritorio el fondo de fuera del marco es distinto. */
+  @media (min-width: 541px) and (min-height: 561px) {
+    html,
+    body {
+      background: var(--color-escritorio);
+    }
+  }
+
+  /* §8 · el foco tiene que verse siempre. */
+  :focus-visible {
+    outline: 2px solid var(--color-terra);
+    outline-offset: 2px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-align: inherit;
+  }
+
+  a {
+    color: var(--color-terra);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-terra-oscuro);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Utilidades de composición
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Scroll sin barra visible. */
+@utility scroll-limpio {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+/* El degradado terracota. Aparece SOLO detrás de la cabecera de Inicio. */
+@utility degradado-cabecera {
+  background: linear-gradient(#eedfcf, var(--color-crema) 78%);
+}
+
+/* Realce de la fila del propio usuario en la lista de los siete. */
+@utility realce-propio {
+  background: linear-gradient(90deg, var(--color-terra-apenas), transparent);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   §6 · Movimiento. Todo tiene motivo, nada decora, nada va en bucle.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hoja-sube {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@utility animar-entrada {
+  animation: subir var(--duracion-entrada) var(--ease-entrada) both;
+}
+
+@utility animar-hoja {
+  animation: hoja-sube var(--duracion-hoja) var(--ease-hoja) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   El contenedor de la app · §7
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.marco-exterior {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marco-app {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-crema);
+  /* Teléfono vertical: la app ES la pantalla. Sin marco, sin borde, radio 0. */
+  width: 100vw;
+  height: 100dvh;
+  border-radius: 0;
+}
+
+/* Pantalla baja: columna a altura completa. No se estira la interfaz a lo ancho. */
+@media (max-height: 560px) {
+  .marco-app {
+    width: min(var(--spacing-app-ancha), 100vw);
+    height: 100dvh;
+    border-left: 1px solid var(--color-linea);
+    border-right: 1px solid var(--color-linea);
+  }
+}
+
+/* Tablet y escritorio: aquí sí, el marco centrado. */
+@media (min-width: 541px) and (min-height: 561px) {
+  .marco-exterior {
+    padding: 28px 20px;
+  }
+  .marco-app {
+    width: var(--spacing-app);
+    height: var(--spacing-app-alto);
+    max-width: 100%;
+    max-height: calc(100dvh - 56px);
+    border: 1px solid var(--color-linea);
+    border-radius: var(--radius-marco);
+    box-shadow: var(--shadow-marco);
+  }
+}
+
+@media (min-width: 541px) and (min-height: 561px) and (max-height: 920px) {
+  .marco-exterior {
+    padding: 16px 20px;
+  }
+}
+
+/* El área de scroll de una pantalla. */
+.pantalla {
+  position: absolute;
+  inset: var(--top) 0 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.pantalla-desde-arriba {
+  inset: 0;
+}
+
+.con-nav {
+  padding-bottom: var(--spacing-bajo-nav);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Gráficos · §4.4 y §4.5 · SVG y CSS a mano, sin librería
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.barra-toque {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.barra {
+  display: block;
+  width: 100%;
+  height: var(--alto-barra);
+  border-radius: var(--radius-mini);
+  /* `02` §6: «crecen desde abajo, escalonadas 30ms. Una vez.» Se anima el
+     transform, no la altura: animar `height` es layout y va a tirones en un
+     móvil de gama media; `scaleY` desde el borde de abajo es GPU y va a 60fps.
+     El escalonado sale de `--i`, el índice de la barra, que pone el componente. */
+  transform-origin: bottom;
+  animation: crecer 0.34s var(--ease-entrada) both;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+@keyframes crecer {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.segmento {
+  flex: 1;
+  height: var(--spacing-segmento);
+  border-radius: var(--radius-pildora);
+}
+
+.sparkline {
+  width: 100%;
+  height: 44px;
+  margin-top: 14px;
+  display: block;
+  color: var(--color-terra);
+}
+
+.sparkline-grande {
+  height: 70px;
+}
+
+.sparkline-vacia {
+  height: 44px;
+  margin-top: 14px;
+  border-radius: var(--radius-chico);
+  background: var(--color-neutro-apenas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip-noche {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  border-radius: var(--radius-chico);
+  padding: 8px 12px;
+  font: 500 12px/1 var(--font-mono);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra {
+    animation: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Navegación · §4.7
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.nav-inferior {
+  position: absolute;
+  left: var(--spacing-tarjetas);
+  right: var(--spacing-tarjetas);
+  bottom: var(--bot);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 10;
+}
+
+.nav-pildora {
+  flex: 1;
+  height: var(--spacing-nav);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+}
+
+.nav-destino {
+  width: var(--spacing-toque);
+  height: var(--spacing-toque);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pildora);
+}
+
+/* Bob no es un quinto destino: es una acción, y por eso va fuera de la píldora. */
+.nav-bob {
+  width: var(--spacing-nav);
+  height: var(--spacing-nav);
+  border-radius: var(--radius-pildora);
+  background: var(--color-ambar);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-shadow: var(--shadow-bob);
+  transition: transform 0.15s;
+}
+
+.nav-bob:hover {
+  transform: scale(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-bob {
+    transition: none;
+  }
+  .nav-bob:hover {
+    transform: none;
+  }
+}
+
+/* El avatar de Bob · §5
+   Los colores ya no viven aquí: el generador los recibe como `palette` desde
+   `lib/bob-cara.ts`, porque el SVG se arma en el servidor y ahí no hay CSS.
+   `lib/__tests__/bob-cara.test.ts` comprueba que son estos mismos tokens. */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Hojas modales · §4.8
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.velo {
+  position: absolute;
+  inset: 0;
+  background: var(--color-velo);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+  border: 0;
+  padding: 0;
+}
+
+.hoja {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-crema);
+  /* La esquina de abajo sigue al marco: en el teléfono es 0, en escritorio 38. */
+  border-radius: var(--radius-hoja) var(--radius-hoja) var(--rad) var(--rad);
+  box-shadow: var(--shadow-hoja);
+  z-index: 21;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.hoja-completa {
+  top: var(--top);
+}
+
+/* Bob: cabecera y campo quietos, conversación desplazándose en medio. La hoja
+   entera no se desplaza, así que el campo de escribir no se va nunca de vista. */
+.hoja-columna {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hoja-alta {
+  top: calc(var(--top) + 6px);
+}
+
+.hoja-media {
+  max-height: 76%;
+}
+
+.asa-contenedor {
+  padding: 14px 0 0;
+}
+
+.asa {
+  display: block;
+  width: var(--spacing-asa-ancho);
+  height: var(--spacing-asa);
+  border-radius: var(--radius-pildora);
+  background: var(--color-asa);
+  margin: 0 auto;
+}
+
+/* El interior de una hoja normal. */
+.hoja-cuerpo {
+  padding: 20px var(--spacing-pantalla) 34px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Teclado numérico propio · §4.6
+   Se superpone a todo, incluida una hoja abierta.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.numpad-capa {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  /* `overflow-y:auto` + `margin-top:auto` en el panel, en vez de
+     `justify-content:flex-end`: cuando el panel es más alto que la ventana
+     —teléfono en apaisado— así se puede desplazar hasta la etiqueta y el valor,
+     que con `flex-end` quedaban cortados arriba y fuera de alcance. `02` §4.6. */
+  overflow-y: auto;
+}
+
+.numpad-velo {
+  position: absolute;
+  inset: 0;
+  background: var(--color-velo-numpad);
+  border: 0;
+  padding: 0;
+}
+
+.numpad-panel {
+  position: relative;
+  margin-top: auto;
+  background: var(--color-crema);
+  border-radius: 28px 28px var(--rad) var(--rad);
+  /* 30px + el inset del gesto de inicio, como `--bot`: sin esto la fila
+     Cancelar/Guardar caía dentro de la zona del gesto en un iPhone. */
+  padding: 22px 22px calc(30px + env(safe-area-inset-bottom));
+  box-shadow: var(--shadow-hoja);
+}
+
+.numpad-etiqueta {
+  margin: 0 0 12px;
+}
+
+.numpad-valor {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 20px;
+  min-height: 40px;
+}
+
+.numpad-numero {
+  font: 500 36px/1 var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
+.numpad-vacio {
+  color: var(--color-apagado);
+}
+
+.numpad-cursor {
+  width: 2px;
+  height: 30px;
+  background: var(--color-terra);
+  display: inline-block;
+}
+
+.numpad-rejilla {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.numpad-tecla {
+  height: 54px;
+  border-radius: var(--radius-icono);
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 22px/1 var(--font-mono);
+  user-select: none;
+}
+
+.numpad-borrar {
+  background: none;
+  border: 0;
+  color: var(--color-gris);
+}
+
+.numpad-acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.numpad-cancelar {
+  flex: 1;
+  height: 52px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-vacio);
+  font: 400 15px/1 var(--font-cuerpo);
+}
+
+.numpad-guardar {
+  flex: 2;
+  height: 52px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  font: 500 15px/1 var(--font-cuerpo);
+}
+
+.numpad-guardar-inactivo {
+  background: var(--color-neutro-barra);
+  color: var(--color-gris-claro);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   P0 · Elegir departamento
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.onboarding-cabecera {
+  padding: 54px var(--spacing-onboarding) 0;
+}
+.onboarding-marca {
+  margin-bottom: 16px;
+}
+.onboarding-titulo {
+  margin: 0 0 10px;
+}
+.onboarding-subtitulo {
+  margin: 0;
+}
+.onboarding-edificio {
+  padding: 34px var(--spacing-onboarding) 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.onboarding-techo {
+  width: 250px;
+  max-width: 100%;
+  height: 20px;
+  background: var(--color-noche);
+  border-radius: var(--radius-mini) var(--radius-mini) 2px 2px;
+  opacity: 0.88;
+}
+.onboarding-piso {
+  width: 250px;
+  max-width: 100%;
+  display: grid;
+  gap: 6px;
+}
+.onboarding-piso[data-columnas='2'] {
+  grid-template-columns: 1fr 1fr;
+}
+.onboarding-dpto {
+  height: 56px;
+  border-radius: var(--radius-mini);
+  background: var(--color-papel);
+  border: 1px solid var(--color-linea);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+.onboarding-dpto:hover {
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   P1 · Inicio · la pantalla que define todo
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.inicio-cabecera {
+  padding: var(--top) 0 8px;
+}
+.inicio-cabecera-interior {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 26px var(--spacing-pantalla) 22px;
+  gap: 12px;
+}
+.inicio-mes {
+  margin-bottom: 8px;
+}
+.inicio-cuota {
+  padding: 24px 24px 20px;
+}
+.inicio-cuota-cabecera {
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.inicio-cuota-monto {
+  margin-bottom: 6px;
+}
+.inicio-cuota-detalle {
+  margin: 0 0 20px;
+}
+.inicio-desglose {
+  border-top: 1px solid var(--color-sobre-noche-divisoria);
+  padding-top: 4px;
+}
+.inicio-desglose-fila {
+  padding: 11px 0;
+  gap: 12px;
+  min-width: 0;
+}
+.inicio-desglose-linea {
+  border-bottom: 1px solid var(--color-sobre-noche-divisoria-sutil);
+}
+.inicio-lavado {
+  margin: 0;
+  padding: 0 0 10px;
+}
+.inicio-seccion-7 {
+  padding: var(--spacing-seccion-media) var(--spacing-pantalla) 0;
+}
+.inicio-titulo-7 {
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.inicio-grupos {
+  margin-top: 20px;
+}
+.inicio-grupo {
+  margin-bottom: 16px;
+}
+.inicio-grupo-titulo {
+  margin: 0 0 2px;
+}
+.fila-propia {
+  margin: 0 -10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: var(--radius-mini);
+}
+.inicio-leyenda {
+  padding: 4px 0 0;
+  margin: 0;
+  list-style: none;
+}
+.punto {
+  width: var(--spacing-punto);
+  height: var(--spacing-punto);
+  border-radius: var(--radius-pildora);
+  flex: 0 0 auto;
+}
+.inicio-seccion-gastos {
+  padding: var(--spacing-seccion) var(--spacing-pantalla) 0;
+}
+.inicio-titulo-gastos {
+  margin-bottom: 16px;
+}
+.inicio-gasto-fila {
+  margin-bottom: 6px;
+  gap: 12px;
+}
+.barra-gasto-pista {
+  height: var(--spacing-barra-gasto);
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-pista);
+}
+.barra-gasto {
+  display: block;
+  height: var(--spacing-barra-gasto);
+  border-radius: var(--radius-pildora);
+  width: var(--ancho-gasto);
+}
+.inicio-total {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-linea);
+  gap: 12px;
+  color: inherit;
+}
+.inicio-seccion-cuenta {
+  padding: var(--spacing-seccion) var(--spacing-tarjetas) 0;
+}
+.inicio-cuenta {
+  padding: 20px 22px;
+}
+.inicio-cuenta-titulo {
+  margin-bottom: 12px;
+}
+.inicio-cuenta-nota {
+  margin: 5px 0 0;
+}
+.inicio-cuenta-pie {
+  margin-top: 16px;
+  border-top: 1px solid var(--color-linea);
+  padding-top: 14px;
+}
+.inicio-cuenta-columna {
+  border-right: 1px solid var(--color-linea);
+  min-width: 0;
+}
+.inicio-cuenta-columna-derecha {
+  padding-left: 18px;
+  min-width: 0;
+}
+.inicio-cuenta-etiqueta {
+  margin-bottom: 7px;
+}
+
+.campana {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-campana);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 auto;
+  color: var(--color-tinta);
+}
+.campana-punto {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: var(--spacing-punto);
+  height: var(--spacing-punto);
+  border-radius: var(--radius-pildora);
+  background: var(--color-terra);
+  border: 1.5px solid var(--color-degradado-cabecera);
+}
+.inicio-acciones {
+  margin-top: 16px;
+}
+.inicio-flecha {
+  width: var(--spacing-toque);
+  height: var(--spacing-toque);
+  border-radius: var(--radius-pildora);
+  background: var(--color-terra);
+  color: var(--color-papel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.linea-bob-contenedor {
+  padding: 12px var(--spacing-tarjetas) 0;
+}
+.linea-bob {
+  width: 100%;
+  background: var(--color-papel);
+  border-radius: var(--radius-bloque);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--color-borde-tarjeta);
+}
+.linea-bob-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-chico);
+  background: var(--color-ambar-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.sin-datos {
+  padding: 80px var(--spacing-pantalla) 0;
+}
+.sin-datos-titulo {
+  margin: 0 0 12px;
+}
+.sin-datos-texto {
+  margin: 0;
+}
+
+.aviso-ok-icono {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-bloque);
+  background: var(--color-agua-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto 22px;
+}
+.aviso-ok-titulo {
+  margin: 0 0 8px;
+  text-align: center;
+}
+.aviso-ok-texto {
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   P2 · El mes
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.mes-titulo {
+  padding: var(--spacing-pantalla) var(--spacing-pantalla) 0;
+}
+.selector-meses {
+  display: flex;
+  gap: 8px;
+  padding: 20px var(--spacing-pantalla) 0;
+  overflow-x: auto;
+}
+.selector-mes {
+  font: 500 13px/1 var(--font-mono);
+  padding: 11px 16px;
+  border-radius: var(--radius-pildora);
+  flex: 0 0 auto;
+}
+.selector-mes-activo {
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+}
+.selector-mes-inactivo {
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  color: var(--color-gris);
+}
+.mes-noche {
+  padding: 20px var(--spacing-tarjetas) 0;
+}
+.mes-noche-titulo {
+  margin-bottom: 14px;
+}
+.mes-noche-nota {
+  margin: 8px 0 0;
+}
+.mes-rejilla {
+  padding: 20px var(--spacing-tarjetas) 0;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+.mes-grafico {
+  flex: 1.45 1 0;
+  min-width: 0;
+  padding: 18px 16px;
+}
+.mes-grafico-titulo {
+  margin-bottom: 18px;
+}
+.mes-columna {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mes-dato {
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-interior-chico);
+}
+.mes-dato-titulo {
+  margin-bottom: 12px;
+}
+.mes-dato-cifra {
+  margin: 0;
+}
+.mes-dato-nota {
+  margin: 5px 0 0;
+}
+.explica-contenedor {
+  padding: 14px var(--spacing-tarjetas) 0;
+}
+.explica {
+  width: 100%;
+  background: var(--color-terra-tenue);
+  border-radius: var(--radius-icono);
+  padding: 14px 16px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.explica-icono {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--color-terra-oscuro);
+}
+.explica-texto {
+  margin: 0;
+}
+.explica-enlace {
+  margin-top: 9px;
+}
+.mes-seccion {
+  padding: var(--spacing-seccion) var(--spacing-pantalla) 0;
+}
+.mes-seccion-final {
+  padding-bottom: 8px;
+}
+.mes-seccion-titulo {
+  margin-bottom: 6px;
+}
+.etiqueta-anual {
+  color: var(--color-gris);
+  background: var(--color-neutro-suave);
+  padding: 4px 6px;
+  border-radius: var(--radius-mini);
+  flex: 0 0 auto;
+}
+.mes-total {
+  padding: var(--spacing-interior-chico) 0 0;
+  gap: 12px;
+}
+.mes-sin-pagos {
+  padding: 12px 0;
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Hoja `calculo` · la pieza central de la transparencia
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.calculo-etiqueta {
+  margin: 0 0 11px;
+}
+.calculo-titulo {
+  margin: 0 0 8px;
+}
+.calculo-intro {
+  margin: 0 0 22px;
+}
+.calculo-seccion {
+  background: var(--color-papel);
+  border-radius: var(--radius-tarjeta);
+  border: 1px solid var(--color-neutro-pista);
+  padding: var(--spacing-tarjetas);
+  margin-bottom: 12px;
+}
+.calculo-seccion-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 14px;
+}
+.calculo-numero {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  font: 500 11px/22px var(--font-mono);
+  text-align: center;
+  flex: 0 0 auto;
+}
+.calculo-dos {
+  display: flex;
+  border-top: 1px solid var(--color-neutro-pista);
+  padding-top: 14px;
+}
+.calculo-dato {
+  flex: 1;
+  min-width: 0;
+}
+.calculo-dato-derecha {
+  border-left: 1px solid var(--color-neutro-pista);
+  padding-left: 18px;
+}
+.calculo-dato-titulo {
+  margin: 0 0 11px;
+}
+.calculo-dato-cifra {
+  font: 500 22px/1 var(--font-mono);
+  margin: 0;
+}
+.calculo-nota {
+  margin: 14px 0 0;
+}
+.calculo-precio {
+  font: 500 13px/1 var(--font-mono);
+  color: var(--color-agua);
+}
+.calculo-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+}
+.calculo-fila-primera {
+  border-top: 1px solid var(--color-neutro-pista);
+}
+.calculo-fila-propia {
+  background: var(--color-agua-realce);
+  margin: 0 -8px;
+  padding: 11px 8px;
+  border-radius: var(--radius-mini);
+}
+.calculo-fila-comun {
+  border-top: 1px solid var(--color-borde-tarjeta);
+}
+.calculo-dpto {
+  width: 38px;
+  flex: 0 0 auto;
+}
+.calculo-suman {
+  display: flex;
+  padding-top: 13px;
+  border-top: 1px solid var(--color-neutro-barra);
+  margin-top: 5px;
+  gap: 12px;
+}
+.calculo-explicacion {
+  border-top: 1px solid var(--color-neutro-pista);
+  padding-top: 14px;
+  margin: 0;
+}
+.calculo-cajas {
+  display: flex;
+  gap: 10px;
+  margin-top: var(--spacing-interior-chico);
+}
+.calculo-caja {
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--radius-icono);
+  padding: 14px;
+}
+.calculo-caja-agua {
+  background: var(--color-agua-realce-fuerte);
+  color: var(--color-agua-texto);
+}
+.calculo-caja-neutra {
+  background: var(--color-neutro-vacio);
+}
+.calculo-caja-cifra {
+  font: 500 18px/1 var(--font-mono);
+  margin: 0;
+}
+.calculo-caja-nota {
+  margin: 7px 0 0;
+}
+.calculo-cuadre {
+  background: var(--color-verde-suave);
+  border-radius: var(--radius-tarjeta);
+  padding: var(--spacing-tarjetas);
+  color: var(--color-verde-oscuro);
+}
+.calculo-cuadre-falla {
+  background: var(--color-ambar-suave);
+  color: var(--color-terra-texto);
+}
+.calculo-cuadre-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 12px;
+}
+.calculo-cuadre-icono {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-verde);
+  color: var(--color-papel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.calculo-cuadre-icono-falla {
+  background: var(--color-ambar);
+}
+.calculo-cuadre-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+.calculo-cuadre-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-verde-linea);
+  margin-top: 6px;
+}
+.calculo-cuadre-cifra {
+  font: 500 16px/1 var(--font-mono);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   P3 · Mi departamento
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.midpto-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding: var(--spacing-pantalla) var(--spacing-pantalla) 0;
+}
+.midpto-etiqueta {
+  margin-bottom: 8px;
+}
+.midpto-noche {
+  padding: 22px var(--spacing-tarjetas) 0;
+}
+/* El balance que arrastra. A favor en verde suave; lo que falta en neutro,
+   nunca en rojo (`03` §voz: vecinos, no cobradores). */
+.midpto-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px var(--spacing-tarjetas) 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-tarjeta);
+}
+.midpto-balance-favor {
+  background: var(--color-verde-suave);
+  color: var(--color-verde-oscuro);
+}
+.midpto-balance-falta {
+  background: var(--color-neutro-suave);
+  color: var(--color-tinta);
+}
+.midpto-noche-cabecera {
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.midpto-noche-nota {
+  margin: 8px 0 0;
+}
+.midpto-acciones {
+  margin-top: 18px;
+}
+.midpto-boton-pagar {
+  flex: 1;
+  height: var(--spacing-boton-medio);
+  border-radius: var(--radius-pildora);
+  background: var(--color-terra);
+  color: var(--color-papel);
+  font: 500 14px/1.3 var(--font-cuerpo);
+}
+.midpto-boton-avisar {
+  height: var(--spacing-boton-medio);
+  padding: 0 var(--spacing-boton-x);
+  border-radius: var(--radius-pildora);
+  background: var(--color-sobre-noche-boton);
+  color: var(--color-sobre-noche);
+  font: 400 14px/1.3 var(--font-cuerpo);
+  flex: 0 0 auto;
+}
+.midpto-lavado-contenedor {
+  padding: 14px var(--spacing-tarjetas) 0;
+}
+.midpto-lavado {
+  padding: 18px var(--spacing-tarjetas);
+}
+.midpto-lavado-cabecera {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-neutro-pista);
+  gap: 12px;
+}
+.midpto-lavado-texto {
+  padding-top: 11px;
+  margin: 0;
+}
+.midpto-historia {
+  padding: var(--spacing-seccion-corta) var(--spacing-tarjetas) 0;
+}
+.midpto-historia-titulo {
+  margin: 0 4px 14px;
+}
+.midpto-tarjeta {
+  background: var(--color-papel);
+  border-radius: var(--radius-tarjeta-grande);
+  border: 1px solid var(--color-borde-tarjeta);
+  padding: var(--spacing-tarjetas);
+  margin-bottom: 12px;
+}
+.midpto-tarjeta-cabecera {
+  margin-bottom: var(--spacing-interior-chico);
+  gap: 12px;
+}
+.midpto-tarjeta-etiqueta {
+  margin-bottom: 10px;
+}
+.midpto-tarjeta-nota {
+  margin: 6px 0 0;
+}
+.midpto-flecha {
+  width: var(--spacing-circulo);
+  height: var(--spacing-circulo);
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-vacio);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.tira-pago {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  border-radius: var(--radius-tira);
+}
+.midpto-eje {
+  margin-top: 8px;
+}
+.midpto-tira-agua {
+  height: var(--spacing-grafico-tira);
+}
+.tira-agua {
+  flex: 1;
+  min-width: 0;
+  height: var(--alto-tira);
+  border-radius: var(--radius-barra);
+}
+.midpto-bob {
+  margin: var(--spacing-interior-chico) 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-neutro-pista);
+}
+.admin-enlace-contenedor {
+  padding: var(--spacing-seccion-corta) var(--spacing-pantalla) 0;
+}
+.admin-enlace {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 0;
+  border-top: 1px solid var(--color-linea);
+  color: inherit;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   P4 · Historial
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.historial-cabecera {
+  padding: var(--spacing-pantalla) var(--spacing-pantalla) 0;
+}
+.historial-subtitulo {
+  margin: 8px 0 0;
+}
+.historial-noche {
+  padding: 22px var(--spacing-tarjetas) 0;
+}
+.historial-noche-titulo {
+  margin-bottom: 14px;
+}
+.historial-noche-nota {
+  margin: 7px 0 0;
+}
+.historial-agua {
+  padding: var(--spacing-seccion-corta) var(--spacing-pantalla) 0;
+}
+.historial-agua-titulo {
+  margin-bottom: var(--spacing-interior-chico);
+}
+.historial-lista {
+  padding: var(--spacing-seccion) var(--spacing-pantalla) 0;
+}
+.historial-lista-titulo {
+  margin-bottom: 6px;
+}
+.historial-fila {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--color-linea);
+  color: inherit;
+}
+.historial-fila-mes {
+  margin-bottom: 6px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   P5 · Avisos · sin navegación inferior, se sale con la flecha
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.avisos-scroll {
+  padding-bottom: 40px;
+}
+.avisos-barra {
+  padding: 22px var(--spacing-pantalla) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.circulo-atras {
+  width: var(--spacing-circulo);
+  height: var(--spacing-circulo);
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--color-tinta);
+}
+.avisos-cabecera {
+  padding: 20px var(--spacing-pantalla) 0;
+}
+.avisos-subtitulo {
+  margin: 8px 0 0;
+}
+.avisos-lista {
+  padding: 12px var(--spacing-tarjetas) 0;
+}
+.avisos-grupo {
+  margin: 14px 4px 10px;
+}
+.avisos-vacio {
+  padding: 20px 4px;
+  margin: 0;
+}
+.aviso {
+  background: var(--color-papel);
+  border-radius: var(--radius-bloque);
+  border: 1px solid var(--color-borde-tarjeta);
+  padding: var(--spacing-interior-chico) 18px;
+  display: flex;
+  gap: 13px;
+  margin-bottom: 10px;
+}
+.aviso-icono {
+  width: var(--spacing-icono-aviso);
+  height: var(--spacing-icono-aviso);
+  border-radius: var(--radius-chico);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.aviso-titulo {
+  margin-bottom: 6px;
+}
+.aviso-titulo h2 {
+  margin: 0;
+}
+.aviso-texto {
+  margin: 0;
+}
+.aviso-nuevo {
+  margin-top: 5px;
+}
+
+/* Hoja `pagar` */
+.pagar-titulo {
+  margin: 0 0 8px;
+}
+.pagar-intro {
+  margin: 0 0 22px;
+}
+.pagar-tarjeta {
+  background: var(--color-noche);
+  border-radius: var(--radius-tarjeta-grande);
+  padding: 22px;
+  color: var(--color-sobre-noche);
+}
+.pagar-etiqueta {
+  margin: 0 0 11px;
+}
+.pagar-monto {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-cifra);
+  margin: 0 0 20px;
+}
+.pagar-monto-cifra {
+  font: 500 36px/1 var(--font-mono);
+  letter-spacing: -0.03em;
+}
+.pagar-cuenta {
+  border-top: 1px solid var(--color-sobre-noche-divisoria);
+  padding-top: var(--spacing-interior-chico);
+}
+.pagar-copiar {
+  height: var(--spacing-circulo);
+  padding: 0 14px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-sobre-noche-activo);
+  font: 400 12px/1.3 var(--font-cuerpo);
+  flex: 0 0 auto;
+}
+.pagar-cci {
+  margin: 10px 0 0;
+}
+.pagar-nota {
+  background: var(--color-papel);
+  border-radius: var(--radius-tarjeta);
+  border: 1px solid var(--color-neutro-pista);
+  padding: var(--spacing-tarjetas);
+  margin-top: 14px;
+}
+.pagar-nota p {
+  margin: 0;
+}
+.pagar-error {
+  margin: 14px 0 0;
+}
+.pagar-boton {
+  margin-top: 18px;
+  width: 100%;
+  height: var(--spacing-boton);
+  border-radius: var(--radius-pildora);
+  background: var(--color-terra);
+  color: var(--color-papel);
+  font: 500 15px/1.3 var(--font-cuerpo);
+}
+.pagar-cancelar {
+  width: 100%;
+  margin-top: 12px;
+  height: var(--spacing-toque);
+}
+
+/* Hojas `pagos` y `agua` */
+.historial-hoja-etiqueta {
+  margin: 0 0 11px;
+}
+.historial-hoja-titulo {
+  margin: 0 0 22px;
+}
+.historial-hoja-fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--spacing-fila-alta) 0;
+  border-bottom: 1px solid var(--color-linea);
+}
+.historial-hoja-m3 {
+  width: 72px;
+  text-align: right;
+  flex: 0 0 auto;
+}
+.historial-hoja-monto {
+  width: 64px;
+  text-align: right;
+  flex: 0 0 auto;
+}
+.historial-hoja-detalle {
+  margin-top: 6px;
+}
+.historial-hoja-cuota {
+  flex: 0 0 auto;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   La puerta de administración
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.pin-pantalla {
+  padding-bottom: 40px;
+}
+.pin-barra {
+  padding: 22px var(--spacing-pantalla) 0;
+}
+.pin-cabecera {
+  padding: 30px var(--spacing-pantalla) 0;
+  text-align: center;
+}
+.pin-titulo {
+  margin: 0 0 10px;
+}
+.pin-texto {
+  margin: 0;
+}
+.pin-puntos {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  padding: 34px 0 0;
+}
+.pin-punto {
+  width: 13px;
+  height: 13px;
+  border-radius: var(--radius-pildora);
+  border: 1.5px solid var(--color-apagado);
+}
+.pin-punto-lleno {
+  background: var(--color-noche);
+  border-color: var(--color-noche);
+}
+.pin-bloqueado {
+  text-align: center;
+  padding: 14px var(--spacing-pantalla) 0;
+  margin: 0;
+}
+.pin-rejilla {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 34px var(--spacing-onboarding) 0;
+  max-width: 330px;
+  margin: 0 auto;
+}
+.pin-tecla {
+  height: 58px;
+  border-radius: var(--radius-icono);
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  font: 400 22px/1 var(--font-mono);
+}
+.pin-borrar {
+  background: none;
+  border: 0;
+  color: var(--color-gris);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sacudir el campo: es todo lo que pasa con un PIN incorrecto. */
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+.pin-sacude {
+  animation: sacudir 0.4s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pin-sacude {
+    animation: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Panel de administración
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.admin-pantalla {
+  padding-bottom: 40px;
+}
+.admin-barra {
+  padding: 22px var(--spacing-pantalla) 0;
+}
+.admin-cabecera {
+  padding: 20px var(--spacing-pantalla) 0;
+}
+.admin-subtitulo {
+  margin: 8px 0 0;
+}
+.admin-seccion {
+  padding: var(--spacing-seccion-corta) var(--spacing-pantalla) 0;
+}
+.admin-seccion-final {
+  padding-bottom: 20px;
+}
+.admin-seccion-titulo {
+  margin-bottom: 12px;
+}
+.admin-texto {
+  margin: 0 0 16px;
+}
+.admin-nota {
+  margin: 14px 0 0;
+}
+.admin-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-fila) 0;
+  border-bottom: 1px solid var(--color-linea);
+}
+.admin-pago {
+  background: var(--color-papel);
+  border-radius: var(--radius-bloque);
+  border: 1px solid var(--color-borde-tarjeta);
+  padding: var(--spacing-interior-chico);
+  margin-bottom: 10px;
+}
+.admin-pago-detalle {
+  margin-top: 5px;
+}
+.admin-pago-texto {
+  margin: 12px 0 0;
+}
+.admin-pago-error {
+  margin: 10px 0 0;
+}
+.admin-pago-boton {
+  margin-top: 14px;
+  width: 100%;
+  height: var(--spacing-toque);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  font: 400 13.5px/1.3 var(--font-cuerpo);
+}
+/* Secundario: para el caso raro de un monto distinto de la cuota. */
+.admin-pago-otro {
+  margin-top: 8px;
+  width: 100%;
+  color: var(--color-gris);
+  font: 400 12.5px/1.3 var(--font-cuerpo);
+  text-decoration: underline;
+}
+.admin-boton {
+  width: 100%;
+  height: var(--spacing-boton);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  font: 500 15px/1.3 var(--font-cuerpo);
+}
+.admin-accion {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-fila-alta) 0;
+  border-bottom: 1px solid var(--color-linea);
+  text-align: left;
+}
+.admin-salir-form {
+  margin: 0;
+}
+.admin-salir {
+  margin-top: 22px;
+  height: var(--spacing-toque);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   El cierre del mes · 04-cierre-del-mes.md
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.cierre-cabecera {
+  padding: var(--spacing-interior-chico) var(--spacing-pantalla) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cierre-hueco {
+  width: var(--spacing-circulo);
+  flex: 0 0 auto;
+}
+.cierre-progreso {
+  display: flex;
+  gap: 4px;
+  padding: var(--spacing-interior-chico) var(--spacing-pantalla) 0;
+}
+.cierre-tramo {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-barra);
+  transition: background 0.3s;
+}
+.cierre-tramo-hecho {
+  background: var(--color-verde);
+}
+.cierre-tramo-actual {
+  background: var(--color-noche);
+}
+.cierre-cuerpo {
+  padding: 22px var(--spacing-pantalla) 34px;
+}
+.cierre-titulo {
+  margin: 0 0 8px;
+}
+.cierre-intro {
+  margin: 0 0 22px;
+}
+.cierre-titulo-fila {
+  margin-bottom: 22px;
+}
+.cierre-contador {
+  font: 500 12px/1 var(--font-mono);
+  color: var(--color-agua);
+  background: var(--color-agua-suave);
+  padding: 7px 11px;
+  border-radius: var(--radius-pildora);
+  flex: 0 0 auto;
+}
+.cierre-etiqueta {
+  margin: 0 0 11px;
+}
+.cierre-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--color-papel);
+  border-radius: var(--radius-tarjeta);
+  border: 1px solid var(--color-neutro-pista);
+  overflow: hidden;
+}
+.cierre-necesita {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: var(--spacing-interior-chico) 18px;
+}
+.cierre-necesita-linea {
+  border-bottom: 1px solid var(--color-neutro-pista);
+}
+.cierre-marca {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pildora);
+  flex: 0 0 auto;
+}
+.cierre-marca-0 {
+  background: var(--color-agua);
+}
+.cierre-marca-1 {
+  background: var(--color-terra);
+}
+.cierre-marca-2 {
+  background: var(--color-ambar);
+}
+.cierre-necesita-nota {
+  margin-top: 4px;
+}
+.cierre-fijos-nota {
+  margin: var(--spacing-interior-chico) 0 0;
+}
+.cierre-error {
+  margin: 14px 0 0;
+}
+.cierre-boton {
+  margin-top: 22px;
+  width: 100%;
+  height: var(--spacing-boton);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  font: 500 15px/1.3 var(--font-cuerpo);
+}
+.cierre-boton-bloqueado {
+  background: var(--color-neutro-suave);
+  color: var(--color-gris);
+}
+
+/* Paso 1 · las lecturas */
+.lectura-fila {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-fila-alta) 0;
+  border-bottom: 1px solid var(--color-linea);
+}
+.lectura-anterior {
+  margin-top: 5px;
+}
+.lectura-consumo {
+  margin-top: 6px;
+}
+.cierre-correccion {
+  margin-bottom: 18px;
+}
+.cierre-correccion-botones {
+  margin-top: 12px;
+}
+.cierre-correccion-si {
+  flex: 1;
+  height: var(--spacing-toque);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  font: 500 13.5px/1.3 var(--font-cuerpo);
+}
+.cierre-correccion-no {
+  flex: 1;
+  height: var(--spacing-toque);
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-suave);
+  font: 400 13.5px/1.3 var(--font-cuerpo);
+}
+
+/* Bob dentro del cierre */
+.bob-nota {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  background: var(--color-ambar-suave);
+  border-radius: var(--radius-icono);
+  padding: 14px var(--spacing-interior-chico);
+  margin-top: var(--spacing-interior-chico);
+}
+.bob-nota-agua {
+  background: var(--color-agua-suave);
+}
+.bob-nota-avatar {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.bob-nota-texto {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Campos numéricos */
+.campo {
+  width: 100%;
+  text-align: left;
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  border-radius: var(--radius-tarjeta);
+  padding: var(--spacing-interior);
+  margin-bottom: 12px;
+}
+.campo-etiqueta {
+  margin-bottom: 12px;
+}
+.campo-valor {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-cifra);
+}
+.campo-cifra {
+  font: 500 28px/1 var(--font-mono);
+}
+
+/* Paso 4 · gastos fijos */
+.fijo-fila {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-fila-alta) 0;
+  border-bottom: 1px solid var(--color-linea);
+  text-align: left;
+}
+.fijo-fila-pendiente {
+  background: var(--color-ambar-suave);
+  margin: 0 -10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: var(--radius-mini);
+  border-bottom-color: transparent;
+}
+/* Agregar un concepto fijo nuevo (data que se inyecta en vivo desde el panel). */
+.fijo-anadir {
+  margin-top: 14px;
+}
+.fijo-nuevo {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: var(--radius-tarjeta);
+  background: var(--color-neutro-suave);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fijo-nuevo-nombre {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-chico);
+  border: 1px solid var(--color-linea);
+  background: var(--color-papel);
+  font: 400 15px/1.2 var(--font-cuerpo);
+}
+.fijo-nuevo-anual {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fijo-nuevo-acciones {
+  display: flex;
+  gap: 8px;
+}
+.fijo-nuevo-boton {
+  flex: 1;
+  padding: 12px 10px;
+  border-radius: var(--radius-chico);
+  background: var(--color-verde-suave);
+  color: var(--color-verde-oscuro);
+  font: 500 13.5px/1.2 var(--font-cuerpo);
+}
+.fijo-nuevo-boton:disabled {
+  opacity: 0.45;
+}
+.fijo-nuevo-cancelar {
+  color: var(--color-gris);
+  text-decoration: underline;
+  align-self: flex-start;
+}
+.fijos-suman {
+  margin-top: 18px;
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  border-radius: var(--radius-bloque);
+  padding: var(--spacing-interior);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Paso 5 · lo puntual */
+.puntual-boton {
+  width: 100%;
+  height: var(--spacing-boton-medio);
+  border-radius: var(--radius-pildora);
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  font: 400 14px/1.3 var(--font-cuerpo);
+  margin-bottom: 10px;
+}
+.puntual-boton-ejemplo {
+  margin-top: 3px;
+}
+.puntual-etiqueta {
+  margin: 22px 0 11px;
+}
+.puntual-anadido {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-fila) 0;
+  border-bottom: 1px solid var(--color-linea);
+}
+.puntual-quien {
+  margin-top: 5px;
+}
+.puntual-quitar {
+  width: var(--spacing-circulo);
+  height: var(--spacing-circulo);
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-suave);
+  color: var(--color-gris);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.puntual-elegir {
+  margin-top: var(--spacing-interior-chico);
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  border-radius: var(--radius-tarjeta);
+  padding: var(--spacing-interior);
+}
+.puntual-elegir-titulo {
+  margin: 0 0 12px;
+}
+.puntual-dptos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.puntual-dpto {
+  font: 500 13px/1 var(--font-mono);
+  padding: 11px 14px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-suave);
+}
+.casilla-fila {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: var(--spacing-fila-alta) 0;
+  border-bottom: 1px solid var(--color-linea);
+}
+.casilla {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-mini);
+  accent-color: var(--color-verde);
+  flex: 0 0 auto;
+}
+
+/* Paso 6 · la revisión */
+.cuadre {
+  background: var(--color-verde-suave);
+  color: var(--color-verde-oscuro);
+  border-radius: var(--radius-tarjeta);
+  padding: var(--spacing-tarjetas);
+  margin-bottom: 12px;
+}
+.cuadre-falla {
+  background: var(--color-ambar-suave);
+  color: var(--color-terra-texto);
+}
+.cuadre-titulo {
+  margin: 0 0 8px;
+}
+.cuadre-texto {
+  margin: 0;
+}
+.cuadre-motivos {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+.atencion {
+  background: var(--color-ambar-suave);
+  color: var(--color-terra-texto);
+  border-radius: var(--radius-icono);
+  padding: 14px var(--spacing-interior-chico);
+  margin-bottom: 12px;
+}
+.atencion p {
+  margin: 0;
+}
+.atencion-nota {
+  margin-top: 9px !important;
+}
+.revision-etiqueta {
+  margin: 22px 0 6px;
+}
+.revision-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-fila) 0;
+  border-bottom: 1px solid var(--color-linea);
+}
+.revision-dif {
+  flex: 0 0 auto;
+}
+.revision-cuadre {
+  margin-top: 22px;
+}
+.revision-cuadre-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+}
+.revision-creditos-nota {
+  margin: 0 0 6px;
+}
+.revision-cuadre-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-top: 13px;
+  border-top: 1px solid var(--color-neutro-barra);
+  margin-top: 5px;
+}
+
+/* Paso 7 · publicar */
+.nota-campo {
+  margin-bottom: var(--spacing-interior-chico);
+}
+.nota-etiqueta {
+  display: block;
+  margin-bottom: 9px;
+}
+.nota-texto {
+  width: 100%;
+  border-radius: var(--radius-icono);
+  border: 1px solid var(--color-neutro-pista);
+  background: var(--color-papel);
+  padding: 13px 14px;
+  resize: vertical;
+  font-family: var(--font-cuerpo);
+  color: var(--color-tinta);
+}
+.publicar-que-pasa {
+  margin-top: 22px;
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  border-radius: var(--radius-tarjeta);
+  padding: var(--spacing-tarjetas);
+}
+.publicar-etiqueta {
+  margin: 0 0 12px;
+}
+.publicar-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.publicar-punto {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+.publicar-check {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+/* Confirmación */
+.publicado {
+  text-align: center;
+}
+/* «Avísales a los demás»: el mensaje listo para copiar y el botón de WhatsApp. */
+.avisar {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: var(--radius-tarjeta);
+  background: var(--color-neutro-suave);
+  text-align: left;
+}
+.avisar-titulo {
+  margin-bottom: 8px;
+}
+.avisar-mensaje {
+  color: var(--color-tinta);
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+}
+.avisar-acciones {
+  display: flex;
+  gap: 8px;
+}
+.avisar-copiar,
+.avisar-wa {
+  flex: 1;
+  text-align: center;
+  padding: 12px 10px;
+  border-radius: var(--radius-chico);
+  font: 500 13.5px/1.2 var(--font-cuerpo);
+}
+.avisar-copiar {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  border: 1px solid var(--color-linea);
+}
+.avisar-wa {
+  background: var(--color-verde);
+  color: var(--color-sobre-noche);
+}
+.publicado-icono {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-bloque);
+  background: var(--color-verde-suave);
+  color: var(--color-verde);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0 22px;
+}
+.publicado-titulo {
+  margin: 0 0 var(--spacing-interior-chico);
+}
+.publicado-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-cifra);
+  margin: 0;
+}
+.publicado-nota {
+  margin: 0 0 var(--spacing-interior);
+}
+.publicado-noche {
+  text-align: left;
+  margin-top: var(--spacing-interior-chico);
+}
+.publicado-noche-mes {
+  margin: 0 0 var(--spacing-fila-alta);
+}
+.publicado-noche-nota {
+  margin: var(--spacing-etiqueta) 0 0;
+}
+
+.cargos-nota {
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+.correccion-motivo {
+  margin-top: 22px;
+}
+.correccion-ayuda {
+  margin: 8px 0 0;
+}
+
+/* ── Sin conexión · Fase 6 ────────────────────────────────────────────────
+   Una banda ámbar bajo el notch, sobre todo lo demás. Ámbar y no rojo: el
+   sistema de color de `02` §1 reserva el rojo para nada, y desconectarse no es
+   una falta de nadie. Se apoya en `--top` para no meterse bajo el notch. */
+.sin-conexion {
+  position: absolute;
+  inset: var(--top) 0 auto;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-fila-x);
+  padding: var(--spacing-pildora-y) var(--spacing-pantalla);
+  background: var(--color-ambar-suave);
+  color: var(--color-terra-texto);
+  text-align: center;
+}
+
+.sin-conexion-icono {
+  flex: none;
+}
+
+.sin-conexion-texto {
+  min-width: 0;
+}
+
+/* ── Elegir qué mes publicado se corrige ──────────────────────────────────
+   Una tira de meses que scrollea a lo ancho, como el carrusel de P2. Lleva
+   `data-scroll-x` para que el chequeo de desbordes sepa que es a propósito. */
+.correccion-meses {
+  display: flex;
+  gap: var(--spacing-fila-x);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: var(--spacing-seccion-corta);
+}
+
+.correccion-meses::-webkit-scrollbar {
+  display: none;
+}
+
+.correccion-mes {
+  flex: none;
+  padding: var(--spacing-pildora-y) var(--spacing-pildora-x);
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-suave);
+  color: var(--color-gris);
+  min-height: var(--spacing-toque);
+}
+
+.correccion-mes-activo {
+  background: var(--color-noche);
+  color: var(--color-crema);
+}
+
+/* El alcance real de lo que baja el Excel, bajo su botón. */
+.export-alcance {
+  margin-top: var(--spacing-fila-x);
+  margin-bottom: var(--spacing-seccion-corta);
+  text-align: center;
+}
+
+/* ── Pantalla de error ────────────────────────────────────────────────────
+   Centrada, sin nav y sin marca. Lo que se ve cuando algo se cayó por debajo. */
+.pantalla-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-onboarding);
+  text-align: center;
+}
+
+.pantalla-error-caja {
+  max-width: var(--spacing-app);
+}
+
+.pantalla-error-texto {
+  margin-top: var(--spacing-fila-alta);
+}
+
+.pantalla-error-digest {
+  margin-top: var(--spacing-fila-alta);
+  font-family: var(--font-mono);
+}
+
+/* Un fallo, en ámbar y nunca en rojo (`02` §1, regla 3). Se anuncia además a
+   lector de pantalla: ver `components/ui/Fallo.tsx`. */
+.fallo {
+  margin-top: var(--spacing-fila-alta);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Bob · la hoja de conversación · 05 §5
+   Al abrir Bob la conversación está ahí mismo: no hay pantalla intermedia.
+   Nada de chispas, gradientes morados ni iconografía de "IA" (05 §6).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.bob-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-fila-x);
+  padding: 18px var(--spacing-chat-x) var(--spacing-interior-chico);
+  border-bottom: 1px solid var(--color-linea);
+  flex: 0 0 auto;
+}
+
+.bob-cabecera-avatar {
+  width: var(--spacing-avatar-cabecera);
+  height: var(--spacing-avatar-cabecera);
+  border-radius: var(--radius-icono);
+  background: var(--color-ambar-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.bob-cabecera-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bob-cabecera-subtitulo {
+  margin-top: 4px;
+}
+
+.bob-conversacion {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px var(--spacing-chat-x) 8px;
+}
+
+.bob-invitacion,
+.bob-esperando {
+  text-align: center;
+  padding: 0 var(--spacing-tarjetas) 8px;
+  margin: 0;
+}
+
+/* Lo que dice el vecino: bloque noche, alineado a la derecha. */
+.bob-mia {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 var(--spacing-burbuja);
+}
+
+.bob-mia-texto {
+  max-width: 80%;
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  border-radius: var(--radius-bloque) var(--radius-bloque) var(--radius-tira) var(--radius-bloque);
+  padding: var(--spacing-burbuja-y) var(--spacing-burbuja-x);
+}
+
+/* Lo que dice Bob: papel, con su avatar al lado. */
+.bob-suya {
+  display: flex;
+  gap: 9px;
+  align-items: flex-end;
+  margin-bottom: var(--spacing-burbuja);
+}
+
+.bob-suya-avatar {
+  flex: 0 0 auto;
+  margin-bottom: 2px;
+}
+
+.bob-suya-texto {
+  max-width: var(--spacing-burbuja-max);
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  border-radius: var(--radius-bloque) var(--radius-bloque) var(--radius-bloque) var(--radius-tira);
+  padding: var(--spacing-burbuja-y) var(--spacing-burbuja-x);
+}
+
+/* "Con dónde verificarlo" (05 §3): el enlace a la pantalla que lo demuestra. */
+.bob-lleva {
+  display: block;
+  margin-top: 10px;
+  color: var(--color-terra-oscuro);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bob-chips {
+  display: flex;
+  gap: var(--spacing-acciones);
+  padding: 6px var(--spacing-chat-x) 10px;
+  overflow-x: auto;
+  flex: 0 0 auto;
+}
+
+.bob-chip {
+  background: var(--color-papel);
+  border: 1px solid var(--color-linea);
+  padding: 10px var(--spacing-fila-alta);
+  border-radius: var(--radius-pildora);
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.bob-pie {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px var(--spacing-chat-x) calc(26px + var(--bot));
+  flex: 0 0 auto;
+}
+
+.bob-campo {
+  flex: 1;
+  min-width: 0;
+  height: var(--spacing-campo);
+  border-radius: var(--radius-pildora);
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-barra);
+  padding: 0 var(--spacing-campo-x);
+  color: var(--color-tinta);
+  outline: none;
+}
+
+.bob-campo:focus-visible {
+  border-color: var(--color-terra);
+}
+
+.bob-enviar {
+  width: var(--spacing-campo);
+  height: var(--spacing-campo);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+/* Con algo escrito, el botón pasa a terracota: el acento de marca marca el
+   dato activo (02 §1), y aquí el dato activo es la pregunta a medio escribir. */
+.bob-enviar-listo {
+  background: var(--color-terra);
+}
+
+/* Activar avisos push en este dispositivo (Mi Departamento). */
+.avisos-push {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px var(--spacing-tarjetas) 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-tarjeta);
+  background: var(--color-neutro-suave);
+}
+.avisos-push-boton {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-verde);
+  color: var(--color-sobre-noche);
+  font: 500 13px/1 var(--font-cuerpo);
+}
+.avisos-push-off {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  border: 1px solid var(--color-linea);
+}

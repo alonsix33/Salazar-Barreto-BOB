@@ -1,0 +1,200 @@
+# La puerta antes de desplegar. Fase 7, punto 4.
+#
+# Cinco pasos en el orden del enunciado: tipos → tokens → unitarios → pantalla →
+# build. Si algo falla, no se despliega.
+#
+# **Y no corta en el primer rojo.** `continue-on-error` en los pasos de prueba,
+# con un paso final que suma: un fallo que esconde a los otros ocho es lo peor de
+# los dos mundos. El resumen del final dice cuántos pasaron y cuáles no.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# Una corrida por rama: si se empuja dos veces seguidas, la primera se cancela.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  puerta:
+    name: La puerta completa
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    # Postgres de verdad. Los tests de integración y los de pantalla escriben en
+    # una base: contra un doble no probarían ni las restricciones ni las
+    # transacciones, que es donde estaban la mitad de los defectos.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: salazar
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/salazar
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/salazar
+      ADMIN_PIN: '2026'
+      # Solo para la corrida: la de producción vive en Vercel y no se parece a esta.
+      ADMIN_SECRETO: clave-de-integracion-continua-solo-para-los-tests-32
+      BOB_MODO: determinista
+      DEEPSEEK_API_KEY: ''
+      NEXT_PUBLIC_APP_URL: http://localhost:3200
+      PERMITIR_RESEMBRADO: 'si'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar
+        run: npm ci
+
+      - name: Preparar la base
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+          npx tsx prisma/seed.ts
+
+      # ── Los cinco pasos del enunciado ────────────────────────────────────
+      - name: 1 · Tipos
+        id: tipos
+        continue-on-error: true
+        run: npx tsc --noEmit
+
+      - name: 2 · Tokens de diseño
+        id: tokens
+        continue-on-error: true
+        run: node scripts/verificar-tokens.mjs
+
+      - name: 3 · Unitarios
+        id: unitarios
+        continue-on-error: true
+        run: npx vitest run
+
+      - name: 3b · Integración
+        id: integracion
+        continue-on-error: true
+        run: npm run test:integracion
+
+      - name: Navegador para las pruebas de pantalla
+        run: npx playwright install --with-deps chromium
+
+      - name: 4 · Pantalla
+        id: pantalla
+        continue-on-error: true
+        # `CHROMIUM` vacío deja que Playwright use el suyo, que es el que acaba
+        # de instalar. En local se apunta al del entorno.
+        env:
+          CHROMIUM: ''
+        run: npx playwright test
+
+      - name: 5 · Build
+        id: build
+        continue-on-error: true
+        run: npm run build
+
+      # Después del build, porque necesita `.next/`: ningún secreto en el
+      # JavaScript que descarga el navegador. Si aparece uno, es un incidente.
+      - name: 6 · Ningún secreto en el bundle
+        id: secretos
+        continue-on-error: true
+        run: node scripts/verificar-secretos.mjs
+
+      # ── El resumen, que es lo que se lee ─────────────────────────────────
+      - name: Resumen
+        run: |
+          fallos=0
+          fila() {
+            if [ "$2" = "success" ]; then
+              echo "| $1 | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $1 | ❌ |" >> "$GITHUB_STEP_SUMMARY"
+              fallos=$((fallos+1))
+            fi
+          }
+          echo "## La puerta" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Paso | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          fila "1 · Tipos"        "${{ steps.tipos.outcome }}"
+          fila "2 · Tokens"       "${{ steps.tokens.outcome }}"
+          fila "3 · Unitarios"    "${{ steps.unitarios.outcome }}"
+          fila "3b · Integración" "${{ steps.integracion.outcome }}"
+          fila "4 · Pantalla"     "${{ steps.pantalla.outcome }}"
+          fila "5 · Build"        "${{ steps.build.outcome }}"
+          fila "6 · Secretos"     "${{ steps.secretos.outcome }}"
+          if [ "$fallos" -gt 0 ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**$fallos paso(s) en rojo.** No se despliega." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Los siete en verde." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Informe de las pruebas de pantalla
+        if: always() && steps.pantalla.outcome != 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # Las pruebas negativas van aparte: tardan porque corren la suite entera una
+  # vez por defecto inyectado, y su valor es distinto — no comprueban que la app
+  # funcione, comprueban que los chequeos sirven.
+  pruebas-negativas:
+    name: ¿Sirven los chequeos?
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Solo en la rama principal y en los PR: en cada empujón sería un peaje.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: salazar
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/salazar
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/salazar
+      ADMIN_PIN: '2026'
+      ADMIN_SECRETO: clave-de-integracion-continua-solo-para-los-tests-32
+      BOB_MODO: determinista
+      NEXT_PUBLIC_APP_URL: http://localhost:3200
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate && npx prisma migrate deploy && npx tsx prisma/seed.ts
+      - name: Motor · 12 defectos inyectados
+        run: node scripts/prueba-negativa.mjs
+      - name: Servicios · 10 defectos inyectados
+        run: node scripts/prueba-negativa-integracion.mjs

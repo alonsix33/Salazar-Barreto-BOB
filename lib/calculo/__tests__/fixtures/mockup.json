@@ -1,0 +1,1729 @@
+{
+ "_origen": "mockup/design_handoff_edificio_salazar_barreto/datos-edificio.js",
+ "_generadoPor": "scripts/generar-golden.mjs",
+ "_nota": "Referencia del motor del mockup. No editar a mano: regenerar.",
+ "meses": {
+  "2025-12": null,
+  "2026-01": {
+   "totalMes": 3271.88,
+   "baseMant": 2963.68,
+   "facturaAgua": 308.2,
+   "precioM3": 4.164864864864865,
+   "descuento": 0,
+   "sumaMedida": 70.81,
+   "brutoComun": 3.19,
+   "comunReal": 3.19,
+   "lavado": 0,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 13.29,
+   "sumaAgua": 294.92,
+   "sumaCuotas": 3258.59,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 5.47,
+    "201": 9.01,
+    "202": 2.04,
+    "301": 16.31,
+    "401": 15.13,
+    "501": 2.36,
+    "502": 20.49
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 308.2,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 289.1,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 347.34,
+     "agua": 22.78,
+     "credito": 0,
+     "total": 370.12,
+     "m3": 5.47,
+     "m3medidos": 5.47,
+     "lavado": 0,
+     "lecturaAnterior": 146.38,
+     "lecturaActual": 151.851
+    },
+    "201": {
+     "mantenimiento": 302.59,
+     "agua": 37.53,
+     "credito": 0,
+     "total": 340.12,
+     "m3": 9.01,
+     "m3medidos": 9.01,
+     "lavado": 0,
+     "lecturaAnterior": 122.502,
+     "lecturaActual": 131.513
+    },
+    "202": {
+     "mantenimiento": 596,
+     "agua": 8.5,
+     "credito": 0,
+     "total": 604.5,
+     "m3": 2.04,
+     "m3medidos": 2.04,
+     "lavado": 0,
+     "lecturaAnterior": 10.84,
+     "lecturaActual": 12.878
+    },
+    "301": {
+     "mantenimiento": 302.59,
+     "agua": 67.93,
+     "credito": 0,
+     "total": 370.52,
+     "m3": 16.31,
+     "m3medidos": 16.31,
+     "lavado": 0,
+     "lecturaAnterior": 330.32,
+     "lecturaActual": 346.625
+    },
+    "401": {
+     "mantenimiento": 302.59,
+     "agua": 63.01,
+     "credito": 0,
+     "total": 365.6,
+     "m3": 15.13,
+     "m3medidos": 15.13,
+     "lavado": 0,
+     "lecturaAnterior": 328.67,
+     "lecturaActual": 343.795
+    },
+    "501": {
+     "mantenimiento": 513.01,
+     "agua": 9.83,
+     "credito": 0,
+     "total": 522.84,
+     "m3": 2.36,
+     "m3medidos": 2.36,
+     "lavado": 0,
+     "lecturaAnterior": 215.8,
+     "lecturaActual": 218.16
+    },
+    "502": {
+     "mantenimiento": 599.55,
+     "agua": 85.34,
+     "credito": 0,
+     "total": 684.89,
+     "m3": 20.49,
+     "m3medidos": 20.49,
+     "lavado": 0,
+     "lecturaAnterior": 155.04,
+     "lecturaActual": 175.53
+    }
+   }
+  },
+  "2026-02": {
+   "totalMes": 3315.48,
+   "baseMant": 2969.18,
+   "facturaAgua": 346.3,
+   "precioM3": 4.172289156626507,
+   "descuento": 0,
+   "sumaMedida": 80.1,
+   "brutoComun": 2.9,
+   "comunReal": 2.9,
+   "lavado": 0,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 12.1,
+   "sumaAgua": 334.2,
+   "sumaCuotas": 3303.38,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 6.6,
+    "201": 10.23,
+    "202": 2.56,
+    "301": 18,
+    "401": 15.66,
+    "501": 2.66,
+    "502": 24.39
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 346.3,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 294.6,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 347.99,
+     "agua": 27.54,
+     "credito": 0,
+     "total": 375.53,
+     "m3": 6.6,
+     "m3medidos": 6.6,
+     "lavado": 0,
+     "lecturaAnterior": 151.851,
+     "lecturaActual": 158.455
+    },
+    "201": {
+     "mantenimiento": 303.15,
+     "agua": 42.68,
+     "credito": 0,
+     "total": 345.83,
+     "m3": 10.23,
+     "m3medidos": 10.23,
+     "lavado": 0,
+     "lecturaAnterior": 131.513,
+     "lecturaActual": 141.739
+    },
+    "202": {
+     "mantenimiento": 597.1,
+     "agua": 10.68,
+     "credito": 0,
+     "total": 607.78,
+     "m3": 2.56,
+     "m3medidos": 2.56,
+     "lavado": 0,
+     "lecturaAnterior": 12.878,
+     "lecturaActual": 15.434
+    },
+    "301": {
+     "mantenimiento": 303.15,
+     "agua": 75.1,
+     "credito": 0,
+     "total": 378.25,
+     "m3": 18,
+     "m3medidos": 18,
+     "lavado": 0,
+     "lecturaAnterior": 346.625,
+     "lecturaActual": 364.626
+    },
+    "401": {
+     "mantenimiento": 303.15,
+     "agua": 65.34,
+     "credito": 0,
+     "total": 368.49,
+     "m3": 15.66,
+     "m3medidos": 15.66,
+     "lavado": 0,
+     "lecturaAnterior": 343.795,
+     "lecturaActual": 359.453
+    },
+    "501": {
+     "mantenimiento": 513.97,
+     "agua": 11.1,
+     "credito": 0,
+     "total": 525.07,
+     "m3": 2.66,
+     "m3medidos": 2.66,
+     "lavado": 0,
+     "lecturaAnterior": 218.16,
+     "lecturaActual": 220.823
+    },
+    "502": {
+     "mantenimiento": 600.67,
+     "agua": 101.76,
+     "credito": 0,
+     "total": 702.43,
+     "m3": 24.39,
+     "m3medidos": 24.39,
+     "lavado": 0,
+     "lecturaAnterior": 175.53,
+     "lecturaActual": 199.922
+    }
+   }
+  },
+  "2026-03": {
+   "totalMes": 3282.88,
+   "baseMant": 2965.78,
+   "facturaAgua": 317.1,
+   "precioM3": 4.1723684210526315,
+   "descuento": 0,
+   "sumaMedida": 72.89,
+   "brutoComun": 3.11,
+   "comunReal": 3.11,
+   "lavado": 0,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 12.98,
+   "sumaAgua": 304.13,
+   "sumaCuotas": 3269.93,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 5.76,
+    "201": 9.39,
+    "202": 2.24,
+    "301": 16.12,
+    "401": 14.94,
+    "501": 2.45,
+    "502": 21.99
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 317.1,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 291.2,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 347.59,
+     "agua": 24.03,
+     "credito": 0,
+     "total": 371.62,
+     "m3": 5.76,
+     "m3medidos": 5.76,
+     "lavado": 0,
+     "lecturaAnterior": 158.455,
+     "lecturaActual": 164.219
+    },
+    "201": {
+     "mantenimiento": 302.81,
+     "agua": 39.18,
+     "credito": 0,
+     "total": 341.99,
+     "m3": 9.39,
+     "m3medidos": 9.39,
+     "lavado": 0,
+     "lecturaAnterior": 141.739,
+     "lecturaActual": 151.132
+    },
+    "202": {
+     "mantenimiento": 596.42,
+     "agua": 9.35,
+     "credito": 0,
+     "total": 605.77,
+     "m3": 2.24,
+     "m3medidos": 2.24,
+     "lavado": 0,
+     "lecturaAnterior": 15.434,
+     "lecturaActual": 17.675
+    },
+    "301": {
+     "mantenimiento": 302.81,
+     "agua": 67.26,
+     "credito": 0,
+     "total": 370.07,
+     "m3": 16.12,
+     "m3medidos": 16.12,
+     "lavado": 0,
+     "lecturaAnterior": 364.626,
+     "lecturaActual": 380.743
+    },
+    "401": {
+     "mantenimiento": 302.81,
+     "agua": 62.34,
+     "credito": 0,
+     "total": 365.15,
+     "m3": 14.94,
+     "m3medidos": 14.94,
+     "lavado": 0,
+     "lecturaAnterior": 359.453,
+     "lecturaActual": 374.396
+    },
+    "501": {
+     "mantenimiento": 513.38,
+     "agua": 10.22,
+     "credito": 0,
+     "total": 523.6,
+     "m3": 2.45,
+     "m3medidos": 2.45,
+     "lavado": 0,
+     "lecturaAnterior": 220.823,
+     "lecturaActual": 223.278
+    },
+    "502": {
+     "mantenimiento": 599.98,
+     "agua": 91.75,
+     "credito": 0,
+     "total": 691.73,
+     "m3": 21.99,
+     "m3medidos": 21.99,
+     "lavado": 0,
+     "lecturaAnterior": 199.922,
+     "lecturaActual": 221.909
+    }
+   }
+  },
+  "2026-04": {
+   "totalMes": 3269.38,
+   "baseMant": 2972.98,
+   "facturaAgua": 296.4,
+   "precioM3": 4.174647887323943,
+   "descuento": 0,
+   "sumaMedida": 68.3,
+   "brutoComun": 2.7,
+   "comunReal": 2.7,
+   "lavado": 0,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 11.27,
+   "sumaAgua": 285.11,
+   "sumaCuotas": 3258.08,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 5.25,
+    "201": 8.67,
+    "202": 2.14,
+    "301": 15.31,
+    "401": 14.34,
+    "501": 2.25,
+    "502": 20.34
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 296.4,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 298.4,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 348.43,
+     "agua": 21.92,
+     "credito": 0,
+     "total": 370.35,
+     "m3": 5.25,
+     "m3medidos": 5.25,
+     "lavado": 0,
+     "lecturaAnterior": 164.219,
+     "lecturaActual": 169.465
+    },
+    "201": {
+     "mantenimiento": 303.54,
+     "agua": 36.19,
+     "credito": 0,
+     "total": 339.73,
+     "m3": 8.67,
+     "m3medidos": 8.67,
+     "lavado": 0,
+     "lecturaAnterior": 151.132,
+     "lecturaActual": 159.803
+    },
+    "202": {
+     "mantenimiento": 597.87,
+     "agua": 8.93,
+     "credito": 0,
+     "total": 606.8,
+     "m3": 2.14,
+     "m3medidos": 2.14,
+     "lavado": 0,
+     "lecturaAnterior": 17.675,
+     "lecturaActual": 19.816
+    },
+    "301": {
+     "mantenimiento": 303.54,
+     "agua": 63.91,
+     "credito": 0,
+     "total": 367.45,
+     "m3": 15.31,
+     "m3medidos": 15.31,
+     "lavado": 0,
+     "lecturaAnterior": 380.743,
+     "lecturaActual": 396.052
+    },
+    "401": {
+     "mantenimiento": 303.54,
+     "agua": 59.86,
+     "credito": 0,
+     "total": 363.4,
+     "m3": 14.34,
+     "m3medidos": 14.34,
+     "lavado": 0,
+     "lecturaAnterior": 374.396,
+     "lecturaActual": 388.741
+    },
+    "501": {
+     "mantenimiento": 514.62,
+     "agua": 9.39,
+     "credito": 0,
+     "total": 524.01,
+     "m3": 2.25,
+     "m3medidos": 2.25,
+     "lavado": 0,
+     "lecturaAnterior": 223.278,
+     "lecturaActual": 225.526
+    },
+    "502": {
+     "mantenimiento": 601.43,
+     "agua": 84.91,
+     "credito": 0,
+     "total": 686.34,
+     "m3": 20.34,
+     "m3medidos": 20.34,
+     "lavado": 0,
+     "lecturaAnterior": 221.909,
+     "lecturaActual": 242.249
+    }
+   }
+  },
+  "2026-05": {
+   "totalMes": 3258.45,
+   "baseMant": 2950.78,
+   "facturaAgua": 307.67,
+   "precioM3": 3.94448717948718,
+   "descuento": 17.33,
+   "sumaMedida": 74.88,
+   "brutoComun": 3.12,
+   "comunReal": 1.62,
+   "lavado": 1.5,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 6.39,
+   "sumaAgua": 301.29,
+   "sumaCuotas": 3252.05,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 5.23,
+    "201": 8.66,
+    "202": 7.45,
+    "301": 15,
+    "401": 14.49,
+    "501": 2.41,
+    "502": 21.64
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 307.67,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 276.2,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 345.83,
+     "agua": 20.63,
+     "credito": 0,
+     "total": 366.46,
+     "m3": 5.23,
+     "m3medidos": 5.23,
+     "lavado": 0,
+     "lecturaAnterior": 169.465,
+     "lecturaActual": 174.699
+    },
+    "201": {
+     "mantenimiento": 301.27,
+     "agua": 34.16,
+     "credito": 0,
+     "total": 335.43,
+     "m3": 8.66,
+     "m3medidos": 8.66,
+     "lavado": 0,
+     "lecturaAnterior": 159.803,
+     "lecturaActual": 168.458
+    },
+    "202": {
+     "mantenimiento": 593.4,
+     "agua": 29.39,
+     "credito": 0,
+     "total": 622.79,
+     "m3": 7.45,
+     "m3medidos": 7.45,
+     "lavado": 0,
+     "lecturaAnterior": 19.816,
+     "lecturaActual": 27.264
+    },
+    "301": {
+     "mantenimiento": 301.27,
+     "agua": 59.17,
+     "credito": 0,
+     "total": 360.44,
+     "m3": 15,
+     "m3medidos": 15,
+     "lavado": 0,
+     "lecturaAnterior": 396.052,
+     "lecturaActual": 411.048
+    },
+    "401": {
+     "mantenimiento": 301.27,
+     "agua": 63.07,
+     "credito": 0,
+     "total": 364.34,
+     "m3": 15.99,
+     "m3medidos": 14.49,
+     "lavado": 1.5,
+     "lecturaAnterior": 388.741,
+     "lecturaActual": 403.234
+    },
+    "501": {
+     "mantenimiento": 510.78,
+     "agua": 9.51,
+     "credito": 0,
+     "total": 520.29,
+     "m3": 2.41,
+     "m3medidos": 2.41,
+     "lavado": 0,
+     "lecturaAnterior": 225.526,
+     "lecturaActual": 227.941
+    },
+    "502": {
+     "mantenimiento": 596.94,
+     "agua": 85.36,
+     "credito": 0,
+     "total": 682.3,
+     "m3": 21.64,
+     "m3medidos": 21.64,
+     "lavado": 0,
+     "lecturaAnterior": 242.249,
+     "lecturaActual": 263.888
+    }
+   }
+  },
+  "2026-06": {
+   "totalMes": 3317.98,
+   "baseMant": 2992.98,
+   "facturaAgua": 325,
+   "precioM3": 4.166666666666667,
+   "descuento": 0,
+   "sumaMedida": 74.88,
+   "brutoComun": 3.12,
+   "comunReal": 1.62,
+   "lavado": 1.5,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 6.75,
+   "sumaAgua": 318.26,
+   "sumaCuotas": 3311.23,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 5.53,
+    "201": 8.93,
+    "202": 7.85,
+    "301": 15.87,
+    "401": 17.4,
+    "501": 2.44,
+    "502": 16.86
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 325,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 318.4,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 350.78,
+     "agua": 23.04,
+     "credito": 0,
+     "total": 373.82,
+     "m3": 5.53,
+     "m3medidos": 5.53,
+     "lavado": 0,
+     "lecturaAnterior": 174.699,
+     "lecturaActual": 180.23
+    },
+    "201": {
+     "mantenimiento": 305.58,
+     "agua": 37.21,
+     "credito": 0,
+     "total": 342.79,
+     "m3": 8.93,
+     "m3medidos": 8.93,
+     "lavado": 0,
+     "lecturaAnterior": 168.458,
+     "lecturaActual": 177.387
+    },
+    "202": {
+     "mantenimiento": 601.89,
+     "agua": 32.71,
+     "credito": 0,
+     "total": 634.6,
+     "m3": 7.85,
+     "m3medidos": 7.85,
+     "lavado": 0,
+     "lecturaAnterior": 27.264,
+     "lecturaActual": 35.112
+    },
+    "301": {
+     "mantenimiento": 305.58,
+     "agua": 66.13,
+     "credito": 0,
+     "total": 371.71,
+     "m3": 15.87,
+     "m3medidos": 15.87,
+     "lavado": 0,
+     "lecturaAnterior": 411.048,
+     "lecturaActual": 426.921
+    },
+    "401": {
+     "mantenimiento": 305.58,
+     "agua": 78.75,
+     "credito": 0,
+     "total": 384.33,
+     "m3": 18.9,
+     "m3medidos": 17.4,
+     "lavado": 1.5,
+     "lecturaAnterior": 403.234,
+     "lecturaActual": 420.638
+    },
+    "501": {
+     "mantenimiento": 518.08,
+     "agua": 10.17,
+     "credito": 0,
+     "total": 528.25,
+     "m3": 2.44,
+     "m3medidos": 2.44,
+     "lavado": 0,
+     "lecturaAnterior": 227.941,
+     "lecturaActual": 230.386
+    },
+    "502": {
+     "mantenimiento": 605.48,
+     "agua": 70.25,
+     "credito": 0,
+     "total": 675.73,
+     "m3": 16.86,
+     "m3medidos": 16.86,
+     "lavado": 0,
+     "lecturaAnterior": 263.888,
+     "lecturaActual": 280.748
+    }
+   }
+  },
+  "2026-07": {
+   "totalMes": 3374.38,
+   "baseMant": 3035.78,
+   "facturaAgua": 338.6,
+   "precioM3": 4.180246913580247,
+   "descuento": 0,
+   "sumaMedida": 77.88,
+   "brutoComun": 3.12,
+   "comunReal": 1.62,
+   "lavado": 1.5,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 6.77,
+   "sumaAgua": 331.83,
+   "sumaCuotas": 3367.6,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuadra": true,
+   "consumos": {
+    "101": 6.23,
+    "201": 7.87,
+    "202": 17.4,
+    "301": 14.61,
+    "401": 17.4,
+    "501": 2.44,
+    "502": 11.93
+   },
+   "gastos": [
+    {
+     "concepto": "Guardianía · Jorge",
+     "monto": 1625,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Ascensor",
+     "monto": 680,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Factura de agua SEDAPAL",
+     "monto": 338.6,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": true
+    },
+    {
+     "concepto": "Recibo de luz común",
+     "monto": 361.2,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. bomba",
+     "monto": 208.33,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Mant. cisterna",
+     "monto": 50,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cerco eléctrico",
+     "monto": 48.75,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Cambio extintor",
+     "monto": 32.5,
+     "anual": true,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Insumos limpieza",
+     "monto": 30,
+     "anual": false,
+     "porConfirmar": false,
+     "esAgua": false
+    },
+    {
+     "concepto": "Pozo a tierra",
+     "monto": null,
+     "anual": false,
+     "porConfirmar": true,
+     "esAgua": false
+    }
+   ],
+   "cuotas": {
+    "101": {
+     "mantenimiento": 355.79,
+     "agua": 26.04,
+     "credito": 0,
+     "total": 381.83,
+     "m3": 6.23,
+     "m3medidos": 6.23,
+     "lavado": 0,
+     "lecturaAnterior": 180.23,
+     "lecturaActual": 186.461
+    },
+    "201": {
+     "mantenimiento": 309.95,
+     "agua": 32.9,
+     "credito": 0,
+     "total": 342.85,
+     "m3": 7.87,
+     "m3medidos": 7.87,
+     "lavado": 0,
+     "lecturaAnterior": 177.387,
+     "lecturaActual": 185.256
+    },
+    "202": {
+     "mantenimiento": 610.5,
+     "agua": 72.74,
+     "credito": 0,
+     "total": 683.24,
+     "m3": 17.4,
+     "m3medidos": 17.4,
+     "lavado": 0,
+     "lecturaAnterior": 35.112,
+     "lecturaActual": 52.513
+    },
+    "301": {
+     "mantenimiento": 309.95,
+     "agua": 61.07,
+     "credito": 0,
+     "total": 371.02,
+     "m3": 14.61,
+     "m3medidos": 14.61,
+     "lavado": 0,
+     "lecturaAnterior": 426.921,
+     "lecturaActual": 441.532
+    },
+    "401": {
+     "mantenimiento": 309.95,
+     "agua": 79.01,
+     "credito": 0,
+     "total": 388.96,
+     "m3": 18.9,
+     "m3medidos": 17.4,
+     "lavado": 1.5,
+     "lecturaAnterior": 420.638,
+     "lecturaActual": 438.038
+    },
+    "501": {
+     "mantenimiento": 525.49,
+     "agua": 10.2,
+     "credito": 0,
+     "total": 535.69,
+     "m3": 2.44,
+     "m3medidos": 2.44,
+     "lavado": 0,
+     "lecturaAnterior": 230.386,
+     "lecturaActual": 232.826
+    },
+    "502": {
+     "mantenimiento": 614.14,
+     "agua": 49.87,
+     "credito": 0,
+     "total": 664.01,
+     "m3": 11.93,
+     "m3medidos": 11.93,
+     "lavado": 0,
+     "lecturaAnterior": 280.748,
+     "lecturaActual": 292.678
+    }
+   }
+  }
+ },
+ "variantes": {
+  "lavado-0": {
+   "totalMes": 3317.98,
+   "baseMant": 2992.98,
+   "comunReal": 3.12,
+   "brutoComun": 3.12,
+   "lavado": 0,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 13,
+   "sumaAgua": 312.01,
+   "sumaCuotas": 3304.98,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuotas": {
+    "101": {
+     "mantenimiento": 350.78,
+     "agua": 23.04,
+     "credito": 0,
+     "total": 373.82,
+     "m3": 5.53
+    },
+    "201": {
+     "mantenimiento": 305.58,
+     "agua": 37.21,
+     "credito": 0,
+     "total": 342.79,
+     "m3": 8.93
+    },
+    "202": {
+     "mantenimiento": 601.89,
+     "agua": 32.71,
+     "credito": 0,
+     "total": 634.6,
+     "m3": 7.85
+    },
+    "301": {
+     "mantenimiento": 305.58,
+     "agua": 66.13,
+     "credito": 0,
+     "total": 371.71,
+     "m3": 15.87
+    },
+    "401": {
+     "mantenimiento": 305.58,
+     "agua": 72.5,
+     "credito": 0,
+     "total": 378.08,
+     "m3": 17.4
+    },
+    "501": {
+     "mantenimiento": 518.08,
+     "agua": 10.17,
+     "credito": 0,
+     "total": 528.25,
+     "m3": 2.44
+    },
+    "502": {
+     "mantenimiento": 605.48,
+     "agua": 70.25,
+     "credito": 0,
+     "total": 675.73,
+     "m3": 16.86
+    }
+   }
+  },
+  "lavado-999": {
+   "totalMes": 3317.98,
+   "baseMant": 2992.98,
+   "comunReal": 3.12,
+   "brutoComun": 3.12,
+   "lavado": 0,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 13,
+   "sumaAgua": 312.01,
+   "sumaCuotas": 3304.98,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuotas": {
+    "101": {
+     "mantenimiento": 350.78,
+     "agua": 23.04,
+     "credito": 0,
+     "total": 373.82,
+     "m3": 5.53
+    },
+    "201": {
+     "mantenimiento": 305.58,
+     "agua": 37.21,
+     "credito": 0,
+     "total": 342.79,
+     "m3": 8.93
+    },
+    "202": {
+     "mantenimiento": 601.89,
+     "agua": 32.71,
+     "credito": 0,
+     "total": 634.6,
+     "m3": 7.85
+    },
+    "301": {
+     "mantenimiento": 305.58,
+     "agua": 66.13,
+     "credito": 0,
+     "total": 371.71,
+     "m3": 15.87
+    },
+    "401": {
+     "mantenimiento": 305.58,
+     "agua": 72.5,
+     "credito": 0,
+     "total": 378.08,
+     "m3": 17.4
+    },
+    "501": {
+     "mantenimiento": 518.08,
+     "agua": 10.17,
+     "credito": 0,
+     "total": 528.25,
+     "m3": 2.44
+    },
+    "502": {
+     "mantenimiento": 605.48,
+     "agua": 70.25,
+     "credito": 0,
+     "total": 675.73,
+     "m3": 16.86
+    }
+   }
+  },
+  "ajustado": {
+   "totalMes": 3317.98,
+   "baseMant": 2992.98,
+   "comunReal": -64.88,
+   "brutoComun": -64.88,
+   "lavado": 0,
+   "ajustado": true,
+   "factor": 0.13354700854700854,
+   "montoComun": 0,
+   "sumaAgua": 325.01,
+   "sumaCuotas": 3317.98,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuotas": {
+    "101": {
+     "mantenimiento": 350.78,
+     "agua": 24.05,
+     "credito": 0,
+     "total": 374.83,
+     "m3": 0.74
+    },
+    "201": {
+     "mantenimiento": 305.58,
+     "agua": 38.67,
+     "credito": 0,
+     "total": 344.25,
+     "m3": 1.19
+    },
+    "202": {
+     "mantenimiento": 601.89,
+     "agua": 34.13,
+     "credito": 0,
+     "total": 636.02,
+     "m3": 1.05
+    },
+    "301": {
+     "mantenimiento": 305.58,
+     "agua": 68.9,
+     "credito": 0,
+     "total": 374.48,
+     "m3": 2.12
+    },
+    "401": {
+     "mantenimiento": 305.58,
+     "agua": 75.4,
+     "credito": 0,
+     "total": 380.98,
+     "m3": 2.32
+    },
+    "501": {
+     "mantenimiento": 518.08,
+     "agua": 10.73,
+     "credito": 0,
+     "total": 528.81,
+     "m3": 0.33
+    },
+    "502": {
+     "mantenimiento": 605.48,
+     "agua": 73.13,
+     "credito": 0,
+     "total": 678.61,
+     "m3": 2.25
+    }
+   }
+  },
+  "credito-301-50": {
+   "totalMes": 3317.98,
+   "baseMant": 2992.98,
+   "comunReal": 1.62,
+   "brutoComun": 3.12,
+   "lavado": 1.5,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 6.75,
+   "sumaAgua": 318.26,
+   "sumaCuotas": 3261.23,
+   "totalCreditos": 50,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuotas": {
+    "101": {
+     "mantenimiento": 350.78,
+     "agua": 23.04,
+     "credito": 0,
+     "total": 373.82,
+     "m3": 5.53
+    },
+    "201": {
+     "mantenimiento": 305.58,
+     "agua": 37.21,
+     "credito": 0,
+     "total": 342.79,
+     "m3": 8.93
+    },
+    "202": {
+     "mantenimiento": 601.89,
+     "agua": 32.71,
+     "credito": 0,
+     "total": 634.6,
+     "m3": 7.85
+    },
+    "301": {
+     "mantenimiento": 305.58,
+     "agua": 66.13,
+     "credito": 50,
+     "total": 321.71,
+     "m3": 15.87
+    },
+    "401": {
+     "mantenimiento": 305.58,
+     "agua": 78.75,
+     "credito": 0,
+     "total": 384.33,
+     "m3": 18.9
+    },
+    "501": {
+     "mantenimiento": 518.08,
+     "agua": 10.17,
+     "credito": 0,
+     "total": 528.25,
+     "m3": 2.44
+    },
+    "502": {
+     "mantenimiento": 605.48,
+     "agua": 70.25,
+     "credito": 0,
+     "total": 675.73,
+     "m3": 16.86
+    }
+   }
+  },
+  "gasto-porton-700": {
+   "totalMes": 4017.98,
+   "baseMant": 3692.98,
+   "comunReal": 1.62,
+   "brutoComun": 3.12,
+   "lavado": 1.5,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 6.75,
+   "sumaAgua": 318.26,
+   "sumaCuotas": 4011.23,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuotas": {
+    "101": {
+     "mantenimiento": 432.82,
+     "agua": 23.04,
+     "credito": 0,
+     "total": 455.86,
+     "m3": 5.53
+    },
+    "201": {
+     "mantenimiento": 377.05,
+     "agua": 37.21,
+     "credito": 0,
+     "total": 414.26,
+     "m3": 8.93
+    },
+    "202": {
+     "mantenimiento": 742.66,
+     "agua": 32.71,
+     "credito": 0,
+     "total": 775.37,
+     "m3": 7.85
+    },
+    "301": {
+     "mantenimiento": 377.05,
+     "agua": 66.13,
+     "credito": 0,
+     "total": 443.18,
+     "m3": 15.87
+    },
+    "401": {
+     "mantenimiento": 377.05,
+     "agua": 78.75,
+     "credito": 0,
+     "total": 455.8,
+     "m3": 18.9
+    },
+    "501": {
+     "mantenimiento": 639.25,
+     "agua": 10.17,
+     "credito": 0,
+     "total": 649.42,
+     "m3": 2.44
+    },
+    "502": {
+     "mantenimiento": 747.09,
+     "agua": 70.25,
+     "credito": 0,
+     "total": 817.34,
+     "m3": 16.86
+    }
+   }
+  },
+  "fijos-todos-null": {
+   "totalMes": 643.4,
+   "baseMant": 318.4,
+   "comunReal": 1.62,
+   "brutoComun": 3.12,
+   "lavado": 1.5,
+   "ajustado": false,
+   "factor": 1,
+   "montoComun": 6.75,
+   "sumaAgua": 318.26,
+   "sumaCuotas": 636.67,
+   "totalCreditos": 0,
+   "cuadraAgua": true,
+   "cuadraMes": true,
+   "cuotas": {
+    "101": {
+     "mantenimiento": 37.32,
+     "agua": 23.04,
+     "credito": 0,
+     "total": 60.36,
+     "m3": 5.53
+    },
+    "201": {
+     "mantenimiento": 32.51,
+     "agua": 37.21,
+     "credito": 0,
+     "total": 69.72,
+     "m3": 8.93
+    },
+    "202": {
+     "mantenimiento": 64.03,
+     "agua": 32.71,
+     "credito": 0,
+     "total": 96.74,
+     "m3": 7.85
+    },
+    "301": {
+     "mantenimiento": 32.51,
+     "agua": 66.13,
+     "credito": 0,
+     "total": 98.64,
+     "m3": 15.87
+    },
+    "401": {
+     "mantenimiento": 32.51,
+     "agua": 78.75,
+     "credito": 0,
+     "total": 111.26,
+     "m3": 18.9
+    },
+    "501": {
+     "mantenimiento": 55.12,
+     "agua": 10.17,
+     "credito": 0,
+     "total": 65.29,
+     "m3": 2.44
+    },
+    "502": {
+     "mantenimiento": 64.41,
+     "agua": 70.25,
+     "credito": 0,
+     "total": 134.66,
+     "m3": 16.86
+    }
+   }
+  }
+ },
+ "serieSaldoDerivada": [
+  {
+   "mes": "2026-01",
+   "corto": "ENE",
+   "recibido": 3258.59,
+   "gastado": 3271.88,
+   "delta": -13.29,
+   "saldo": 5102.94
+  },
+  {
+   "mes": "2026-02",
+   "corto": "FEB",
+   "recibido": 3303.38,
+   "gastado": 3315.48,
+   "delta": -12.1,
+   "saldo": 5090.84
+  },
+  {
+   "mes": "2026-03",
+   "corto": "MAR",
+   "recibido": 3269.93,
+   "gastado": 3282.88,
+   "delta": -12.95,
+   "saldo": 5077.89
+  },
+  {
+   "mes": "2026-04",
+   "corto": "ABR",
+   "recibido": 3258.08,
+   "gastado": 3269.38,
+   "delta": -11.3,
+   "saldo": 5066.59
+  },
+  {
+   "mes": "2026-05",
+   "corto": "MAY",
+   "recibido": 3252.05,
+   "gastado": 3258.45,
+   "delta": -6.4,
+   "saldo": 5060.19
+  },
+  {
+   "mes": "2026-06",
+   "corto": "JUN",
+   "recibido": 2440.19,
+   "gastado": 3317.98,
+   "delta": -877.79,
+   "saldo": 4182.4
+  }
+ ],
+ "correcciones": {
+  "unica": {
+   "valor": 438.038,
+   "consumo": 17.4
+  },
+  "ambigua": null,
+  "menorQueAnterior": null,
+  "yaCorrecta": null,
+  "menorConArreglo": {
+   "valor": 440,
+   "consumo": 19.36
+  }
+ }
+}

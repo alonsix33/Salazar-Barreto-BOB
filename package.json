@@ -1,0 +1,61 @@
+{
+  "name": "salazar-barreto",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "node scripts/construir.mjs",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "verificar-tokens": "node scripts/verificar-tokens.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "verify": "npm run typecheck && npm run verificar-tokens && npm run test",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset --force",
+    "prueba-negativa": "node scripts/prueba-negativa.mjs",
+    "medir-tolerancia": "tsx scripts/medir-tolerancia.mjs",
+    "golden": "node scripts/generar-golden.mjs",
+    "test:integracion": "vitest run --config vitest.integracion.config.ts",
+    "iconos": "node scripts/generar-iconos.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "verificar-secretos": "node scripts/verificar-secretos.mjs",
+    "prueba-base-caida": "node scripts/prueba-base-caida.mjs"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@blobatar/react": "^2.7.0",
+    "@prisma/client": "^6.19.3",
+    "@tanstack/react-query": "^5.102.8",
+    "blobatar": "^2.7.0",
+    "decimal.js": "^10.6.0",
+    "exceljs": "^4.4.0",
+    "next": "^15.5.25",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "web-push": "^3.6.7",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.4.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@types/web-push": "^3.6.4",
+    "fast-check": "^4.9.0",
+    "lighthouse": "^13.4.1",
+    "postcss": "^8.5.28",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
