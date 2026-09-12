@@ -92,9 +92,31 @@ self.addEventListener('install', (ev) => {
           // Sin red, o tardando demasiado. Se llenará en la primera visita.
         }
       }
-      await self.skipWaiting()
+      /**
+       * **Solo se adelanta en la primera instalación.**
+       *
+       * `skipWaiting()` sin condición hacía que una versión nueva tomara el
+       * control de una pestaña abierta sin recargarla: la app seguía corriendo
+       * el JavaScript viejo mientras el worker nuevo servía los archivos
+       * nuevos. Eso es media actualización, y es peor que ninguna.
+       *
+       * Cuando ya hay un worker activo, este se queda esperando y la app avisa
+       * al vecino con un botón. Al pulsarlo llega el mensaje `ACTUALIZAR` de
+       * aquí abajo, y recién entonces se adelanta y la página recarga entera.
+       */
+      if (!self.registration.active) await self.skipWaiting()
     })(),
   )
+})
+
+/**
+ * La app pide pasar a la versión nueva.
+ *
+ * Lo manda `AvisoVersion` cuando el vecino pulsa «Actualizar». Al adelantarse,
+ * el navegador dispara `controllerchange` en la página, que es donde recarga.
+ */
+self.addEventListener('message', (ev) => {
+  if (ev.data && ev.data.tipo === 'ACTUALIZAR') self.skipWaiting()
 })
 
 self.addEventListener('activate', (ev) => {

@@ -938,7 +938,7 @@
   /* `min-height` y no `height`: con el nombre completo, algunas tarjetas
      necesitan dos líneas y con altura fija el texto se salía. */
   min-height: 56px;
-  padding: var(--spacing-8);
+  padding: var(--spacing-pildora-y);
   border-radius: var(--radius-mini);
   background: var(--color-papel);
   border: 1px solid var(--color-linea);
@@ -2842,10 +2842,10 @@
   text-decoration: line-through;
 }
 .puntual-elegir-nota {
-  margin-top: var(--spacing-8);
+  margin-top: var(--spacing-pildora-y);
 }
 .puntual-elegir-listo {
-  margin-top: var(--spacing-12);
+  margin-top: var(--spacing-interior);
   width: 100%;
 }
 
@@ -2856,4 +2856,44 @@
   line-height: 1.15;
   text-align: center;
   max-width: 100%;
+}
+
+/* El aviso de versión nueva.
+   Va abajo, sobre la navegación, y no bloquea: se puede seguir usando la app
+   con él ahí. Quien está a mitad de un cierre no puede perder el trabajo. */
+.aviso-version {
+  position: fixed;
+  /* Anclado a los dos lados y centrado con `margin-inline`, no con
+     `left: 50%`: con eso el espacio disponible es solo la mitad derecha de la
+     pantalla, la píldora se encogía a 195px antes de que actuara el
+     `max-width`, y el texto se partía en seis líneas. */
+  left: var(--spacing-pantalla);
+  right: var(--spacing-pantalla);
+  width: fit-content;
+  margin-inline: auto;
+  bottom: var(--spacing-bajo-nav);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-interior);
+  max-width: 100%;
+  padding: var(--spacing-pildora-y) var(--spacing-interior);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  box-shadow: var(--shadow-hoja);
+}
+.aviso-version-texto {
+  min-width: 0;
+}
+.aviso-version-boton {
+  flex-shrink: 0;
+  padding: var(--spacing-pildora-y) var(--spacing-pildora-x);
+  border-radius: var(--radius-pildora);
+  background: var(--color-ambar);
+  color: var(--color-noche);
+  font-weight: 600;
+}
+.aviso-version-boton:disabled {
+  opacity: 0.7;
 }

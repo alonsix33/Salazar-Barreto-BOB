@@ -332,6 +332,65 @@ for (const a of archivosRevisados) {
   porCarpeta[c] = (porCarpeta[c] ?? 0) + 1
 }
 
+/**
+ * **Cada `var(--x)` tiene que apuntar a un token que exista.**
+ *
+ * Esto faltaba y era un agujero real: el chequeo vigilaba que no hubiera
+ * valores literales, pero no que el token referenciado estuviera declarado. Así
+ * que `bottom: var(--spacing-96)` —un token inventado— pasaba en verde, y el
+ * navegador descartaba la línea entera en silencio. El aviso de versión nueva
+ * salió pegado arriba y cortado por eso, con el chequeo dando ✓.
+ *
+ * Un `calc()` con una variable indefinida no es un error visible: es una
+ * declaración que desaparece. Justo la clase de fallo que nadie ve hasta que
+ * alguien mira la pantalla.
+ */
+const DECLARADOS = new Set(
+  [...fs.readFileSync(path.join(RAIZ, ARCHIVO_TOKENS), "utf8").matchAll(/^\s*(--[a-zA-Z0-9-]+)\s*:/gm)].map((m) => m[1]),
+)
+/**
+ * Las que **no** se declaran en `globals.css` porque las pone otro, y por qué.
+ * Si alguna deja de usarse, sobra: una excepción muerta miente sobre el alcance.
+ */
+const DE_FUERA = {
+  '--i': 'el índice de cada barra, que lo pone el componente en línea',
+  '--alto-barra': 'la altura de una barra, calculada con los datos del mes',
+  '--alto-tira': 'lo mismo para la tira del año',
+  '--ancho-gasto': 'el ancho de la barra de un gasto, proporcional a su monto',
+  '--fuente-syne': 'la pone el cargador de fuentes de Next',
+  '--fuente-dm-sans': 'la pone el cargador de fuentes de Next',
+  '--fuente-jetbrains-mono': 'la pone el cargador de fuentes de Next',
+}
+for (const rel of archivosRevisados.concat([ARCHIVO_TOKENS])) {
+  const texto = fs.readFileSync(path.join(RAIZ, rel), "utf8")
+  texto.split('\n').forEach((linea, i) => {
+    for (const m of linea.matchAll(/var\((--[a-zA-Z0-9-]+)/g)) {
+      const token = m[1]
+      if (DECLARADOS.has(token) || token in DE_FUERA) continue
+      fallos.push({
+        archivo: rel,
+        linea: i + 1,
+        regla: 'token-inexistente',
+        mensaje: `var(${token}) no está declarado en ${ARCHIVO_TOKENS}`,
+        texto: linea.trim().slice(0, 120),
+      })
+    }
+  })
+}
+// Una excepción que ya nadie usa sobra.
+if (!ES_FIXTURE) {
+  const todo = archivosRevisados
+    .concat([ARCHIVO_TOKENS])
+    .map((rel) => fs.readFileSync(path.join(RAIZ, rel), "utf8"))
+    .join('\n')
+  for (const [token, motivo] of Object.entries(DE_FUERA)) {
+    if (!todo.includes(`var(${token}`)) {
+      console.error(`verificar-tokens: ${token} ya no se usa (exento: ${motivo}). Quita la excepción.`)
+      process.exit(2)
+    }
+  }
+}
+
 if (fallos.length > 0) {
   console.error(`\n✗ ${fallos.length} valor(es) huérfano(s):\n`)
   for (const f of fallos) {

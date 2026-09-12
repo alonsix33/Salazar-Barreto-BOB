@@ -50,6 +50,16 @@ export const COPYS = {
     'en-verificacion': 'En verificación',
   } satisfies Record<EstadoCuota, string>,
 
+  /**
+   * El aviso de versión nueva. No dice "nueva versión disponible" porque eso es
+   * lenguaje de app store: dice qué gana el vecino, que es ver lo último.
+   */
+  version: {
+    hayNueva: 'Hay una versión nueva de la app.',
+    actualizar: 'Actualizar',
+    actualizando: 'Actualizando…',
+  },
+
   // ── P0 · Elegir departamento ───────────────────────────────────────────
   onboarding: {
     marca: 'Jr. Enrique Salazar Barreto',
