@@ -321,8 +321,9 @@ del producto que no haya pantalla para eso** (`README` §7).
 
 | Lo que ves | Qué es | Qué hacer |
 |---|---|---|
-| «Algo no está respondiendo» | la app no alcanza la base | revisa `DATABASE_URL` en Vercel; suele ser la URL interna en vez de la pública |
-| El build falla en Vercel y en local no | falta una variable de entorno | compara las seis de Vercel con tu `.env` |
+| «Algo no está respondiendo» · log dice `Can't reach database server` | la URL es la **interna** de Railway, que Vercel no alcanza | usa `DATABASE_PUBLIC_URL` de Railway en las dos variables |
+| «Algo no está respondiendo» · log dice `does not exist` o `P2021` | **las tablas no están creadas** | el build de Vercel NO las crea: corre `npx prisma migrate deploy` y la semilla desde tu máquina apuntando a Railway (paso 4) |
+| El build falla en Vercel y en local no | falta una variable de entorno | compara las de Vercel con la tabla de claves de arriba |
 | «Too many connections» | falta el pooler | añade `?pgbouncer=true&connection_limit=1` a `DATABASE_URL` |
 | `migrate deploy` se queda colgado | `DIRECT_URL` apunta al pooler | `DIRECT_URL` va **sin** `pgbouncer` |
 | El PIN correcto no entra | se agotaron los intentos de esa IP | son ocho cada quince minutos; espera |
@@ -335,7 +336,9 @@ del producto que no haya pantalla para eso** (`README` §7).
 - **Dominio propio** (`edificio-salazar.pe` en vez de `algo.vercel.app`). Se hace
   en Vercel → Settings → Domains y hay que tocar el DNS del dominio. No hace
   falta para funcionar.
-- **Notificaciones push.** No están hechas: los avisos se ven al abrir la app.
-  Está declarado en `docs/AUDITORIA-FINAL.md`.
+- **Probar las notificaciones push de verdad.** Están hechas y funcionan, pero
+  necesitan HTTPS: solo se comprueban una vez desplegado. El primer día, activa
+  los avisos desde «Mi departamento» en tu teléfono y publica un mes de prueba
+  para verlo llegar. Sin las claves VAPID la app funciona igual, sin avisos.
 - **Conectar a Bob con DeepSeek.** El camino está hecho; falta la clave. Con
   `BOB_MODO=determinista` funciona sin coste y sin clave.
