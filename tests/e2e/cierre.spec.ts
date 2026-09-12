@@ -28,12 +28,62 @@ const ESPERADO_JULIO = {
 }
 
 /** Teclea un número en el teclado numérico propio. */
+/**
+ * Teclea en el numpad, **comprobando que cada dígito entró** antes del
+ * siguiente.
+ *
+ * La versión anterior disparaba los clics en fila sin mirar la pantalla, y con
+ * la máquina cargada eso se transponía: en una corrida completa salió 438.038
+ * donde se tecleó 483.038, con el 8 y el 3 cambiados de sitio. En aislado
+ * pasaba siempre, así que era fácil llamarlo casualidad y volver a correrlo.
+ *
+ * No es un `waitForTimeout` disfrazado: se espera a que el visor muestre el
+ * prefijo que va escrito, que es exactamente la condición que hacía falta.
+ */
 async function teclear(page: Page, digitos: string) {
   await expect(page.getByRole('dialog').last()).toBeVisible()
+  const visor = page.locator('.numpad-panel .numpad-numero')
+  let escrito = ''
   for (const d of digitos) {
     await page.getByRole('button', { name: d === '.' ? 'Punto decimal' : d, exact: true }).click()
+    escrito += d
+    await expect(visor, `el numpad se quedó atrás al teclear «${escrito}»`).toHaveText(escrito)
   }
   await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+}
+
+/**
+ * Teclea **sin esperar entre dígitos**, que es como teclea una persona con
+ * prisa en un teléfono.
+ *
+ * Es el caso que `teclear` ya no puede reproducir: aquella comprueba el visor
+ * después de cada pulsación, así que nunca hay dos sin pintar por medio. Aquí
+ * se disparan las doce seguidas a propósito, porque lo que se mide es
+ * justamente que no se pierda ninguna.
+ */
+async function teclearRapido(page: Page, digitos: string) {
+  await expect(page.getByRole('dialog').last()).toBeVisible()
+  /**
+   * Las pulsaciones se disparan **en la misma tarea del navegador**, una detrás
+   * de otra sin ceder el hilo. Así es como llegan cuando alguien teclea rápido
+   * en un teléfono: React las agrupa en un solo repintado.
+   *
+   * Con `Promise.all` de clics de Playwright no vale: eso son toques
+   * simultáneos, no rápidos, y el propio Playwright descarta la mitad
+   * esperando a elementos que se repintan. Medido: de seis dígitos quedaba uno.
+   */
+  await page.evaluate((ds: string) => {
+    const panel = document.querySelector('.numpad-panel')
+    if (!panel) throw new Error('el numpad no está abierto')
+    for (const d of ds) {
+      const etiqueta = d === '.' ? 'Punto decimal' : d
+      const boton = [...panel.querySelectorAll('button')].find(
+        (b) => (b.getAttribute('aria-label') ?? b.textContent ?? '').trim() === etiqueta,
+      )
+      if (!boton) throw new Error(`no existe la tecla ${etiqueta}`)
+      boton.click()
+    }
+  }, digitos)
 }
 
 /**
@@ -351,5 +401,40 @@ test.describe('el cierre del mes, paso a paso', () => {
     expect(julio.resultado.cuotas['401'].agua).toBeLessThan(aguaConLavado)
     // …y el total del mes NO cambia.
     expect(julio.resultado.totalMes).toBe(3374.38)
+  })
+})
+
+/**
+ * Tecleando rápido no se pierde un dígito.
+ *
+ * Esto no es una prueba de interfaz: una lectura de medidor con un dígito de
+ * menos cambia el consumo y cambia la cuota, y no hay nada en pantalla que lo
+ * delate, porque el número que queda también parece un número.
+ *
+ * El defecto era real y estaba en `Numpad`: cada pulsación leía el valor del
+ * cierre en vez del más reciente, así que dos toques procesados antes de
+ * repintar se comían uno. Salió en una corrida completa, con 438.038 donde se
+ * había tecleado 483.038.
+ */
+test.describe('el teclado numérico aguanta dedos rápidos', () => {
+  test('doce dígitos seguidos, sin esperar entre uno y otro, entran los doce', async ({ page }) => {
+    await abrirCierre(page)
+    await page.getByRole('button', { name: 'Empezar', exact: true }).click()
+    await page.getByRole('button', { name: /^401\b/ }).first().click()
+
+    const visor = page.locator('.numpad-panel .numpad-numero')
+    await expect(visor).toBeVisible()
+    // Se borra lo que hubiera, también a toques seguidos.
+    await page.evaluate(() => {
+      const panel = document.querySelector('.numpad-panel')!
+      const borrar = [...panel.querySelectorAll('button')].find(
+        (b) => (b.getAttribute('aria-label') ?? '').trim() === 'Borrar',
+      )!
+      for (let i = 0; i < 12; i++) borrar.click()
+    })
+    await expect(visor, 'los borrados también se pierden si se pulsan rápido').toHaveText('0')
+
+    await teclearRapido(page, '483038')
+    await expect(visor, 'se perdió un dígito al teclear rápido').toHaveText('483038')
   })
 })

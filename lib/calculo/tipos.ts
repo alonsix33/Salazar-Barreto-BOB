@@ -57,12 +57,24 @@ export interface LineaGasto {
   esAgua?: boolean
   /** Marca un gasto extraordinario añadido en el paso 5 del cierre. */
   extra?: boolean
+  /**
+   * Quiénes pagan el gasto puntual, si no son los siete, y cómo se reparte.
+   *
+   * Van en la línea y no solo en el `Extra` de entrada porque son la respuesta
+   * a la pregunta que el gasto genera: «¿por qué a mí me tocó más?». Sin esto,
+   * lo único que se podía enseñar del portón era el total.
+   */
+  participantes?: readonly DptoId[]
+  reparto?: ModoReparto
 }
 
 /**
  * Lo puntual del mes.
- * - `gasto` se suma a `totalMes` y lo pagan los siete por su porcentaje, como
- *   todo lo demás. No hay reparto equitativo.
+ * - `gasto` se suma a `totalMes`. Por defecto lo pagan los siete por su
+ *   porcentaje; se puede excluir a quien no lo usa, y entonces los que quedan
+ *   se renormalizan al nuevo 100 % conservando la proporción entre ellos.
+ *   `iguales` existe solo para el histórico: en el Excel hay gastos que se
+ *   cobraron en partes iguales y esos meses no se reescriben.
  * - `credito` se resta de la cuota de un departamento y sale del saldo de la cuenta.
  */
 export type Extra =

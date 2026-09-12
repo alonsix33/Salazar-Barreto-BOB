@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { COPYS } from '@/lib/copys'
@@ -19,36 +19,62 @@ export function PedirPin() {
   const [sacude, setSacude] = useState(false)
   const [bloqueado, setBloqueado] = useState<string | null>(null)
 
-  const pulsar = async (tecla: string) => {
+  /**
+   * Una tecla, aplicada **sobre el PIN más reciente**.
+   *
+   * Esto leía `pin` del cierre, y ahí se perdían dígitos: dos toques procesados
+   * antes de que React repintara veían el mismo `pin` viejo y uno se comía al
+   * otro. En el teclado numérico del cierre eso arruinaba una lectura; aquí es
+   * peor de explicar, porque el PIN correcto simplemente **no entra** y no hay
+   * nada en pantalla que diga por qué. Quien administra lo vive como «la app no
+   * me deja», que es el peor error posible: el que no se puede reproducir.
+   */
+  const pulsar = (tecla: string) => {
     if (bloqueado) return
-    if (tecla === '←') return setPin(pin.slice(0, -1))
-    const nuevo = (pin + tecla).slice(0, 4)
-    setPin(nuevo)
-    if (nuevo.length < 4) return
-
-    const r = await fetch('/api/admin/pin', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ pin: nuevo }),
-    })
-    if (r.ok) {
-      router.refresh()
-      return
-    }
-    // 429: hay que decirlo, porque si no el usuario teclea a ciegas sin saber
-    // por qué su PIN correcto no entra.
-    if (r.status === 429) {
-      const cuerpo = await r.json().catch(() => ({ error: 'Demasiados intentos.' }))
-      setBloqueado(cuerpo.error as string)
-      setPin('')
-      return
-    }
-    setSacude(true)
-    setTimeout(() => {
-      setSacude(false)
-      setPin('')
-    }, 400)
+    setPin((p) => (tecla === '←' ? p.slice(0, -1) : (p + tecla).slice(0, 4)))
   }
+
+  /**
+   * La comprobación va **aquí y no en `pulsar`** a propósito.
+   *
+   * Con la forma funcional, `pulsar` ya no sabe cuál fue el PIN resultante, y
+   * calcularlo aparte para mandarlo sería volver a tener dos verdades. Se mira
+   * el PIN ya pintado: si llegó a cuatro, se comprueba.
+   */
+  useEffect(() => {
+    if (pin.length !== 4 || bloqueado) return
+    let vivo = true
+    void (async () => {
+      const r = await fetch('/api/admin/pin', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      })
+      if (!vivo) return
+      if (r.ok) {
+        router.refresh()
+        return
+      }
+      // 429: hay que decirlo, porque si no el usuario teclea a ciegas sin saber
+      // por qué su PIN correcto no entra.
+      if (r.status === 429) {
+        const cuerpo = await r.json().catch(() => ({ error: 'Demasiados intentos.' }))
+        if (!vivo) return
+        setBloqueado(cuerpo.error as string)
+        setPin('')
+        return
+      }
+      setSacude(true)
+      setTimeout(() => {
+        if (!vivo) return
+        setSacude(false)
+        setPin('')
+      }, 400)
+    })()
+    return () => {
+      vivo = false
+    }
+  }, [pin, bloqueado, router])
 
   return (
     <div className="pantalla scroll-limpio pin-pantalla">

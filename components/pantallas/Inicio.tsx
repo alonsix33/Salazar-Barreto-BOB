@@ -129,6 +129,7 @@ export function Inicio({
         avisados={avisados.map((d) => d.id)}
         sinRegistrar={sinRegistrar.map((d) => d.id)}
         mes={mes}
+        dpto={dpto}
       />
 
       {/* 3 · Los 7 este mes */}

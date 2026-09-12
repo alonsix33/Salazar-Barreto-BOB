@@ -364,7 +364,16 @@ export function calcularMes(entradasCrudas: EntradasMes, ovCruda: Overrides = {}
    */
   const extrasDelMes = ov.extras ?? entradas.extras
   for (const e of extrasDelMes) {
-    if (e.tipo === 'gasto') gastos.push({ concepto: e.concepto, monto: e.monto, extra: true })
+    if (e.tipo === 'gasto')
+      gastos.push({
+        concepto: e.concepto,
+        monto: e.monto,
+        extra: true,
+        // Quién lo paga viaja con la línea: es lo que explica una cuota que no
+        // sale del flat de siempre.
+        ...(e.participantes?.length ? { participantes: e.participantes } : {}),
+        ...(e.reparto ? { reparto: e.reparto } : {}),
+      })
   }
 
   const totalMes = sumarMontos(gastos)

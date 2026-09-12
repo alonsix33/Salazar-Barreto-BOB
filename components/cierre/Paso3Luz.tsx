@@ -6,6 +6,8 @@ import { useNumpad } from '@/components/Numpad'
 import type { PropsPaso } from './Wizard'
 import { BotonAvanzar } from './BotonAvanzar'
 import { AvisoBob } from './AvisoBob'
+import { BobDice } from '@/components/BobDice'
+import { MOMENTOS } from '@/lib/bob/momentos'
 import { CampoNumerico } from './CampoNumerico'
 import { Fallo } from '@/components/ui/Fallo'
 
@@ -14,6 +16,16 @@ export function Paso3Luz({ borrador, guardar, guardando, errorGuardar, avanzar }
   const { abrir } = useNumpad()
   const luz = borrador.resultado.rec.luz
   const tiene = luz > 0
+
+  /**
+   * Lo que Bob necesita para comparar, con el mismo criterio que el agua: sin
+   * meses anteriores se calla la comparación en vez de inventarla. El texto
+   * vive en `MOMENTOS['cierre-luz']`.
+   */
+  const datosLuz = {
+    luz,
+    anteriores: borrador.luzAnteriores.map((a) => ({ mes: a.mes, valor: a.luz })),
+  }
 
   return (
     <div className="cierre-cuerpo">
@@ -36,7 +48,13 @@ export function Paso3Luz({ borrador, guardar, guardando, errorGuardar, avanzar }
         }
       />
 
-      {tiene && <AvisoBob>{compararLuz(luz, borrador.luzAnteriores)}</AvisoBob>}
+      {tiene && (
+        <AvisoBob>
+          <BobDice momento="cierre-luz" datos={datosLuz} mes={borrador.mes} dpto={null}>
+            {MOMENTOS['cierre-luz'].determinista(datosLuz)}
+          </BobDice>
+        </AvisoBob>
+      )}
       {errorGuardar && <Fallo>{errorGuardar}</Fallo>}
 
       <BotonAvanzar onClick={avanzar} bloqueadoPor={tiene ? null : COPYS.cierre.faltaMonto} cargando={guardando}>
@@ -46,19 +64,3 @@ export function Paso3Luz({ borrador, guardar, guardando, errorGuardar, avanzar }
   )
 }
 
-/**
- * Lo que Bob dice del recibo de luz. `04-cierre-del-mes.md` §Paso 3: «Bob
- * compara con el mes anterior». La versión anterior repetía el número que el
- * administrador acababa de teclear y le pedía revisarlo, que es justo lo que el
- * paso 2 arregló y su comentario documenta. Sin meses con que comparar, se calla.
- */
-function compararLuz(luz: number, anteriores: { mes: string; luz: number }[]): string {
-  if (anteriores.length === 0) {
-    return `S/ ${fmt(luz)} de luz común este mes. Es el primero, así que todavía no hay con qué compararlo.`
-  }
-  const lista = anteriores.map((a) => `${a.mes} S/ ${fmt(a.luz)}`).join(' y ')
-  const media = anteriores.reduce((s, a) => s + a.luz, 0) / anteriores.length
-  return luz > media * 1.15
-    ? `S/ ${fmt(luz)} es bastante más que los últimos meses (${lista}). ¿Lo confirmas?`
-    : `S/ ${fmt(luz)} está en línea con los últimos meses: ${lista}.`
-}

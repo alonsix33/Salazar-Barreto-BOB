@@ -8,7 +8,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from 'react'
 import { createPortal } from 'react-dom'
 import { fmt3 } from '@/lib/calculo/redondeo'
@@ -83,7 +85,12 @@ function Teclado({
 }: {
   peticion: PeticionNumpad
   valor: string
-  setValor: (v: string) => void
+  /**
+   * El `setValor` de `useState`, entero: **hace falta la forma funcional**.
+   * Tipado como `(v: string) => void` a secas, `pulsar` no podía leer el valor
+   * más reciente y se perdían dígitos al teclear rápido.
+   */
+  setValor: Dispatch<SetStateAction<string>>
   cerrar: () => void
 }) {
   const panel = useRef<HTMLDivElement>(null)
@@ -143,16 +150,34 @@ function Teclado({
   const maxDecimales = peticion.maxDecimales ?? 3
   const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', admiteDecimales ? '.' : '', '0', '←']
 
+  /**
+   * Una tecla, aplicada **sobre el valor más reciente**, no sobre el que había
+   * cuando se pintó el botón.
+   *
+   * Esto era `setValor(valor + k)`, con `valor` del cierre, y ahí hay una
+   * pérdida de dígitos de verdad: si dos pulsaciones se procesan antes de que
+   * React vuelva a pintar —dedos rápidos en un teléfono, o la máquina
+   * cargada—, la segunda parte del mismo `valor` viejo y la primera se pierde.
+   * Con los borrados igual: doce toques seguidos podían borrar once.
+   *
+   * En una app de recibos eso no es un detalle de interfaz. Una lectura de
+   * medidor con un dígito de menos cambia el consumo, cambia la cuota, y no
+   * hay nada en pantalla que lo delate: el número que queda también parece un
+   * número. Apareció en una corrida completa de las pruebas, donde salió
+   * 438.038 en vez del 483.038 que se tecleó.
+   *
+   * La forma funcional lo cierra: cada pulsación ve lo que dejó la anterior,
+   * las procese React cuando las procese.
+   */
   const pulsar = (k: string) => {
-    if (k === '←') return setValor(valor.slice(0, -1))
-    if (k === '.') {
-      if (valor.includes('.')) return
-      return setValor((valor || '0') + '.')
-    }
-    if (admiteDecimales && valor.includes('.') && (valor.split('.')[1]?.length ?? 0) >= maxDecimales) return
-    // Sin esto se pueden teclear cincuenta dígitos y el número deja de ser uno.
-    if (valor.replace('.', '').length >= 12) return
-    setValor(valor + k)
+    setValor((v) => {
+      if (k === '←') return v.slice(0, -1)
+      if (k === '.') return v.includes('.') ? v : (v || '0') + '.'
+      if (admiteDecimales && v.includes('.') && (v.split('.')[1]?.length ?? 0) >= maxDecimales) return v
+      // Sin esto se pueden teclear cincuenta dígitos y el número deja de ser uno.
+      if (v.replace('.', '').length >= 12) return v
+      return v + k
+    })
   }
 
   const guardar = () => {

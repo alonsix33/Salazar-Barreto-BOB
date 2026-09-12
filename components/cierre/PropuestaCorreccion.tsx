@@ -29,6 +29,15 @@ export function PropuestaCorreccion({
 }) {
   return (
     <div className="cierre-correccion" data-propuesta={propuesta.dpto}>
+      {/*
+        El único texto automático de Bob que **no** pasa por el modelo, y está
+        declarado así en `MOMENTOS['cierre-propuesta']` con el motivo: lo que
+        dice lleva la lectura tecleada, la anterior y la propuesta con tres
+        decimales, y justo debajo hay dos botones que escriben exactamente esa
+        cifra. Un texto redactado de nuevo, aunque fuera correcto, podría
+        describir un número distinto del que el botón va a guardar, y ahí no hay
+        guarda que valga: los dos números existirían.
+      */}
       <AvisoBob>
         {COPYS.cierre.propuesta({
           valor: fmt3(propuesta.valor),

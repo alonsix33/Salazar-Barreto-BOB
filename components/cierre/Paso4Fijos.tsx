@@ -8,6 +8,8 @@ import { useNumpad } from '@/components/Numpad'
 import type { PropsPaso } from './Wizard'
 import { BotonAvanzar } from './BotonAvanzar'
 import { AvisoBob } from './AvisoBob'
+import { BobDice } from '@/components/BobDice'
+import { MOMENTOS } from '@/lib/bob/momentos'
 import { Fallo } from '@/components/ui/Fallo'
 
 /**
@@ -84,6 +86,12 @@ export function Paso4Fijos({ borrador, guardar, guardando, errorGuardar, avanzar
         </button>
       ) : (
         <div className="fijo-nuevo">
+          {/*
+            El nombre de un concepto es texto —«Limpieza», «Pozo a tierra»—, así
+            que teclado normal. El monto de al lado, en cambio, abre el numpad:
+            son dos campos contiguos con dos teclados distintos, y esa es
+            exactamente la diferencia que hay que respetar.
+          */}
           <input
             type="text"
             value={nombre}
@@ -92,6 +100,9 @@ export function Paso4Fijos({ borrador, guardar, guardando, errorGuardar, avanzar
             aria-label={COPYS.cierre.nombreConcepto}
             maxLength={80}
             className="fijo-nuevo-nombre"
+            autoCapitalize="sentences"
+            autoComplete="off"
+            enterKeyHint="done"
             autoFocus
           />
           <label className="fijo-nuevo-anual">
@@ -133,7 +144,14 @@ export function Paso4Fijos({ borrador, guardar, guardando, errorGuardar, avanzar
 
       {sinCifra.length > 0 && (
         <AvisoBob>
-          {`${sinCifra[0]!.concepto} sigue sin cifra. Puedes dejarlo así y ponerlo cuando lo tengas.`}
+          <BobDice
+            momento="cierre-sin-cifra"
+            datos={{ concepto: sinCifra[0]!.concepto }}
+            mes={borrador.mes}
+            dpto={null}
+          >
+            {MOMENTOS['cierre-sin-cifra'].determinista({ concepto: sinCifra[0]!.concepto })}
+          </BobDice>
         </AvisoBob>
       )}
       {errorGuardar && <Fallo>{errorGuardar}</Fallo>}

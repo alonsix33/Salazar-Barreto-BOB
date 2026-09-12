@@ -194,3 +194,60 @@ test.describe('el panel de administración', () => {
     )
   })
 })
+
+/**
+ * El teclado del PIN, con dedos rápidos.
+ *
+ * Mismo defecto que el numpad del cierre y de la misma familia: la pulsación
+ * leía el PIN del cierre en vez del más reciente, así que dos toques seguidos
+ * se comían uno. Aquí duele más que en una lectura de medidor, porque el PIN
+ * correcto simplemente no entra y no hay nada en pantalla que diga por qué.
+ */
+test.describe('el teclado del PIN aguanta dedos rápidos', () => {
+  /**
+   * La sesión de administración se abre sola en estos tests, así que la pantalla
+   * del PIN no se ve nunca. Aquí se cierra a propósito, que es lo único que la
+   * hace aparecer.
+   */
+  const sinSesion = async (page: import('@playwright/test').Page) => {
+    await page.goto('/')
+    await page.request.delete('/api/admin/pin')
+    await page.goto('/admin')
+    await expect(page.locator('.pin-rejilla')).toBeVisible()
+  }
+
+  test('cuatro dígitos seguidos entran los cuatro', async ({ page }) => {
+    await sinSesion(page)
+
+    // Se teclea un PIN incorrecto a propósito: lo que se mide es cuántos
+    // dígitos registró, no si entra.
+    await page.evaluate(() => {
+      const teclas = [...document.querySelectorAll('.pin-rejilla button')]
+      for (const d of ['9', '9', '9', '9']) {
+        const b = teclas.find((t) => (t.getAttribute('aria-label') ?? '').trim() === d)
+        if (!b) throw new Error(`no existe la tecla ${d}`)
+        ;(b as HTMLElement).click()
+      }
+    })
+
+    // Los cuatro puntos llenos, o el anuncio del lector de pantalla diciendo 4.
+    await expect(
+      page.locator('.pin-punto-lleno'),
+      'se perdió un dígito del PIN al teclear rápido',
+    ).toHaveCount(4)
+  })
+
+  test('los borrados rápidos también cuentan todos', async ({ page }) => {
+    await sinSesion(page)
+    await page.evaluate(() => {
+      const teclas = [...document.querySelectorAll('.pin-rejilla button')]
+      const pulsa = (etiqueta: string) => {
+        const b = teclas.find((t) => (t.getAttribute('aria-label') ?? '').trim() === etiqueta)
+        ;(b as HTMLElement).click()
+      }
+      for (const d of ['1', '2', '3']) pulsa(d)
+      for (let i = 0; i < 3; i++) pulsa('Borrar')
+    })
+    await expect(page.locator('.pin-punto-lleno'), 'un borrado se perdió').toHaveCount(0)
+  })
+})

@@ -24,7 +24,7 @@ import { prisma } from '@/lib/datos/prisma'
 import { responderDeterminista } from './determinista'
 import { hayClave, PlazoAgotado, preguntarADeepseek } from './deepseek'
 import { aDosFrases, numerosInventados } from './guardas'
-import type { Contexto, Llamada, MotivoCaida, Respuesta } from './tipos'
+import type { Contexto, Llamada, MotivoCaida, Respuesta, Turno } from './tipos'
 
 export type { Contexto, Respuesta } from './tipos'
 
@@ -36,20 +36,35 @@ export function modoDeBob(): 'determinista' | 'deepseek' {
 /** Lo más largo que se acepta de una pregunta. Más que esto no es una pregunta. */
 export const MAX_PREGUNTA = 400
 
-export async function preguntarABob(texto: string, contexto: Contexto): Promise<Respuesta> {
+export async function preguntarABob(
+  texto: string,
+  contexto: Contexto,
+  historial: readonly Turno[] = [],
+): Promise<Respuesta> {
   const arranque = Date.now()
-  const respuesta = await resolver(texto, contexto)
+  const respuesta = await resolver(texto, contexto, historial)
   await registrar(texto, contexto, respuesta, Date.now() - arranque)
   return respuesta
 }
 
-async function resolver(texto: string, contexto: Contexto): Promise<Respuesta> {
+async function resolver(
+  texto: string,
+  contexto: Contexto,
+  historial: readonly Turno[],
+): Promise<Respuesta> {
+  /**
+   * El catálogo **no usa el hilo**, y es una limitación conocida, no un olvido.
+   * Resuelve por palabras clave de la pregunta actual: para entender «¿y el mes
+   * pasado?» haría falta arrastrar la intención anterior, y un catálogo que
+   * adivina de qué se hablaba se equivoca de tema con cara de certeza. Sin
+   * clave, Bob contesta cada pregunta por separado y lo hace bien.
+   */
   if (modoDeBob() === 'determinista') return await conElCatalogo(texto, contexto, null)
   if (!hayClave()) return await conElCatalogo(texto, contexto, 'sin-clave')
 
   let llamadas: Llamada[] = []
   try {
-    const delModelo = await preguntarADeepseek(texto, contexto)
+    const delModelo = await preguntarADeepseek(texto, contexto, historial)
     llamadas = delModelo.llamadas
 
     const dicho = aDosFrases(delModelo.texto)
