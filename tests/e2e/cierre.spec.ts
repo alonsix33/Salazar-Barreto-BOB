@@ -19,10 +19,11 @@ const JULIO = {
 const ESPERADO_JULIO = {
   totalMes: '3,374.38',
   cuotas: {
-    // 202 y 502 llevan el flat corregido a la escritura (20.11 / 20.23): el 202
-    // baja S/ 0.30 y el 502 sube S/ 0.31. El total del mes no se mueve.
-    '101': '381.83', '201': '342.85', '202': '683.24', '301': '371.02',
-    '401': '388.96', '501': '535.69', '502': '664.01',
+    // Suben todas porque el área común ya no la absorbe el fondo: la pagan los
+    // siete por su flat (`01` §3.2, corregida contra la planilla real). El total
+    // del mes no se mueve. Los flats del 202 y el 502 son los de la escritura.
+    '101': '382.63', '201': '343.54', '202': '684.60', '301': '371.71',
+    '401': '389.65', '501': '536.87', '502': '665.38',
   },
 }
 

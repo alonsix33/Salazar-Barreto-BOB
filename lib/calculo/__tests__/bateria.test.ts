@@ -186,20 +186,24 @@ function invariantes(r: ResultadoMes): string[] {
   }
 
   /**
-   * 2 · **El cuadre del mes**, tal como lo escribe `01` §5.2:
+   * 2 · **El cuadre del mes**:
    *
-   *     Σ cuota(d) + montoComun + Σ créditos ≈ totalMes
+   *     Σ cuota(d) + Σ créditos ≈ totalMes
    *
-   * El área común y los créditos entran porque **los pone el edificio, no los
-   * vecinos** (`01` §3.2). La primera versión los dejaba fuera y daba en rojo
-   * un mes correcto: el error era mío. Se arregla leyendo la regla, no
-   * ensanchando la tolerancia.
+   * Los créditos entran porque los pone el edificio, no los vecinos. El **área
+   * común ya no**: la pagan los siete por su flat, así que viene dentro de cada
+   * cuota. Sumarla aparte la contaría dos veces.
+   *
+   * Antes iba sumada, siguiendo `01` §3.2, que decía que el área común no se le
+   * cobraba a nadie y la absorbía el fondo. Esa regla era del prototipo y no del
+   * edificio —y dejaba sin sentido el lavado del 401, porque si el fondo paga el
+   * común da igual cuánta agua gaste lavando el carro—.
    */
   const sumaCuotas = round2(DPTOS.reduce((s, d) => s + r.cuotas[d.id].total, 0))
-  const desvio = Math.abs(sumaCuotas + r.montoComun + r.totalCreditos - r.totalMes)
+  const desvio = Math.abs(sumaCuotas + r.totalCreditos - r.totalMes)
   if (desvio > toleranciaMes(r.precioM3)) {
     fallos.push(
-      `el mes no cuadra por S/ ${desvio.toFixed(4)}: cuotas ${sumaCuotas} + común ${r.montoComun} ` +
+      `el mes no cuadra por S/ ${desvio.toFixed(4)}: cuotas ${sumaCuotas} ` +
         `+ créditos ${r.totalCreditos} contra total ${r.totalMes}`,
     )
   }
@@ -437,19 +441,24 @@ describe('batería · corregir un mes publicado', () => {
         /**
          * **La diferencia tiene que estar explicada, entera.**
          *
-         * Lo que cambia en lo que pagan los siete, más lo que cambia el área
-         * común y los créditos, tiene que ser exactamente lo que cambia el
-         * total del mes. Si no, la corrección movió plata que no está en
-         * ninguna línea: eso es lo que hay que enseñarle al vecino en el aviso
-         * de corrección, y si no cuadra, el aviso miente.
+         * Lo que cambia en lo que pagan los siete, más lo que cambian los
+         * créditos, tiene que ser exactamente lo que cambia el total del mes.
+         * Si no, la corrección movió plata que no está en ninguna línea: eso es
+         * lo que hay que enseñarle al vecino en el aviso de corrección, y si no
+         * cuadra, el aviso miente.
+         *
+         * El área común **no** se suma aparte. Mientras la pagaba el fondo del
+         * edificio había que sumarla para cerrar la identidad; ahora entra en la
+         * base de mantenimiento y ya viene dentro de `deltaCuotas`. Sumarla otra
+         * vez contaría dos veces cada sol de común que la corrección mueva, que
+         * es justo lo que pasa cuando se apaga el lavado.
          */
         const deltaCuotas = round2(
           DPTOS.reduce((s2, d) => s2 + despues.cuotas[d.id].total - antes.cuotas[d.id].total, 0),
         )
-        const deltaComun = round2(despues.montoComun - antes.montoComun)
         const deltaCreditos = round2(despues.totalCreditos - antes.totalCreditos)
         const deltaTotal = round2(despues.totalMes - antes.totalMes)
-        const desvio = Math.abs(deltaCuotas + deltaComun + deltaCreditos - deltaTotal)
+        const desvio = Math.abs(deltaCuotas + deltaCreditos - deltaTotal)
         expect(desvio, `${como} · semilla ${semilla}: la corrección mueve S/ ${desvio.toFixed(4)} sin línea que lo explique`)
           .toBeLessThanOrEqual(toleranciaMes(despues.precioM3) * 2)
       }

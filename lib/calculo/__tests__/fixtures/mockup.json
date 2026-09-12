@@ -6,7 +6,7 @@
   "2025-12": null,
   "2026-01": {
    "totalMes": 3271.88,
-   "baseMant": 2963.68,
+   "baseMant": 2976.97,
    "facturaAgua": 308.2,
    "precioM3": 4.164864864864865,
    "descuento": 0,
@@ -18,7 +18,7 @@
    "factor": 1,
    "montoComun": 13.29,
    "sumaAgua": 294.92,
-   "sumaCuotas": 3258.59,
+   "sumaCuotas": 3271.89,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -106,10 +106,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 347.34,
+     "mantenimiento": 348.9,
      "agua": 22.78,
      "credito": 0,
-     "total": 370.12,
+     "total": 371.68,
      "m3": 5.47,
      "m3medidos": 5.47,
      "lavado": 0,
@@ -117,10 +117,10 @@
      "lecturaActual": 151.851
     },
     "201": {
-     "mantenimiento": 302.59,
+     "mantenimiento": 303.95,
      "agua": 37.53,
      "credito": 0,
-     "total": 340.12,
+     "total": 341.48,
      "m3": 9.01,
      "m3medidos": 9.01,
      "lavado": 0,
@@ -128,10 +128,10 @@
      "lecturaActual": 131.513
     },
     "202": {
-     "mantenimiento": 596,
+     "mantenimiento": 598.67,
      "agua": 8.5,
      "credito": 0,
-     "total": 604.5,
+     "total": 607.17,
      "m3": 2.04,
      "m3medidos": 2.04,
      "lavado": 0,
@@ -139,10 +139,10 @@
      "lecturaActual": 12.878
     },
     "301": {
-     "mantenimiento": 302.59,
+     "mantenimiento": 303.95,
      "agua": 67.93,
      "credito": 0,
-     "total": 370.52,
+     "total": 371.88,
      "m3": 16.31,
      "m3medidos": 16.31,
      "lavado": 0,
@@ -150,10 +150,10 @@
      "lecturaActual": 346.625
     },
     "401": {
-     "mantenimiento": 302.59,
+     "mantenimiento": 303.95,
      "agua": 63.01,
      "credito": 0,
-     "total": 365.6,
+     "total": 366.96,
      "m3": 15.13,
      "m3medidos": 15.13,
      "lavado": 0,
@@ -161,10 +161,10 @@
      "lecturaActual": 343.795
     },
     "501": {
-     "mantenimiento": 513.01,
+     "mantenimiento": 515.31,
      "agua": 9.83,
      "credito": 0,
-     "total": 522.84,
+     "total": 525.14,
      "m3": 2.36,
      "m3medidos": 2.36,
      "lavado": 0,
@@ -172,10 +172,10 @@
      "lecturaActual": 218.16
     },
     "502": {
-     "mantenimiento": 599.55,
+     "mantenimiento": 602.24,
      "agua": 85.34,
      "credito": 0,
-     "total": 684.89,
+     "total": 687.58,
      "m3": 20.49,
      "m3medidos": 20.49,
      "lavado": 0,
@@ -186,7 +186,7 @@
   },
   "2026-02": {
    "totalMes": 3315.48,
-   "baseMant": 2969.18,
+   "baseMant": 2981.28,
    "facturaAgua": 346.3,
    "precioM3": 4.172289156626507,
    "descuento": 0,
@@ -198,7 +198,7 @@
    "factor": 1,
    "montoComun": 12.1,
    "sumaAgua": 334.2,
-   "sumaCuotas": 3303.38,
+   "sumaCuotas": 3315.49,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -286,10 +286,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 347.99,
+     "mantenimiento": 349.41,
      "agua": 27.54,
      "credito": 0,
-     "total": 375.53,
+     "total": 376.95,
      "m3": 6.6,
      "m3medidos": 6.6,
      "lavado": 0,
@@ -297,10 +297,10 @@
      "lecturaActual": 158.455
     },
     "201": {
-     "mantenimiento": 303.15,
+     "mantenimiento": 304.39,
      "agua": 42.68,
      "credito": 0,
-     "total": 345.83,
+     "total": 347.07,
      "m3": 10.23,
      "m3medidos": 10.23,
      "lavado": 0,
@@ -308,10 +308,10 @@
      "lecturaActual": 141.739
     },
     "202": {
-     "mantenimiento": 597.1,
+     "mantenimiento": 599.54,
      "agua": 10.68,
      "credito": 0,
-     "total": 607.78,
+     "total": 610.22,
      "m3": 2.56,
      "m3medidos": 2.56,
      "lavado": 0,
@@ -319,10 +319,10 @@
      "lecturaActual": 15.434
     },
     "301": {
-     "mantenimiento": 303.15,
+     "mantenimiento": 304.39,
      "agua": 75.1,
      "credito": 0,
-     "total": 378.25,
+     "total": 379.49,
      "m3": 18,
      "m3medidos": 18,
      "lavado": 0,
@@ -330,10 +330,10 @@
      "lecturaActual": 364.626
     },
     "401": {
-     "mantenimiento": 303.15,
+     "mantenimiento": 304.39,
      "agua": 65.34,
      "credito": 0,
-     "total": 368.49,
+     "total": 369.73,
      "m3": 15.66,
      "m3medidos": 15.66,
      "lavado": 0,
@@ -341,10 +341,10 @@
      "lecturaActual": 359.453
     },
     "501": {
-     "mantenimiento": 513.97,
+     "mantenimiento": 516.06,
      "agua": 11.1,
      "credito": 0,
-     "total": 525.07,
+     "total": 527.16,
      "m3": 2.66,
      "m3medidos": 2.66,
      "lavado": 0,
@@ -352,10 +352,10 @@
      "lecturaActual": 220.823
     },
     "502": {
-     "mantenimiento": 600.67,
+     "mantenimiento": 603.11,
      "agua": 101.76,
      "credito": 0,
-     "total": 702.43,
+     "total": 704.87,
      "m3": 24.39,
      "m3medidos": 24.39,
      "lavado": 0,
@@ -366,7 +366,7 @@
   },
   "2026-03": {
    "totalMes": 3282.88,
-   "baseMant": 2965.78,
+   "baseMant": 2978.76,
    "facturaAgua": 317.1,
    "precioM3": 4.1723684210526315,
    "descuento": 0,
@@ -378,7 +378,7 @@
    "factor": 1,
    "montoComun": 12.98,
    "sumaAgua": 304.13,
-   "sumaCuotas": 3269.93,
+   "sumaCuotas": 3282.88,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -466,10 +466,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 347.59,
+     "mantenimiento": 349.11,
      "agua": 24.03,
      "credito": 0,
-     "total": 371.62,
+     "total": 373.14,
      "m3": 5.76,
      "m3medidos": 5.76,
      "lavado": 0,
@@ -477,10 +477,10 @@
      "lecturaActual": 164.219
     },
     "201": {
-     "mantenimiento": 302.81,
+     "mantenimiento": 304.13,
      "agua": 39.18,
      "credito": 0,
-     "total": 341.99,
+     "total": 343.31,
      "m3": 9.39,
      "m3medidos": 9.39,
      "lavado": 0,
@@ -488,10 +488,10 @@
      "lecturaActual": 151.132
     },
     "202": {
-     "mantenimiento": 596.42,
+     "mantenimiento": 599.03,
      "agua": 9.35,
      "credito": 0,
-     "total": 605.77,
+     "total": 608.38,
      "m3": 2.24,
      "m3medidos": 2.24,
      "lavado": 0,
@@ -499,10 +499,10 @@
      "lecturaActual": 17.675
     },
     "301": {
-     "mantenimiento": 302.81,
+     "mantenimiento": 304.13,
      "agua": 67.26,
      "credito": 0,
-     "total": 370.07,
+     "total": 371.39,
      "m3": 16.12,
      "m3medidos": 16.12,
      "lavado": 0,
@@ -510,10 +510,10 @@
      "lecturaActual": 380.743
     },
     "401": {
-     "mantenimiento": 302.81,
+     "mantenimiento": 304.13,
      "agua": 62.34,
      "credito": 0,
-     "total": 365.15,
+     "total": 366.47,
      "m3": 14.94,
      "m3medidos": 14.94,
      "lavado": 0,
@@ -521,10 +521,10 @@
      "lecturaActual": 374.396
     },
     "501": {
-     "mantenimiento": 513.38,
+     "mantenimiento": 515.62,
      "agua": 10.22,
      "credito": 0,
-     "total": 523.6,
+     "total": 525.84,
      "m3": 2.45,
      "m3medidos": 2.45,
      "lavado": 0,
@@ -532,10 +532,10 @@
      "lecturaActual": 223.278
     },
     "502": {
-     "mantenimiento": 599.98,
+     "mantenimiento": 602.6,
      "agua": 91.75,
      "credito": 0,
-     "total": 691.73,
+     "total": 694.35,
      "m3": 21.99,
      "m3medidos": 21.99,
      "lavado": 0,
@@ -546,7 +546,7 @@
   },
   "2026-04": {
    "totalMes": 3269.38,
-   "baseMant": 2972.98,
+   "baseMant": 2984.25,
    "facturaAgua": 296.4,
    "precioM3": 4.174647887323943,
    "descuento": 0,
@@ -558,7 +558,7 @@
    "factor": 1,
    "montoComun": 11.27,
    "sumaAgua": 285.11,
-   "sumaCuotas": 3258.08,
+   "sumaCuotas": 3269.34,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -646,10 +646,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 348.43,
+     "mantenimiento": 349.75,
      "agua": 21.92,
      "credito": 0,
-     "total": 370.35,
+     "total": 371.67,
      "m3": 5.25,
      "m3medidos": 5.25,
      "lavado": 0,
@@ -657,10 +657,10 @@
      "lecturaActual": 169.465
     },
     "201": {
-     "mantenimiento": 303.54,
+     "mantenimiento": 304.69,
      "agua": 36.19,
      "credito": 0,
-     "total": 339.73,
+     "total": 340.88,
      "m3": 8.67,
      "m3medidos": 8.67,
      "lavado": 0,
@@ -668,10 +668,10 @@
      "lecturaActual": 159.803
     },
     "202": {
-     "mantenimiento": 597.87,
+     "mantenimiento": 600.13,
      "agua": 8.93,
      "credito": 0,
-     "total": 606.8,
+     "total": 609.06,
      "m3": 2.14,
      "m3medidos": 2.14,
      "lavado": 0,
@@ -679,10 +679,10 @@
      "lecturaActual": 19.816
     },
     "301": {
-     "mantenimiento": 303.54,
+     "mantenimiento": 304.69,
      "agua": 63.91,
      "credito": 0,
-     "total": 367.45,
+     "total": 368.6,
      "m3": 15.31,
      "m3medidos": 15.31,
      "lavado": 0,
@@ -690,10 +690,10 @@
      "lecturaActual": 396.052
     },
     "401": {
-     "mantenimiento": 303.54,
+     "mantenimiento": 304.69,
      "agua": 59.86,
      "credito": 0,
-     "total": 363.4,
+     "total": 364.55,
      "m3": 14.34,
      "m3medidos": 14.34,
      "lavado": 0,
@@ -701,10 +701,10 @@
      "lecturaActual": 388.741
     },
     "501": {
-     "mantenimiento": 514.62,
+     "mantenimiento": 516.57,
      "agua": 9.39,
      "credito": 0,
-     "total": 524.01,
+     "total": 525.96,
      "m3": 2.25,
      "m3medidos": 2.25,
      "lavado": 0,
@@ -712,10 +712,10 @@
      "lecturaActual": 225.526
     },
     "502": {
-     "mantenimiento": 601.43,
+     "mantenimiento": 603.71,
      "agua": 84.91,
      "credito": 0,
-     "total": 686.34,
+     "total": 688.62,
      "m3": 20.34,
      "m3medidos": 20.34,
      "lavado": 0,
@@ -726,7 +726,7 @@
   },
   "2026-05": {
    "totalMes": 3258.45,
-   "baseMant": 2950.78,
+   "baseMant": 2957.17,
    "facturaAgua": 307.67,
    "precioM3": 3.94448717948718,
    "descuento": 17.33,
@@ -738,7 +738,7 @@
    "factor": 1,
    "montoComun": 6.39,
    "sumaAgua": 301.29,
-   "sumaCuotas": 3252.05,
+   "sumaCuotas": 3258.48,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -826,10 +826,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 345.83,
+     "mantenimiento": 346.58,
      "agua": 20.63,
      "credito": 0,
-     "total": 366.46,
+     "total": 367.21,
      "m3": 5.23,
      "m3medidos": 5.23,
      "lavado": 0,
@@ -837,10 +837,10 @@
      "lecturaActual": 174.699
     },
     "201": {
-     "mantenimiento": 301.27,
+     "mantenimiento": 301.93,
      "agua": 34.16,
      "credito": 0,
-     "total": 335.43,
+     "total": 336.09,
      "m3": 8.66,
      "m3medidos": 8.66,
      "lavado": 0,
@@ -848,10 +848,10 @@
      "lecturaActual": 168.458
     },
     "202": {
-     "mantenimiento": 593.4,
+     "mantenimiento": 594.69,
      "agua": 29.39,
      "credito": 0,
-     "total": 622.79,
+     "total": 624.08,
      "m3": 7.45,
      "m3medidos": 7.45,
      "lavado": 0,
@@ -859,10 +859,10 @@
      "lecturaActual": 27.264
     },
     "301": {
-     "mantenimiento": 301.27,
+     "mantenimiento": 301.93,
      "agua": 59.17,
      "credito": 0,
-     "total": 360.44,
+     "total": 361.1,
      "m3": 15,
      "m3medidos": 15,
      "lavado": 0,
@@ -870,10 +870,10 @@
      "lecturaActual": 411.048
     },
     "401": {
-     "mantenimiento": 301.27,
+     "mantenimiento": 301.93,
      "agua": 63.07,
      "credito": 0,
-     "total": 364.34,
+     "total": 365,
      "m3": 15.99,
      "m3medidos": 14.49,
      "lavado": 1.5,
@@ -881,10 +881,10 @@
      "lecturaActual": 403.234
     },
     "501": {
-     "mantenimiento": 510.78,
+     "mantenimiento": 511.89,
      "agua": 9.51,
      "credito": 0,
-     "total": 520.29,
+     "total": 521.4,
      "m3": 2.41,
      "m3medidos": 2.41,
      "lavado": 0,
@@ -892,10 +892,10 @@
      "lecturaActual": 227.941
     },
     "502": {
-     "mantenimiento": 596.94,
+     "mantenimiento": 598.24,
      "agua": 85.36,
      "credito": 0,
-     "total": 682.3,
+     "total": 683.6,
      "m3": 21.64,
      "m3medidos": 21.64,
      "lavado": 0,
@@ -906,7 +906,7 @@
   },
   "2026-06": {
    "totalMes": 3317.98,
-   "baseMant": 2992.98,
+   "baseMant": 2999.73,
    "facturaAgua": 325,
    "precioM3": 4.166666666666667,
    "descuento": 0,
@@ -918,7 +918,7 @@
    "factor": 1,
    "montoComun": 6.75,
    "sumaAgua": 318.26,
-   "sumaCuotas": 3311.23,
+   "sumaCuotas": 3317.99,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -1006,10 +1006,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 350.78,
+     "mantenimiento": 351.57,
      "agua": 23.04,
      "credito": 0,
-     "total": 373.82,
+     "total": 374.61,
      "m3": 5.53,
      "m3medidos": 5.53,
      "lavado": 0,
@@ -1017,10 +1017,10 @@
      "lecturaActual": 180.23
     },
     "201": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.27,
      "agua": 37.21,
      "credito": 0,
-     "total": 342.79,
+     "total": 343.48,
      "m3": 8.93,
      "m3medidos": 8.93,
      "lavado": 0,
@@ -1028,10 +1028,10 @@
      "lecturaActual": 177.387
     },
     "202": {
-     "mantenimiento": 601.89,
+     "mantenimiento": 603.25,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.6,
+     "total": 635.96,
      "m3": 7.85,
      "m3medidos": 7.85,
      "lavado": 0,
@@ -1039,10 +1039,10 @@
      "lecturaActual": 35.112
     },
     "301": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.27,
      "agua": 66.13,
      "credito": 0,
-     "total": 371.71,
+     "total": 372.4,
      "m3": 15.87,
      "m3medidos": 15.87,
      "lavado": 0,
@@ -1050,10 +1050,10 @@
      "lecturaActual": 426.921
     },
     "401": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.27,
      "agua": 78.75,
      "credito": 0,
-     "total": 384.33,
+     "total": 385.02,
      "m3": 18.9,
      "m3medidos": 17.4,
      "lavado": 1.5,
@@ -1061,10 +1061,10 @@
      "lecturaActual": 420.638
     },
     "501": {
-     "mantenimiento": 518.08,
+     "mantenimiento": 519.25,
      "agua": 10.17,
      "credito": 0,
-     "total": 528.25,
+     "total": 529.42,
      "m3": 2.44,
      "m3medidos": 2.44,
      "lavado": 0,
@@ -1072,10 +1072,10 @@
      "lecturaActual": 230.386
     },
     "502": {
-     "mantenimiento": 605.48,
+     "mantenimiento": 606.85,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.73,
+     "total": 677.1,
      "m3": 16.86,
      "m3medidos": 16.86,
      "lavado": 0,
@@ -1086,7 +1086,7 @@
   },
   "2026-07": {
    "totalMes": 3374.38,
-   "baseMant": 3035.78,
+   "baseMant": 3042.55,
    "facturaAgua": 338.6,
    "precioM3": 4.180246913580247,
    "descuento": 0,
@@ -1098,7 +1098,7 @@
    "factor": 1,
    "montoComun": 6.77,
    "sumaAgua": 331.83,
-   "sumaCuotas": 3367.6,
+   "sumaCuotas": 3374.38,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
@@ -1186,10 +1186,10 @@
    ],
    "cuotas": {
     "101": {
-     "mantenimiento": 355.79,
+     "mantenimiento": 356.59,
      "agua": 26.04,
      "credito": 0,
-     "total": 381.83,
+     "total": 382.63,
      "m3": 6.23,
      "m3medidos": 6.23,
      "lavado": 0,
@@ -1197,10 +1197,10 @@
      "lecturaActual": 186.461
     },
     "201": {
-     "mantenimiento": 309.95,
+     "mantenimiento": 310.64,
      "agua": 32.9,
      "credito": 0,
-     "total": 342.85,
+     "total": 343.54,
      "m3": 7.87,
      "m3medidos": 7.87,
      "lavado": 0,
@@ -1208,10 +1208,10 @@
      "lecturaActual": 185.256
     },
     "202": {
-     "mantenimiento": 610.5,
+     "mantenimiento": 611.86,
      "agua": 72.74,
      "credito": 0,
-     "total": 683.24,
+     "total": 684.6,
      "m3": 17.4,
      "m3medidos": 17.4,
      "lavado": 0,
@@ -1219,10 +1219,10 @@
      "lecturaActual": 52.513
     },
     "301": {
-     "mantenimiento": 309.95,
+     "mantenimiento": 310.64,
      "agua": 61.07,
      "credito": 0,
-     "total": 371.02,
+     "total": 371.71,
      "m3": 14.61,
      "m3medidos": 14.61,
      "lavado": 0,
@@ -1230,10 +1230,10 @@
      "lecturaActual": 441.532
     },
     "401": {
-     "mantenimiento": 309.95,
+     "mantenimiento": 310.64,
      "agua": 79.01,
      "credito": 0,
-     "total": 388.96,
+     "total": 389.65,
      "m3": 18.9,
      "m3medidos": 17.4,
      "lavado": 1.5,
@@ -1241,10 +1241,10 @@
      "lecturaActual": 438.038
     },
     "501": {
-     "mantenimiento": 525.49,
+     "mantenimiento": 526.67,
      "agua": 10.2,
      "credito": 0,
-     "total": 535.69,
+     "total": 536.87,
      "m3": 2.44,
      "m3medidos": 2.44,
      "lavado": 0,
@@ -1252,10 +1252,10 @@
      "lecturaActual": 232.826
     },
     "502": {
-     "mantenimiento": 614.14,
+     "mantenimiento": 615.51,
      "agua": 49.87,
      "credito": 0,
-     "total": 664.01,
+     "total": 665.38,
      "m3": 11.93,
      "m3medidos": 11.93,
      "lavado": 0,
@@ -1268,7 +1268,7 @@
  "variantes": {
   "lavado-0": {
    "totalMes": 3317.98,
-   "baseMant": 2992.98,
+   "baseMant": 3005.98,
    "comunReal": 3.12,
    "brutoComun": 3.12,
    "lavado": 0,
@@ -1276,65 +1276,65 @@
    "factor": 1,
    "montoComun": 13,
    "sumaAgua": 312.01,
-   "sumaCuotas": 3304.98,
+   "sumaCuotas": 3317.99,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
    "cuotas": {
     "101": {
-     "mantenimiento": 350.78,
+     "mantenimiento": 352.3,
      "agua": 23.04,
      "credito": 0,
-     "total": 373.82,
+     "total": 375.34,
      "m3": 5.53
     },
     "201": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.91,
      "agua": 37.21,
      "credito": 0,
-     "total": 342.79,
+     "total": 344.12,
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 601.89,
+     "mantenimiento": 604.5,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.6,
+     "total": 637.21,
      "m3": 7.85
     },
     "301": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.91,
      "agua": 66.13,
      "credito": 0,
-     "total": 371.71,
+     "total": 373.04,
      "m3": 15.87
     },
     "401": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.91,
      "agua": 72.5,
      "credito": 0,
-     "total": 378.08,
+     "total": 379.41,
      "m3": 17.4
     },
     "501": {
-     "mantenimiento": 518.08,
+     "mantenimiento": 520.34,
      "agua": 10.17,
      "credito": 0,
-     "total": 528.25,
+     "total": 530.51,
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 605.48,
+     "mantenimiento": 608.11,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.73,
+     "total": 678.36,
      "m3": 16.86
     }
    }
   },
   "lavado-999": {
    "totalMes": 3317.98,
-   "baseMant": 2992.98,
+   "baseMant": 3005.98,
    "comunReal": 3.12,
    "brutoComun": 3.12,
    "lavado": 0,
@@ -1342,58 +1342,58 @@
    "factor": 1,
    "montoComun": 13,
    "sumaAgua": 312.01,
-   "sumaCuotas": 3304.98,
+   "sumaCuotas": 3317.99,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
    "cuotas": {
     "101": {
-     "mantenimiento": 350.78,
+     "mantenimiento": 352.3,
      "agua": 23.04,
      "credito": 0,
-     "total": 373.82,
+     "total": 375.34,
      "m3": 5.53
     },
     "201": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.91,
      "agua": 37.21,
      "credito": 0,
-     "total": 342.79,
+     "total": 344.12,
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 601.89,
+     "mantenimiento": 604.5,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.6,
+     "total": 637.21,
      "m3": 7.85
     },
     "301": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.91,
      "agua": 66.13,
      "credito": 0,
-     "total": 371.71,
+     "total": 373.04,
      "m3": 15.87
     },
     "401": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.91,
      "agua": 72.5,
      "credito": 0,
-     "total": 378.08,
+     "total": 379.41,
      "m3": 17.4
     },
     "501": {
-     "mantenimiento": 518.08,
+     "mantenimiento": 520.34,
      "agua": 10.17,
      "credito": 0,
-     "total": 528.25,
+     "total": 530.51,
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 605.48,
+     "mantenimiento": 608.11,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.73,
+     "total": 678.36,
      "m3": 16.86
     }
    }
@@ -1466,7 +1466,7 @@
   },
   "credito-301-50": {
    "totalMes": 3317.98,
-   "baseMant": 2992.98,
+   "baseMant": 2999.73,
    "comunReal": 1.62,
    "brutoComun": 3.12,
    "lavado": 1.5,
@@ -1474,65 +1474,65 @@
    "factor": 1,
    "montoComun": 6.75,
    "sumaAgua": 318.26,
-   "sumaCuotas": 3261.23,
+   "sumaCuotas": 3267.99,
    "totalCreditos": 50,
    "cuadraAgua": true,
    "cuadraMes": true,
    "cuotas": {
     "101": {
-     "mantenimiento": 350.78,
+     "mantenimiento": 351.57,
      "agua": 23.04,
      "credito": 0,
-     "total": 373.82,
+     "total": 374.61,
      "m3": 5.53
     },
     "201": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.27,
      "agua": 37.21,
      "credito": 0,
-     "total": 342.79,
+     "total": 343.48,
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 601.89,
+     "mantenimiento": 603.25,
      "agua": 32.71,
      "credito": 0,
-     "total": 634.6,
+     "total": 635.96,
      "m3": 7.85
     },
     "301": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.27,
      "agua": 66.13,
      "credito": 50,
-     "total": 321.71,
+     "total": 322.4,
      "m3": 15.87
     },
     "401": {
-     "mantenimiento": 305.58,
+     "mantenimiento": 306.27,
      "agua": 78.75,
      "credito": 0,
-     "total": 384.33,
+     "total": 385.02,
      "m3": 18.9
     },
     "501": {
-     "mantenimiento": 518.08,
+     "mantenimiento": 519.25,
      "agua": 10.17,
      "credito": 0,
-     "total": 528.25,
+     "total": 529.42,
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 605.48,
+     "mantenimiento": 606.85,
      "agua": 70.25,
      "credito": 0,
-     "total": 675.73,
+     "total": 677.1,
      "m3": 16.86
     }
    }
   },
   "gasto-porton-700": {
    "totalMes": 4017.98,
-   "baseMant": 3692.98,
+   "baseMant": 3699.73,
    "comunReal": 1.62,
    "brutoComun": 3.12,
    "lavado": 1.5,
@@ -1540,65 +1540,65 @@
    "factor": 1,
    "montoComun": 6.75,
    "sumaAgua": 318.26,
-   "sumaCuotas": 4011.23,
+   "sumaCuotas": 4017.99,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
    "cuotas": {
     "101": {
-     "mantenimiento": 432.82,
+     "mantenimiento": 433.61,
      "agua": 23.04,
      "credito": 0,
-     "total": 455.86,
+     "total": 456.65,
      "m3": 5.53
     },
     "201": {
-     "mantenimiento": 377.05,
+     "mantenimiento": 377.74,
      "agua": 37.21,
      "credito": 0,
-     "total": 414.26,
+     "total": 414.95,
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 742.66,
+     "mantenimiento": 744.02,
      "agua": 32.71,
      "credito": 0,
-     "total": 775.37,
+     "total": 776.73,
      "m3": 7.85
     },
     "301": {
-     "mantenimiento": 377.05,
+     "mantenimiento": 377.74,
      "agua": 66.13,
      "credito": 0,
-     "total": 443.18,
+     "total": 443.87,
      "m3": 15.87
     },
     "401": {
-     "mantenimiento": 377.05,
+     "mantenimiento": 377.74,
      "agua": 78.75,
      "credito": 0,
-     "total": 455.8,
+     "total": 456.49,
      "m3": 18.9
     },
     "501": {
-     "mantenimiento": 639.25,
+     "mantenimiento": 640.42,
      "agua": 10.17,
      "credito": 0,
-     "total": 649.42,
+     "total": 650.59,
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 747.09,
+     "mantenimiento": 748.46,
      "agua": 70.25,
      "credito": 0,
-     "total": 817.34,
+     "total": 818.71,
      "m3": 16.86
     }
    }
   },
   "fijos-todos-null": {
    "totalMes": 643.4,
-   "baseMant": 318.4,
+   "baseMant": 325.15,
    "comunReal": 1.62,
    "brutoComun": 3.12,
    "lavado": 1.5,
@@ -1606,58 +1606,58 @@
    "factor": 1,
    "montoComun": 6.75,
    "sumaAgua": 318.26,
-   "sumaCuotas": 636.67,
+   "sumaCuotas": 643.42,
    "totalCreditos": 0,
    "cuadraAgua": true,
    "cuadraMes": true,
    "cuotas": {
     "101": {
-     "mantenimiento": 37.32,
+     "mantenimiento": 38.11,
      "agua": 23.04,
      "credito": 0,
-     "total": 60.36,
+     "total": 61.15,
      "m3": 5.53
     },
     "201": {
-     "mantenimiento": 32.51,
+     "mantenimiento": 33.2,
      "agua": 37.21,
      "credito": 0,
-     "total": 69.72,
+     "total": 70.41,
      "m3": 8.93
     },
     "202": {
-     "mantenimiento": 64.03,
+     "mantenimiento": 65.39,
      "agua": 32.71,
      "credito": 0,
-     "total": 96.74,
+     "total": 98.1,
      "m3": 7.85
     },
     "301": {
-     "mantenimiento": 32.51,
+     "mantenimiento": 33.2,
      "agua": 66.13,
      "credito": 0,
-     "total": 98.64,
+     "total": 99.33,
      "m3": 15.87
     },
     "401": {
-     "mantenimiento": 32.51,
+     "mantenimiento": 33.2,
      "agua": 78.75,
      "credito": 0,
-     "total": 111.26,
+     "total": 111.95,
      "m3": 18.9
     },
     "501": {
-     "mantenimiento": 55.12,
+     "mantenimiento": 56.28,
      "agua": 10.17,
      "credito": 0,
-     "total": 65.29,
+     "total": 66.45,
      "m3": 2.44
     },
     "502": {
-     "mantenimiento": 64.41,
+     "mantenimiento": 65.78,
      "agua": 70.25,
      "credito": 0,
-     "total": 134.66,
+     "total": 136.03,
      "m3": 16.86
     }
    }
@@ -1667,49 +1667,49 @@
   {
    "mes": "2026-01",
    "corto": "ENE",
-   "recibido": 3258.59,
+   "recibido": 3271.89,
    "gastado": 3271.88,
-   "delta": -13.29,
-   "saldo": 5102.94
+   "delta": 0.01,
+   "saldo": 5055.29
   },
   {
    "mes": "2026-02",
    "corto": "FEB",
-   "recibido": 3303.38,
+   "recibido": 3315.49,
    "gastado": 3315.48,
-   "delta": -12.1,
-   "saldo": 5090.84
+   "delta": 0.01,
+   "saldo": 5055.3
   },
   {
    "mes": "2026-03",
    "corto": "MAR",
-   "recibido": 3269.93,
+   "recibido": 3282.88,
    "gastado": 3282.88,
-   "delta": -12.95,
-   "saldo": 5077.89
+   "delta": 0,
+   "saldo": 5055.3
   },
   {
    "mes": "2026-04",
    "corto": "ABR",
-   "recibido": 3258.08,
+   "recibido": 3269.34,
    "gastado": 3269.38,
-   "delta": -11.3,
-   "saldo": 5066.59
+   "delta": -0.04,
+   "saldo": 5055.26
   },
   {
    "mes": "2026-05",
    "corto": "MAY",
-   "recibido": 3252.05,
+   "recibido": 3258.48,
    "gastado": 3258.45,
-   "delta": -6.4,
-   "saldo": 5060.19
+   "delta": 0.03,
+   "saldo": 5055.29
   },
   {
    "mes": "2026-06",
    "corto": "JUN",
-   "recibido": 2440.19,
+   "recibido": 2445.09,
    "gastado": 3317.98,
-   "delta": -877.79,
+   "delta": -872.89,
    "saldo": 4182.4
   }
  ],

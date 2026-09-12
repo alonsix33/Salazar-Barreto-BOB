@@ -350,8 +350,22 @@ export function calcularMes(entradasCrudas: EntradasMes, ovCruda: Overrides = {}
   }
 
   const totalMes = sumarMontos(gastos)
-  // El agua se saca de la base porque no se reparte por flat sino por consumo.
-  const baseMant = round2(totalMes - facturaAgua)
+  /**
+   * La base que se reparte por flat.
+   *
+   * Sale el agua **que se cobra por medidor** —el consumo de cada uno más el
+   * lavado del 401—, porque esa no se reparte por porcentaje sino por lo que
+   * marcó el contador. Pero el **área común se queda dentro**: la pagan los
+   * siete, cada uno por su flat.
+   *
+   * Antes el área común no entraba aquí ni en ninguna cuota: la absorbía el
+   * fondo del edificio, siguiendo `01` §3.2. Esa regla era del prototipo y no
+   * del edificio, y hacía además que el lavado no tuviera sentido —si el fondo
+   * paga el común, da igual cuánta agua gaste el 401 lavando el carro—. Con el
+   * común dentro de la base, reasignar el lavado sí hace lo que dice: que esos
+   * m³ los pague el 401 en vez de los otros seis.
+   */
+  const baseMant = round2(totalMes - facturaAgua + montoComun)
 
   // ── Créditos · §4.2 · salen del saldo de la cuenta, no de los demás vecinos
   const creditos: Partial<Record<DptoId, number>> = {}
@@ -419,8 +433,14 @@ export function calcularMes(entradasCrudas: EntradasMes, ovCruda: Overrides = {}
 
   const totalCreditos = round2(DPTOS.reduce((s, d) => s + (cuotas[d.id].credito || 0), 0))
   const sumaCuotas = round2(DPTOS.reduce((s, d) => s + cuotas[d.id].total, 0))
-  const cuadraMes =
-    Math.abs(sumaCuotas + montoComun + totalCreditos - totalMes) <= toleranciaMes(precioM3)
+  /**
+   * Lo que pagan los siete más los créditos tiene que ser el total del mes.
+   *
+   * El `montoComun` ya no va sumado aquí porque ya está **dentro** de las
+   * cuotas: entra en la base de mantenimiento y se reparte por flat. Mientras
+   * lo pagaba el fondo, este cuadre tenía que sumarlo aparte para cerrar.
+   */
+  const cuadraMes = Math.abs(sumaCuotas + totalCreditos - totalMes) <= toleranciaMes(precioM3)
 
   // El tercer cuadre. Los dos de `01` §5 son identidades algebraicas: se
   // cumplen igual con cifras imposibles. Ver `sanidad.ts`.
