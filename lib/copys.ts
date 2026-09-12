@@ -14,7 +14,9 @@
 
 import { fmt } from './calculo/redondeo'
 import type { MotivoLectura } from './calculo/correccion'
+import type { EstadoPago } from './calculo/tipos'
 import type { EstadoCuota } from './estados'
+import { fechaCorta } from './formato'
 
 /**
  * Los múltiplos en palabras, como los escribe `04`: *«cuatro veces tu promedio»*,
@@ -46,6 +48,7 @@ export const COPYS = {
   /** `01` §7 · nunca "deudor", "moroso" ni "vencido". */
   estados: {
     'al-dia': 'Al día',
+    'sin-cobro': 'Nada que pagar',
     'sin-registrar': 'Sin registrar',
     'en-verificacion': 'En verificación',
   } satisfies Record<EstadoCuota, string>,
@@ -83,9 +86,20 @@ export const COPYS = {
     grupoAlDia: 'Al día',
     grupoAvisaron: 'Avisaron, falta confirmar',
     grupoSinAviso: 'Sin aviso todavía',
-    leyendaAlDia: 'Al día',
-    leyendaPorConfirmar: 'Por confirmar',
-    leyendaSinAviso: 'Sin aviso',
+    /**
+     * La leyenda de la barra de siete, por estado.
+     *
+     * Dice cosas distintas de `COPYS.estados` a propósito: la píldora habla del
+     * mes de quien mira («En verificación») y la leyenda habla de los vecinos
+     * («Por confirmar»). Es un `Record` y no tres claves sueltas para que
+     * agregar un estado no compile hasta que tenga su palabra.
+     */
+    leyenda: {
+      'al-dia': 'Al día',
+      'en-verificacion': 'Por confirmar',
+      'sin-registrar': 'Sin aviso',
+      'sin-cobro': 'Sin nada que pagar',
+    } satisfies Record<EstadoCuota, string>,
     tuDepartamento: 'Tu departamento',
     enQueSeGasto: 'En qué se gastó',
     facturaAguaCon: (m3: number) => `Factura de agua · ${m3} m³`,
@@ -93,16 +107,35 @@ export const COPYS = {
     laCuenta: 'La cuenta',
     recibido: 'Recibido',
     gastado: 'Gastado',
-    resumenPagos: (confirmados: number, avisados: number) =>
+    /**
+     * El contador del encabezado. `resueltos` es quien no debe nada: pagó y está
+     * confirmado, **o** su cuota quedó en cero. Con el 501 condonado esto decía
+     * «6 / 7» mientras Bob, dos centímetros más abajo, decía «los siete al
+     * día»; el que estaba mal era el contador.
+     */
+    resumenPagos: (resueltos: number, avisados: number) =>
       avisados
-        ? `${confirmados} confirmados · ${avisados} por confirmar`
-        : `${confirmados} / 7`,
+        ? `${resueltos} listos · ${avisados} por confirmar`
+        : `${resueltos} / 7`,
+    /**
+     * Lo que oye un lector de pantalla en vez de siete rectángulos.
+     *
+     * Se arma de los mismos grupos que se pintan, en el mismo orden, así que no
+     * puede contar una cosa distinta de la que se ve. Antes era una plantilla
+     * aparte con tres números escritos a mano, y al aparecer el cuarto estado
+     * la barra y su rótulo dejaron de coincidir.
+     */
+    resumenBarra: (grupos: readonly { estado: EstadoCuota; cuantos: number }[]) =>
+      grupos.map((g) => `${g.cuantos} ${COPYS.inicio.leyenda[g.estado].toLowerCase()}`).join(', '),
     notaSaldo: (delta: number) =>
       delta < 0
         ? `acumulado de la cuenta conjunta · este mes bajó S/ ${fmt(Math.abs(delta))}`
         : `acumulado de la cuenta conjunta · este mes subió S/ ${fmt(delta)}`,
     sparklineCorta: 'La curva aparece con el tercer mes',
     detalleSinRegistrar: 'Aún no hay un pago asociado a este mes.',
+    /** Cuota en cero: no es que falte el pago, es que no había nada que pagar. */
+    detalleSinCobro: 'Este mes tu cuota quedó en cero. No tienes nada que depositar.',
+    grupoSinCobro: 'Sin nada que pagar',
     detalleEnVerificacion: (fecha: string) =>
       `Avisaste el ${fecha}. Falta que lo confirmen contra el estado de cuenta.`,
     detalleAlDia: (fecha: string, op: string) => `Pagado el ${fecha} · op. ${op}`,
@@ -535,3 +568,22 @@ export const COPYS = {
 } as const
 
 export type Copys = typeof COPYS
+
+/**
+ * La línea que va debajo de la píldora de estado, en Inicio y en Mi
+ * departamento.
+ *
+ * Está aquí y no en cada pantalla porque las dos la escribían por separado con
+ * el mismo `if` anidado, y el cuarto estado —cuota en cero— habría que haberlo
+ * agregado en los dos sitios. Ojo con el `pago!` de las dos últimas ramas: sin
+ * pago solo se puede caer en los dos primeros casos, y por eso están antes.
+ */
+export function detalleDe(
+  estado: EstadoCuota,
+  pago: { estado: EstadoPago; fecha: string; op?: string | null } | null | undefined,
+): string {
+  if (estado === 'sin-cobro') return COPYS.inicio.detalleSinCobro
+  if (estado === 'sin-registrar') return COPYS.inicio.detalleSinRegistrar
+  if (estado === 'en-verificacion') return COPYS.inicio.detalleEnVerificacion(fechaCorta(pago!.fecha))
+  return COPYS.inicio.detalleAlDia(fechaCorta(pago!.fecha), pago!.op ?? '—')
+}

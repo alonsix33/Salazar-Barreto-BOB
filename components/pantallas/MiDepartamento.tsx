@@ -1,7 +1,6 @@
-import { COPYS } from '@/lib/copys'
+import { COPYS, detalleDe } from '@/lib/copys'
 import { fmt } from '@/lib/calculo/redondeo'
 import { etiquetaMes, nombreMes } from '@/lib/calculo/mes'
-import { fechaCorta } from '@/lib/formato'
 import { estadoCuota } from '@/lib/estados'
 import type { DptoId, MesId, PagosMes, ResultadoMes } from '@/lib/calculo/tipos'
 import { vistaAnual, type HistorialDpto } from '@/lib/datos/historial'
@@ -41,13 +40,8 @@ export function MiDepartamento({
 }) {
   const mia = resultado.cuotas[dpto]
   const miPago = pagos[dpto] ?? null
-  const estado = estadoCuota(miPago)
-  const detalle =
-    estado === 'sin-registrar'
-      ? COPYS.inicio.detalleSinRegistrar
-      : estado === 'en-verificacion'
-        ? COPYS.inicio.detalleEnVerificacion(fechaCorta(miPago!.fecha))
-        : COPYS.inicio.detalleAlDia(fechaCorta(miPago!.fecha), miPago!.op ?? '—')
+  const estado = estadoCuota(miPago, mia.total)
+  const detalle = detalleDe(estado, miPago)
 
   // La tira ENE→DIC y los agregados «del año» se toman del año de calendario que
   // se está mirando, no de una ventana móvil de doce meses. Ver `vistaAnual`.

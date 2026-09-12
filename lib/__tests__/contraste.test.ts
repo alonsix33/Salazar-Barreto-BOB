@@ -63,9 +63,19 @@ function luminancia({ r, g, b }: { r: number; g: number; b: number }): number {
   return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b)
 }
 
-/** El ratio de contraste, redondeado a dos decimales como lo reporta axe. */
-function ratio(textoValor: string, fondoValor: string): number {
-  const fondo = componer(leerColor(fondoValor), { r: 255, g: 255, b: 255 })
+/**
+ * El ratio de contraste, redondeado a dos decimales como lo reporta axe.
+ *
+ * `base` es lo que hay **debajo** cuando el fondo es translúcido. Por defecto
+ * blanco, que es la tarjeta; las píldoras que van sobre el bloque noche se
+ * miden con `noche` debajo, o el ratio sale de un fondo que no existe.
+ */
+function ratio(
+  textoValor: string,
+  fondoValor: string,
+  base: { r: number; g: number; b: number } = { r: 255, g: 255, b: 255 },
+): number {
+  const fondo = componer(leerColor(fondoValor), base)
   const texto = componer(leerColor(textoValor), fondo)
   const a = luminancia(texto)
   const b = luminancia(fondo)
@@ -88,6 +98,8 @@ const COMBINACIONES: {
   minimo: 3 | 4.5
   esperado: number
   cumpleAA: boolean
+  /** Lo que hay debajo del fondo translúcido. Por defecto, la tarjeta blanca. */
+  base?: { r: number; g: number; b: number }
 }[] = [
   // ── Sobre crema, el fondo de la app
   { texto: token('tinta'), fondo: token('crema'), uso: 'texto principal sobre crema', minimo: 4.5, esperado: 17.59, cumpleAA: true },
@@ -127,12 +139,32 @@ const COMBINACIONES: {
   // ── Sobre los fondos suaves de las píldoras y los avisos
   { texto: token('verde-oscuro'), fondo: token('verde-suave'), uso: 'píldora al día', minimo: 4.5, esperado: 7.53, cumpleAA: true },
   { texto: token('terra-texto'), fondo: token('ambar-suave'), uso: 'aviso de Bob', minimo: 4.5, esperado: 6.52, cumpleAA: true },
+  /**
+   * **Las otras tres píldoras, que esta tabla no medía.**
+   *
+   * Estaba solo la verde, la que cumple. Las tres que no llegan a AA —y que
+   * llevan meses en pantalla— no aparecían, así que la tabla se leía como si
+   * las píldoras estuvieran bien. Ninguna se corrige aquí: son los tonos de
+   * `02` §1 y la paleta es decisión del usuario. Lo que cambia es que ahora
+   * están medidas y dichas, con su ratio, igual que el ámbar y el terracota.
+   *
+   * La nueva —«Nada que pagar», 4.28:1— es la que **mejor** contraste tiene de
+   * las tres, así que no empeora nada.
+   */
+  { texto: token('gris'), fondo: token('neutro-apenas'), uso: 'píldora nada que pagar', minimo: 4.5, esperado: 4.28, cumpleAA: false },
+  { texto: token('gris'), fondo: token('neutro-suave'), uso: 'píldora en verificación', minimo: 4.5, esperado: 4.02, cumpleAA: false },
+  { texto: token('ambar'), fondo: token('ambar-suave'), uso: 'píldora sin registrar', minimo: 4.5, esperado: 3.05, cumpleAA: false },
+  // ── Las mismas píldoras, sobre el bloque noche
+  { texto: token('verde-claro'), fondo: token('pildora-dia'), uso: 'píldora al día sobre noche', minimo: 4.5, esperado: 7.35, cumpleAA: true, base: leerColor(token('noche')) },
+  { texto: token('sobre-noche-cuerpo'), fondo: token('sobre-noche-boton'), uso: 'píldora nada que pagar sobre noche', minimo: 4.5, esperado: 7.61, cumpleAA: true, base: leerColor(token('noche')) },
+  { texto: token('ambar-claro'), fondo: token('pildora-sin'), uso: 'píldora sin registrar sobre noche', minimo: 4.5, esperado: 6.48, cumpleAA: true, base: leerColor(token('noche')) },
+  { texto: token('agua-claro'), fondo: token('pildora-verificacion'), uso: 'píldora en verificación sobre noche', minimo: 4.5, esperado: 7.2, cumpleAA: true, base: leerColor(token('noche')) },
 ]
 
 describe('contraste · cada combinación de 02 §1, medida', () => {
   for (const c of COMBINACIONES) {
     it(`${c.uso} · ${c.esperado}:1${c.cumpleAA ? '' : ' · NO llega a AA'}`, () => {
-      const medido = ratio(c.texto, c.fondo)
+      const medido = ratio(c.texto, c.fondo, c.base)
       // El ratio se fija: si alguien mueve un color, el test dice el nuevo.
       expect(medido, `${c.texto} sobre ${c.fondo}`).toBeCloseTo(c.esperado, 2)
       expect(medido >= c.minimo, `${c.uso}: ${medido}:1 contra un mínimo de ${c.minimo}:1`).toBe(
