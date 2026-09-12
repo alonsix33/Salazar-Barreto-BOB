@@ -87,7 +87,15 @@ export async function extrasDe(mes: MesId, db: Lector = prisma): Promise<Extra[]
   return filas.map((f): Extra =>
     f.tipo === 'credito'
       ? { tipo: 'credito', concepto: f.concepto, monto: aNumeroObligatorio(f.monto), dpto: f.dptoId as DptoId }
-      : { tipo: 'gasto', concepto: f.concepto, monto: aNumeroObligatorio(f.monto) },
+      : {
+          tipo: 'gasto',
+          concepto: f.concepto,
+          monto: aNumeroObligatorio(f.monto),
+          // `as`: la columna guarda ids de departamento, los mismos siete de
+          // `DPTOS`. Vacío significa "lo pagan todos" y el motor lo trata así.
+          participantes: f.participantes as DptoId[],
+          reparto: f.reparto,
+        },
   )
 }
 

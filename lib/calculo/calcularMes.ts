@@ -21,6 +21,7 @@ import {
   toleranciaMes,
 } from './constantes'
 import { esMesId } from './mes'
+import { repartir } from './reparto'
 import { round2 } from './redondeo'
 import { revisarEntradas, revisarResultado, sumarMontos } from './sanidad'
 import type {
@@ -342,10 +343,27 @@ export function calcularMes(entradasCrudas: EntradasMes, ovCruda: Overrides = {}
   if (!insertadaAgua) gastos.push({ concepto: CONCEPTO_AGUA, monto: facturaAgua, esAgua: true })
   if (!insertadaLuz) gastos.push({ concepto: CONCEPTO_LUZ, monto: rec.luz })
 
-  // Gastos extraordinarios del paso 5: se suman al total y **los pagan los siete
-  // por su porcentaje**, como todo lo demás. No hay reparto equitativo: si algún
-  // vecino pagó algo aparte, eso se maneja con un crédito a su cuota.
-  for (const e of ov.extras ?? entradas.extras) {
+  /**
+   * Gastos extraordinarios del paso 5.
+   *
+   * Por defecto los pagan **los siete por su porcentaje**, igual que todo lo
+   * demás, y para eso basta con que entren en el total: la base ya se reparte
+   * por flat. Pero hay dos casos que no:
+   *
+   *  - **No lo pagan todos.** El portón del garaje no le sirve al primer piso,
+   *    así que el 101 no entra. Entre los seis que quedan se reparte
+   *    renormalizando sus flats: su 88.28 % pasa a ser el nuevo 100 % y cada
+   *    uno paga su parte proporcional dentro de él. Se respeta que el 502 es
+   *    más grande que el 201, que es lo que el flat significa.
+   *  - **Se repartió en partes iguales.** Solo para el histórico: la planilla
+   *    cobró así el tanque hidroneumático, S/ 182.90 a cada uno. De aquí en
+   *    adelante, porcentaje.
+   *
+   * Esos dos salen de la base y se asignan a mano, departamento por
+   * departamento, con los céntimos cuadrados (ver `reparto.ts`).
+   */
+  const extrasDelMes = ov.extras ?? entradas.extras
+  for (const e of extrasDelMes) {
     if (e.tipo === 'gasto') gastos.push({ concepto: e.concepto, monto: e.monto, extra: true })
   }
 
@@ -365,7 +383,23 @@ export function calcularMes(entradasCrudas: EntradasMes, ovCruda: Overrides = {}
    * común dentro de la base, reasignar el lavado sí hace lo que dice: que esos
    * m³ los pague el 401 en vez de los otros seis.
    */
-  const baseMant = round2(totalMes - facturaAgua + montoComun)
+  const repartoAparte: Partial<Record<DptoId, number>> = {}
+  let montoAparte = 0
+  for (const e of extrasDelMes) {
+    if (e.tipo !== 'gasto') continue
+    const subconjunto =
+      !!e.participantes && e.participantes.length > 0 && e.participantes.length < DPTOS.length
+    if (!subconjunto && e.reparto !== 'iguales') continue
+    montoAparte = round2(montoAparte + e.monto)
+    for (const [id, parte] of Object.entries(
+      repartir(e.monto, e.participantes, e.reparto ?? 'porcentaje'),
+    )) {
+      const d = id as DptoId
+      repartoAparte[d] = round2((repartoAparte[d] ?? 0) + (parte ?? 0))
+    }
+  }
+
+  const baseMant = round2(totalMes - facturaAgua + montoComun - montoAparte)
 
   // ── Créditos · §4.2 · salen del saldo de la cuenta, no de los demás vecinos
   const creditos: Partial<Record<DptoId, number>> = {}
@@ -398,14 +432,16 @@ export function calcularMes(entradasCrudas: EntradasMes, ovCruda: Overrides = {}
      * este `round2`.
      */
     const cred = round2(creditos[d.id] ?? 0)
+    // Lo que le toca de los gastos que no pagan los siete por flat.
+    const aparte = round2(repartoAparte[d.id] ?? 0)
     cuotas[d.id] = {
       credito: cred,
-      mantenimiento: round2(mant),
+      mantenimiento: round2(mant + aparte),
       agua: montoAgua[d.id],
       m3: m3Cobrados[d.id],
       m3medidos: consumos[d.id],
       lavado: d.id === LAVADO.dpto ? lavado : 0,
-      total: round2(mant + montoAgua[d.id] - cred),
+      total: round2(mant + aparte + montoAgua[d.id] - cred),
       lecturaAnterior: lecAnt[d.id],
       lecturaActual: lecAct[d.id],
     }

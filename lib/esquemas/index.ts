@@ -1,6 +1,7 @@
 /** Los esquemas de cada endpoint. Comparte tipos con el cliente. */
 
 import { z } from 'zod'
+import { DPTO_IDS } from '@/lib/calculo/constantes'
 import { zDpto, zLectura, zM3, zM3Recibo, zMes, zMonto, zPin, zTexto } from './comunes'
 
 export * from './comunes'
@@ -50,6 +51,19 @@ export const zGuardarGastos = z.object({
           tipo: z.literal('gasto'),
           concepto: zTexto(80).min(1, 'El gasto necesita un concepto'),
           monto: zMonto,
+          /**
+           * Quiénes lo pagan. Vacío o ausente = los siete, que es lo normal.
+           * Se valida contra los ids reales: un departamento inventado aquí
+           * repartiría el gasto entre menos gente sin que nada avise.
+           */
+          participantes: z
+            .array(z.string())
+            .optional()
+            .refine(
+              (v) => !v || v.every((id) => (DPTO_IDS as readonly string[]).includes(id)),
+              'Hay un departamento que no existe en la lista de quiénes pagan este gasto',
+            ),
+          reparto: z.enum(['porcentaje', 'iguales']).optional(),
         }),
         z.object({
           tipo: z.literal('credito'),

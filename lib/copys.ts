@@ -409,7 +409,19 @@ export const COPYS = {
     montoGasto: 'Monto del gasto extraordinario',
     montoCredito: 'Monto del crédito',
     anadidos: (n: number) => `Añadido este mes · ${n}`,
-    seRepartte: 'se reparte entre los siete',
+    seRepartte: 'lo pagan los siete',
+    /** Cuando un gasto no lo pagan todos. Dice quién queda fuera, que es lo raro. */
+    loPaganAlgunos: (fuera: readonly string[]) =>
+      fuera.length === 1
+        ? `lo pagan seis · sin el ${fuera[0]}`
+        : `lo pagan ${7 - fuera.length} · sin ${fuera.join(' ni ')}`,
+    enPartesIguales: 'en partes iguales',
+    quienesPagan: '¿Quiénes lo pagan?',
+    todosPagan: 'Todos',
+    listoQuienes: 'Listo',
+    /** Se explica solo cuando alguien queda fuera, que es cuando surge la duda. */
+    comoSeReparte:
+      'Entre los que pagan se reparte por su porcentaje, ajustado para que sumen 100 %.',
     aFavorDe: (dpto: string) => `a favor del ${dpto}`,
     reasignaciones: 'Reasignaciones de agua · ¿siguen?',
     lavadoActivo: 'activo · se descuenta del área común',

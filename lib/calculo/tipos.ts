@@ -6,6 +6,8 @@
  */
 
 /** Identificador de mes, `'AAAA-MM'`. */
+import type { ModoReparto } from './reparto'
+
 export type MesId = string & { readonly __marca?: 'MesId' }
 
 /** Los siete departamentos del edificio. */
@@ -64,7 +66,22 @@ export interface LineaGasto {
  * - `credito` se resta de la cuota de un departamento y sale del saldo de la cuenta.
  */
 export type Extra =
-  | { tipo: 'gasto'; concepto: string; monto: number; dpto?: null }
+  | {
+      tipo: 'gasto'
+      concepto: string
+      monto: number
+      dpto?: null
+      /**
+       * Quiénes lo pagan. Vacío o ausente = **los siete**, que es lo normal.
+       *
+       * Existe porque no todo gasto puntual le sirve a todos: el portón del
+       * garaje no le sirve al primer piso, así que el 101 no entra. Entre los
+       * que quedan se reparte renormalizando sus flats al nuevo 100 %.
+       */
+      participantes?: readonly DptoId[]
+      /** `porcentaje` (lo normal) o `iguales` (solo para el histórico). */
+      reparto?: ModoReparto
+    }
   | { tipo: 'credito'; concepto?: string; monto: number; dpto: DptoId }
 
 /**
