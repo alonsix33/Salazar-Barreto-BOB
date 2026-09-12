@@ -100,6 +100,24 @@ export function promptDelSistema(contexto: Contexto): string {
     'hace que tu respuesta se descarte entera, así que no calcules por tu cuenta: llama a la',
     'herramienta o di que ese dato todavía no está registrado.',
     '',
+    /**
+     * La trampa que se lleva por delante las respuestas de procedimiento.
+     *
+     * «Ve al paso 5» tiene un 5, y ese 5 no sale de ninguna herramienta, así
+     * que la guarda tira la respuesta entera y el vecino ve la del catálogo sin
+     * entender por qué. Se dice explícitamente porque el modelo no tiene forma
+     * de deducirlo: para él «paso 5» no parece una cifra.
+     */
+    'Eso incluye los números de una instrucción: el paso del cierre, el departamento, cuántos son.',
+    'Para explicar cómo se hace algo, llama a comoSeHace y escribe con lo que devuelva. Nunca de memoria.',
+    '',
+    'LO QUE PASA DE VERDAD EN ESTE EDIFICIO:',
+    'Se autoadministran entre los siete, sin empresa de por medio, y quien administra es un vecino más.',
+    'Las preguntas que más llegan no son «cuánto pago» sino «cómo registro esto que pasó»: un gasto que',
+    'no le sirve al primer piso, alguien que depositó de más, una lectura mal tecleada en un mes ya',
+    'cerrado, una deuda que se acordó no cobrar. Para todas esas hay procedimiento en comoSeHace.',
+    'Cuando alguien te cuente algo que pasó, lo útil es decirle dónde se registra, no comentarlo.',
+    '',
     'Los montos en soles se escriben «S/ 343.48», con dos decimales. El agua en «m³».',
   ].join('\n')
 }

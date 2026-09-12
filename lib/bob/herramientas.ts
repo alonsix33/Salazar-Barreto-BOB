@@ -12,12 +12,14 @@
  */
 
 import { z } from 'zod'
-import { DPTOS, DPTO_IDS } from '@/lib/calculo/constantes'
+import { DPTOS, DPTO_IDS, LAVADO } from '@/lib/calculo/constantes'
 import { mesAnterior, nombreMes, comoMes } from '@/lib/calculo/mes'
 import { fmt } from '@/lib/calculo/redondeo'
 import { serieDelSaldo, mesesPublicados } from '@/lib/datos/meses'
 import { pagosDe, resultadoDeMes } from '@/lib/datos/mes'
 import { historialDeDpto } from '@/lib/datos/historial'
+import { prisma } from '@/lib/datos/prisma'
+import { CASOS, PROCEDIMIENTOS, procedimientoPara } from './procedimientos'
 import type { DptoId, MesId } from '@/lib/calculo/tipos'
 import type { Contexto, Herramienta } from './tipos'
 
@@ -255,12 +257,23 @@ export const HERRAMIENTAS: Herramienta[] = [
       const mes = mesDe(argumentos as { mes?: string }, contexto)
       const r = await resultadoDeMes(mes)
       if (!r.valido) return { mes, valido: false, motivo: r.motivoInvalido }
-      if (r.lavado <= 0) return { mes, nombreMes: nombreMes(mes), activo: false }
+      /**
+       * Con el lavado apagado **también** se dice de quién es.
+       *
+       * Sin este `dpto`, la respuesta correcta —«cuando está activo, esos m³ se
+       * le cargan al 401»— llevaba un 401 que no salía de ninguna herramienta,
+       * y la guarda de números la habría descartado entera si la hubiera
+       * escrito el modelo. El catálogo la decía igual porque a él no se le
+       * aplica la guarda: o sea, la misma frase pasaba o no según quién la
+       * escribiera.
+       */
+      if (r.lavado <= 0)
+        return { mes, nombreMes: nombreMes(mes), activo: false, dpto: LAVADO.dpto }
       return {
         mes,
         nombreMes: nombreMes(mes),
         activo: true,
-        dpto: '401',
+        dpto: LAVADO.dpto,
         m3: r.lavado,
         areaComunAntes: r.brutoComun,
         areaComunDespues: r.comunReal,
@@ -277,6 +290,81 @@ export const HERRAMIENTAS: Herramienta[] = [
           `No se cobran por fuera de la factura: se restan del área común, que este mes queda en ` +
           `${fmt(r.comunReal)} m³, y se le suman al 401, así que el total del edificio sigue siendo ` +
           `exactamente lo que factura SEDAPAL.`,
+      }
+    },
+  },
+  {
+    nombre: 'quienVive',
+    descripcion:
+      'Los siete departamentos del edificio: quién vive en cada uno, su piso y su porcentaje de la escritura.',
+    parametros: {
+      type: 'object',
+      properties: { dpto: { type: 'string', description: 'Si preguntan por uno en concreto.' } },
+    },
+    async ejecutar(argumentos: { dpto?: string }) {
+      /**
+       * Los nombres salen de la **base**, no de `DPTOS`.
+       *
+       * Es lo mismo mientras nadie cambie de dueño, y deja de serlo el día que
+       * alguien se muda: la constante es la escritura, la base es quién vive
+       * hoy. Bob tiene que decir quién vive hoy. Los porcentajes sí son de la
+       * escritura y por eso se toman de la constante, que es donde el test
+       * candado los vigila.
+       */
+      const filas = await prisma.departamento.findMany({ orderBy: { id: 'asc' } })
+      const porId = new Map(filas.map((f) => [f.id, f.nombre]))
+      const todos = DPTOS.map((d) => ({
+        dpto: d.id,
+        quienVive: porId.get(d.id) ?? d.nombre,
+        piso: d.piso,
+        porcentaje: d.flat,
+      }))
+      // Si preguntaron por uno en concreto, se dice cuál es. Quién vive dónde
+      // es público entre los siete, así que esto no pasa por `dptoDe`.
+      const pedido = typeof argumentos.dpto === 'string' ? argumentos.dpto : null
+      const uno = pedido ? (todos.find((x) => x.dpto === pedido) ?? null) : null
+      return { dptos: todos, preguntadoPor: uno }
+    },
+  },
+  {
+    nombre: 'comoSeHace',
+    descripcion:
+      'El procedimiento para un caso concreto de la app: gasto extra, gasto que no paga alguien, ' +
+      'pago adelantado, pago parcial, condonar, corregir un mes publicado, cambiar un gasto fijo, ' +
+      'concepto nuevo, lavado de vehículo, cambio de dueño, publicar, o un mes que no cuadra. ' +
+      'Llámala siempre que pregunten cómo se registra o cómo se hace algo.',
+    parametros: {
+      type: 'object',
+      properties: {
+        caso: {
+          type: 'string',
+          description: `Uno de: ${CASOS.join(', ')}. También vale la pregunta tal cual la escribieron.`,
+        },
+      },
+      required: ['caso'],
+    },
+    async ejecutar(argumentos: { caso?: string }) {
+      const pedido = typeof argumentos.caso === 'string' ? argumentos.caso : ''
+      const p = procedimientoPara(pedido)
+      /**
+       * Sin receta no se improvisa una: se devuelve la lista de las que hay.
+       *
+       * Inventar un procedimiento es peor que no tenerlo. Quien administra lo
+       * seguiría, y el error terminaría en la cuota de alguien.
+       */
+      if (!p) {
+        return {
+          encontrado: false,
+          casos: PROCEDIMIENTOS.map((x) => ({ caso: x.caso, queEs: x.queEs })),
+        }
+      }
+      return {
+        encontrado: true,
+        caso: p.caso,
+        queEs: p.queEs,
+        donde: p.donde,
+        pasos: p.pasos,
+        ...(p.ojoCon ? { ojoCon: p.ojoCon } : {}),
       }
     },
   },
