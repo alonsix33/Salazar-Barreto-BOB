@@ -36,8 +36,8 @@ tienen un valor por defecto sensato o se pueden dejar vacías.
 
 | Variable | ¿De dónde la saco? | ¿Dónde la configuro? | ¿Obligatoria? |
 |---|---|---|---|
-| `DATABASE_URL` | Railway → servicio Postgres → pestaña **Variables** → `DATABASE_URL`. Al final le añades `?pgbouncer=true&connection_limit=1` | `.env` local **y** Vercel | **Sí** |
-| `DIRECT_URL` | La misma de Railway, **sin** el `?pgbouncer=...` | `.env` local **y** Vercel | **Sí** |
+| `DATABASE_URL` | Railway → servicio Postgres → pestaña **Variables** → `DATABASE_URL`. Al final le añades `?connection_limit=1` | `.env` local **y** Vercel | **Sí** |
+| `DIRECT_URL` | La misma `DATABASE_PUBLIC_URL`, **sin** el `?connection_limit` | `.env` local **y** Vercel | **Sí** |
 | `ADMIN_PIN` | Lo eliges tú. Cuatro dígitos | `.env` local **y** Vercel | **Sí** |
 | `ADMIN_SECRETO` | Lo generas: `openssl rand -base64 32` | `.env` local **y** Vercel | **Sí** |
 | `NEXT_PUBLIC_APP_URL` | La URL que te da Vercel al desplegar | `.env` local **y** Vercel | **Sí** |
@@ -103,10 +103,10 @@ cp .env.example .env
 Abre `.env` y rellena:
 
 ```bash
-# Las dos de Railway. La pública lleva `?pgbouncer=true&connection_limit=1`
+# Las dos de Railway. La pública lleva `?connection_limit=1`
 # añadido al final: Vercel abre y cierra funciones sin parar, y sin eso la base
 # se queda sin conexiones.
-DATABASE_URL="<DATABASE_PUBLIC_URL de Railway>?pgbouncer=true&connection_limit=1"
+DATABASE_URL="<DATABASE_PUBLIC_URL de Railway>?connection_limit=1"
 DIRECT_URL="<DATABASE_PUBLIC_URL de Railway>"
 
 # El PIN de cuatro dígitos del panel de administración. Elígelo tú.
@@ -222,7 +222,7 @@ Si lo ves, bórralo del repositorio inmediatamente y cambia el PIN y el
 
    | Nombre | Valor |
    |---|---|
-   | `DATABASE_URL` | la de Railway, con `?pgbouncer=true&connection_limit=1` |
+   | `DATABASE_URL` | la de Railway, con `?connection_limit=1` |
    | `DIRECT_URL` | la de Railway, sin nada añadido |
    | `ADMIN_PIN` | tu PIN de cuatro dígitos |
    | `ADMIN_SECRETO` | la cadena larga de `openssl rand -base64 32` |
@@ -324,8 +324,8 @@ del producto que no haya pantalla para eso** (`README` §7).
 | «Algo no está respondiendo» · log dice `Can't reach database server` | la URL es la **interna** de Railway, que Vercel no alcanza | usa `DATABASE_PUBLIC_URL` de Railway en las dos variables |
 | «Algo no está respondiendo» · log dice `does not exist` o `P2021` | **las tablas no están creadas** | el build de Vercel NO las crea: corre `npx prisma migrate deploy` y la semilla desde tu máquina apuntando a Railway (paso 4) |
 | El build falla en Vercel y en local no | falta una variable de entorno | compara las de Vercel con la tabla de claves de arriba |
-| «Too many connections» | falta el pooler | añade `?pgbouncer=true&connection_limit=1` a `DATABASE_URL` |
-| `migrate deploy` se queda colgado | `DIRECT_URL` apunta al pooler | `DIRECT_URL` va **sin** `pgbouncer` |
+| «Too many connections» | falta el pooler | añade `?connection_limit=1` a `DATABASE_URL` |
+| `migrate deploy` se queda colgado | `DIRECT_URL` lleva parámetros de pool | `DIRECT_URL` va limpia, sin `?connection_limit` |
 | El PIN correcto no entra | se agotaron los intentos de esa IP | son ocho cada quince minutos; espera |
 | En iPhone no sale «Añadir a pantalla de inicio» | estás en Chrome | ábrelo en Safari |
 
