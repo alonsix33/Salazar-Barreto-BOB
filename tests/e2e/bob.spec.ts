@@ -243,3 +243,75 @@ test.describe('la ruta de Bob aguanta lo que le tiren', () => {
     expect(con.texto).toBe(sin.texto)
   })
 })
+
+/**
+ * Los globos de Bob, con lo que de verdad puede tocarles decir.
+ *
+ * `05` §3 le pone a Bob un techo de dos frases, no un suelo, y una frase puede
+ * ser larga. Y hay datos que no se parten solos: el CCI del edificio son veinte
+ * dígitos seguidos y Bob los puede citar. Medido antes de arreglarlo: a 320 px
+ * la página se iba 155 px a la derecha y el globo escondía 157 px de texto, o
+ * sea que el número que estaba dando salía **cortado**.
+ *
+ * El texto se mete por el campo, así que lo que se mide es el globo del vecino,
+ * que usa el mismo `overflow-wrap` que el de Bob y que las notas del cierre.
+ */
+const ANCHOS_GLOBO = [320, 390, 430]
+
+/** Sin espacios, como un CCI, un número de operación o un correo largo. */
+const SIN_ESPACIOS = '00219411729981505999000219411729981505999'
+
+const LARGO =
+  'Quiero saber si el monto que deposité el mes pasado por adelantado alcanza para cubrir ' +
+  'la cuota de este mes y la del siguiente, o si me va a faltar y tengo que completar algo.'
+
+for (const ancho of ANCHOS_GLOBO) {
+  for (const [nombre, texto] of [
+    ['una pregunta larga', LARGO],
+    ['un número sin espacios', SIN_ESPACIOS],
+  ] as const) {
+    test(`el globo aguanta ${nombre} a ${ancho}px`, async ({ page }) => {
+      await page.setViewportSize({ width: ancho, height: 720 })
+      await page.goto('/')
+      await page.getByRole('button', { name: 'Preguntar a Bob' }).click()
+      const campo = page.getByRole('textbox', { name: 'Escribe tu pregunta' })
+      await campo.fill(texto)
+      await campo.press('Enter')
+
+      const mia = page.locator('.bob-mia-texto').first()
+      await expect(mia).toBeVisible()
+      await expect(page.locator('.bob-suya-texto').first()).toBeVisible({ timeout: 15_000 })
+
+      const medida = await page.evaluate(() => {
+        const marco = document.querySelector('.marco-app') ?? document.body
+        const dentro = marco.getBoundingClientRect()
+        const globos = [...document.querySelectorAll('.bob-mia-texto, .bob-suya-texto')]
+        return {
+          // Nada se sale del marco de la app, ni por la derecha ni por la izquierda.
+          fuera: globos.map((g) => {
+            const c = g.getBoundingClientRect()
+            return Math.round(Math.max(c.right - dentro.right, dentro.left - c.left) * 10) / 10
+          }),
+          // Y nada se queda escondido detrás del borde del propio globo.
+          escondido: globos.map((g) => g.scrollWidth - g.clientWidth),
+          // La conversación no se desplaza en horizontal: eso es que algo empuja.
+          scrollConversacion: (() => {
+            const c = document.querySelector('.bob-conversacion')
+            return c ? c.scrollWidth - c.clientWidth : 0
+          })(),
+          cuantos: globos.length,
+        }
+      })
+
+      expect(medida.cuantos, 'no se midió ningún globo').toBeGreaterThan(0)
+      for (const f of medida.fuera) expect(f, `un globo se sale ${f}px del marco`).toBeLessThanOrEqual(0.5)
+      for (const e of medida.escondido) expect(e, `un globo esconde ${e}px de texto`).toBe(0)
+      expect(medida.scrollConversacion, 'la conversación se desplaza en horizontal').toBe(0)
+
+      // El texto completo sigue ahí: adaptarse no es recortar.
+      expect(((await mia.textContent()) ?? '').replace(/\s+/g, ' ')).toContain(
+        texto.slice(0, 40),
+      )
+    })
+  }
+}

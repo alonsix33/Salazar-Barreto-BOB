@@ -2682,6 +2682,35 @@
   margin-top: 4px;
 }
 
+/**
+ * Todo lo que Bob escribe, y lo que se le escribe a él, **parte las palabras
+ * que no caben**.
+ *
+ * Medido antes de esto, con la respuesta llevando el CCI del edificio
+ * —veinte dígitos seguidos, que es un dato que Bob puede citar—: a 320 px la
+ * página se iba 155 px a la derecha y el globo escondía 157 px de texto. O sea
+ * que el número que Bob estaba dando salía cortado, que es la peor forma
+ * posible de fallar en una app de plata. A 430 px seguía roto, 45 px.
+ *
+ * `anywhere` y no `break-word`: los dos parten la palabra, pero solo `anywhere`
+ * reduce el ancho mínimo del elemento, que es lo que hace falta para que un
+ * hijo de flex no empuje a su padre. El `min-width: 0` es la otra mitad: sin él
+ * un hijo de flex nunca baja de su contenido, por mucho `flex: 1` que tenga.
+ *
+ * El texto largo, en cambio, ya estaba bien: las cajas crecen solas. Se midió
+ * con una respuesta de sesenta palabras y ninguna se rompió.
+ */
+.linea-bob-texto,
+.bob-nota-texto,
+.bob-mia-texto,
+.bob-suya-texto,
+.bob-invitacion,
+.bob-esperando,
+.bob-cabecera-texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .bob-conversacion {
   flex: 1;
   overflow-y: auto;

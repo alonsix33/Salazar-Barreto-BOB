@@ -37,7 +37,7 @@ export function LineaBob({
         <span className="linea-bob-avatar">
           <Avatar tamano="tarjeta" />
         </span>
-        <span className="tipo-cuerpo-chico flex-1 text-left">{texto}</span>
+        <span className="tipo-cuerpo-chico linea-bob-texto flex-1 text-left">{texto}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-gris" aria-hidden="true">
           <path d="M6 9l6 6 6-6" />
         </svg>
