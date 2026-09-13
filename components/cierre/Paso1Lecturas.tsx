@@ -12,6 +12,8 @@ import { useNumpad } from '@/components/Numpad'
 import type { PropsPaso } from './Wizard'
 import { BotonAvanzar } from './BotonAvanzar'
 import { AvisoBob } from './AvisoBob'
+import { BobDice } from '@/components/BobDice'
+import { MOMENTOS } from '@/lib/bob/momentos'
 import { PropuestaCorreccion } from './PropuestaCorreccion'
 import { Fallo } from '@/components/ui/Fallo'
 
@@ -158,7 +160,11 @@ export function Paso1Lecturas({ borrador, guardar, guardando, errorGuardar, avan
         const promedio = borrador.promedios[d.id] ?? 0
         return consumo !== null && promedio > 0 && consumo > promedio * 2
       }).map((d) => (
-        <AvisoBob key={d.id}>{COPYS.cierre.consumoAlto(d.id)}</AvisoBob>
+        <AvisoBob key={d.id}>
+          <BobDice momento="cierre-consumo-alto" datos={{ dpto: d.id }} mes={borrador.mes} dpto={null}>
+            {MOMENTOS['cierre-consumo-alto'].determinista({ dpto: d.id })}
+          </BobDice>
+        </AvisoBob>
       ))}
 
       {errorGuardar && <Fallo>{errorGuardar}</Fallo>}

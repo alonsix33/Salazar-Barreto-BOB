@@ -205,6 +205,7 @@ export function HojaCorregir({
           <label htmlFor="motivo-correccion" className="tipo-etiqueta-pequena text-gris nota-etiqueta">
             {COPYS.correccion.motivo}
           </label>
+          {/* El motivo queda en el registro y lo leen los siete: teclado normal. */}
           <textarea
             id="motivo-correccion"
             value={motivo}
@@ -212,6 +213,8 @@ export function HojaCorregir({
             rows={2}
             maxLength={500}
             className="nota-texto tipo-cuerpo-chico"
+            autoCapitalize="sentences"
+            spellCheck
           />
           <p className="tipo-contexto text-gris correccion-ayuda">{COPYS.correccion.motivoAyuda}</p>
         </div>

@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { DPTOS } from '@/lib/calculo/constantes'
-import { COPYS } from '@/lib/copys'
+import { COPYS, detalleDe } from '@/lib/copys'
 import { estadoCuota } from '@/lib/estados'
+import type { EstadoCuota } from '@/lib/estados'
 import { fmt } from '@/lib/calculo/redondeo'
 import { etiquetaMes, nombreMes } from '@/lib/calculo/mes'
-import { fechaCorta } from '@/lib/formato'
 import type { DptoId, FilaSaldo, MesId, PagosMes, ResultadoMes } from '@/lib/calculo/tipos'
 import { FijarContexto } from '@/components/hojas/Contexto'
 import { Etiqueta } from '@/components/ui/Etiqueta'
@@ -48,24 +48,29 @@ export function Inicio({
 }) {
   const mia = resultado.cuotas[dpto]
   const miPago = pagos[dpto] ?? null
-  const estado = estadoCuota(miPago)
+  const estado = estadoCuota(miPago, mia.total)
 
-  const confirmados = DPTOS.filter((d) => pagos[d.id]?.estado === 'confirmado')
-  const avisados = DPTOS.filter((d) => pagos[d.id]?.estado === 'aviso')
-  const sinRegistrar = DPTOS.filter((d) => !pagos[d.id])
+  /**
+   * Cada uno de los siete cae en exactamente un grupo, y el reparto se hace con
+   * el mismo `estadoCuota` que pinta la píldora. Antes se hacía a mano aquí
+   * —`!pagos[d.id]` era "sin aviso"— y el 501, con su cuota condonada en cero,
+   * aparecía bajo «Sin aviso todavía» sin deber un sol.
+   */
+  const porEstado = (cual: EstadoCuota) =>
+    DPTOS.filter((d) => estadoCuota(pagos[d.id], resultado.cuotas[d.id].total) === cual)
+  const confirmados = porEstado('al-dia')
+  const avisados = porEstado('en-verificacion')
+  const sinRegistrar = porEstado('sin-registrar')
+  const sinCobro = porEstado('sin-cobro')
 
   const grupos = [
     { titulo: COPYS.inicio.grupoAlDia, dptos: confirmados, estado: 'al-dia' as const },
     { titulo: COPYS.inicio.grupoAvisaron, dptos: avisados, estado: 'en-verificacion' as const },
     { titulo: COPYS.inicio.grupoSinAviso, dptos: sinRegistrar, estado: 'sin-registrar' as const },
+    { titulo: COPYS.inicio.grupoSinCobro, dptos: sinCobro, estado: 'sin-cobro' as const },
   ].filter((g) => g.dptos.length > 0)
 
-  const detalle =
-    estado === 'sin-registrar'
-      ? COPYS.inicio.detalleSinRegistrar
-      : estado === 'en-verificacion'
-        ? COPYS.inicio.detalleEnVerificacion(fechaCorta(miPago!.fecha))
-        : COPYS.inicio.detalleAlDia(fechaCorta(miPago!.fecha), miPago!.op ?? '—')
+  const detalle = detalleDe(estado, miPago)
 
   const conMonto = resultado.gastos.filter((g) => g.monto).sort((a, b) => (b.monto ?? 0) - (a.monto ?? 0))
   const mayor = conMonto[0]?.monto ?? 1
@@ -124,6 +129,7 @@ export function Inicio({
         avisados={avisados.map((d) => d.id)}
         sinRegistrar={sinRegistrar.map((d) => d.id)}
         mes={mes}
+        dpto={dpto}
       />
 
       {/* 3 · Los 7 este mes */}
@@ -131,16 +137,14 @@ export function Inicio({
         <div className="flex items-baseline justify-between inicio-titulo-7">
           <Etiqueta>{COPYS.inicio.los7}</Etiqueta>
           <span className="tipo-mono-mini">
-            {COPYS.inicio.resumenPagos(confirmados.length, avisados.length)}
+            {COPYS.inicio.resumenPagos(confirmados.length + sinCobro.length, avisados.length)}
           </span>
         </div>
         <BarraSegmentada
-          estados={[
-            ...confirmados.map(() => 'al-dia' as const),
-            ...avisados.map(() => 'en-verificacion' as const),
-            ...sinRegistrar.map(() => 'sin-registrar' as const),
-          ]}
-          resumen={`${confirmados.length} de 7 al día, ${avisados.length} en verificación, ${sinRegistrar.length} sin registrar`}
+          estados={grupos.flatMap((g) => g.dptos.map(() => g.estado))}
+          resumen={COPYS.inicio.resumenBarra(
+            grupos.map((g) => ({ estado: g.estado, cuantos: g.dptos.length })),
+          )}
         />
         <div className="inicio-grupos">
           {grupos.map((g) => (
@@ -164,15 +168,17 @@ export function Inicio({
             </div>
           ))}
         </div>
+        {/*
+          La leyenda sale de los grupos que de verdad se pintaron. Estaba escrita
+          a mano con tres entradas fijas, así que al aparecer «sin nada que
+          pagar» la barra tenía un color que la leyenda no explicaba —y seguía
+          nombrando «Sin aviso» en un mes donde nadie faltaba.
+        */}
         <ul className="flex gap-leyenda inicio-leyenda">
-          {[
-            [COPYS.inicio.leyendaAlDia, 'bg-verde'],
-            [COPYS.inicio.leyendaPorConfirmar, 'bg-agua'],
-            [COPYS.inicio.leyendaSinAviso, 'bg-ambar'],
-          ].map(([texto, color]) => (
-            <li key={texto} className="flex items-center gap-punto">
-              <span className={`punto ${color}`} aria-hidden="true" />
-              <span className="tipo-contexto-mini text-gris">{texto}</span>
+          {grupos.map((g) => (
+            <li key={g.estado} className="flex items-center gap-punto">
+              <span className={`punto ${PUNTO[g.estado]}`} aria-hidden="true" />
+              <span className="tipo-contexto-mini text-gris">{COPYS.inicio.leyenda[g.estado]}</span>
             </li>
           ))}
         </ul>
@@ -249,4 +255,5 @@ const PUNTO = {
   'al-dia': 'bg-verde',
   'en-verificacion': 'bg-agua',
   'sin-registrar': 'bg-ambar',
+  'sin-cobro': 'bg-neutro-barra',
 } as const

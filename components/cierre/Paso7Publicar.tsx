@@ -76,6 +76,7 @@ export function Paso7Publicar({
           <label htmlFor={`nota-${campo.clave}`} className="tipo-etiqueta-pequena text-gris nota-etiqueta">
             {campo.etiqueta}
           </label>
+          {/* Texto libre que leen los siete: teclado normal, con corrección. */}
           <textarea
             id={`nota-${campo.clave}`}
             value={notas[campo.clave]}
@@ -83,6 +84,8 @@ export function Paso7Publicar({
             rows={3}
             maxLength={1000}
             className="nota-texto tipo-cuerpo-chico"
+            autoCapitalize="sentences"
+            spellCheck
           />
         </div>
       ))}

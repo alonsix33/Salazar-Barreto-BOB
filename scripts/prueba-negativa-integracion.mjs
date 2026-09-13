@@ -43,8 +43,28 @@ const DEFECTOS = [
   ['servicios/bloqueo.ts', 'volver al bloqueo optimista con carrera',
     '  const actualizado = await tx.cierre.updateMany({\n    where: { mes, version },\n    data: { version: { increment: 1 } },\n  })\n  if (actualizado.count === 0) {',
     '  if (version !== cierre.version) {'],
-  ['servicios/admin.ts', 'quitar el límite de intentos del PIN',
-    '  if (fallidos >= MAX_INTENTOS) {', '  if (false) {'],
+  /**
+   * Los dos topes del PIN van **por separado**, y no es un capricho.
+   *
+   * Son dos protecciones distintas: la de por IP frena a quien insiste desde un
+   * sitio, y la global frena a quien rota la cabecera `x-forwarded-for` para
+   * presentar una IP nueva en cada intento. Esa segunda salió de un agujero
+   * real que encontró la auditoría —con la IP fija el noveno intento daba 429;
+   * rotándola, los diez mil PINes quedaban al alcance sin un solo 429—.
+   *
+   * Una sola inyección que tumbara la condición entera pasaría en cuanto
+   * cualquiera de los dos tests diera rojo, y dejaría de comprobar que el otro
+   * tope tiene quien lo vigile. Aquí estaba antes justamente eso, y encima
+   * apuntando a una línea que ya no existe: al ganar el tope global la
+   * condición cambió, la sustitución dejó de encontrar su objetivo, y el script
+   * lo dio por «no aplicable» sin probar nada.
+   */
+  ['servicios/admin.ts', 'quitar el tope de intentos por IP',
+    'if (fallidos >= MAX_INTENTOS || fallidosGlobal >= MAX_GLOBAL) {',
+    'if (fallidosGlobal >= MAX_GLOBAL) {'],
+  ['servicios/admin.ts', 'quitar el tope global, el que frena la IP rotada',
+    'if (fallidos >= MAX_INTENTOS || fallidosGlobal >= MAX_GLOBAL) {',
+    'if (fallidos >= MAX_INTENTOS) {'],
   ['servicios/pagos.ts', 'contar un aviso de pago como confirmado',
     "      update: { estado: 'aviso', operacion: datos.operacion ?? null, texto: datos.texto ?? null },",
     "      update: { estado: 'confirmado', operacion: datos.operacion ?? null, texto: datos.texto ?? null },"],
@@ -70,6 +90,8 @@ if (!base.verde) {
 console.log('Punto de partida: suite de integración en verde.\n')
 
 let sinDetectar = 0
+/** Inyecciones que ya no encuentran su objetivo. Ver el bloque de abajo. */
+let obsoletos = 0
 /**
  * Igual que en `prueba-negativa.mjs`: este script escribe defectos en el árbol
  * de trabajo real, y si lo matan a mitad se quedan puestos.
@@ -105,8 +127,17 @@ for (const [archivo, descripcion, buscar, reemplazar] of DEFECTOS) {
   const ruta = path.join(RAIZ, 'lib', archivo)
   const original = fs.readFileSync(ruta, 'utf8')
   if (!original.includes(buscar)) {
-    console.log(`  ⚠ NO APLICABLE  ${descripcion} · actualiza este script`)
-    sinDetectar++
+    /**
+     * El código a sustituir ya no existe: **el script se quedó viejo**.
+     *
+     * Se cuenta aparte de «no se detecta» porque son dos problemas distintos y
+     * antes se reportaban con el mismo mensaje. «No se detecta» es que falta un
+     * test; esto es que la inyección no llegó a probar nada, y arreglarlo es
+     * actualizar esta línea, no escribir un test. Confundirlos cuesta una tarde.
+     */
+    console.log(`  ⚠ OBSOLETA  ${descripcion}`)
+    console.log(`      el texto a sustituir ya no está en ${archivo}; actualiza ESTE SCRIPT, no los tests`)
+    obsoletos++
     continue
   }
   pendientes.set(ruta, original)
@@ -126,8 +157,12 @@ for (const [archivo, descripcion, buscar, reemplazar] of DEFECTOS) {
 const final = correr()
 console.log(`\nRestaurado: la suite vuelve a estar ${final.verde ? 'en verde' : 'ROTA'}.`)
 if (!final.verde) process.exit(2)
-if (sinDetectar > 0) {
-  console.error(`\n${sinDetectar} defecto(s) que la suite no atrapa. Faltan tests.`)
-  process.exit(1)
+if (obsoletos > 0) {
+  console.error(`\n${obsoletos} inyección(es) obsoleta(s): apuntan a código que ya no existe.`)
+  console.error('No faltan tests: lo que hay que actualizar es este script.')
 }
+if (sinDetectar > 0) {
+  console.error(`\n${sinDetectar} defecto(s) que la suite NO atrapa. Faltan tests.`)
+}
+if (obsoletos > 0 || sinDetectar > 0) process.exit(1)
 console.log(`\n✓ los ${DEFECTOS.length} defectos se detectan.`)

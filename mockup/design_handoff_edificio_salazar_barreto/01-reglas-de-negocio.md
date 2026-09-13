@@ -82,8 +82,17 @@ pérdidas.
 brutoComun = round2( m3Sedapal − sumaMedida )
 ```
 
-El área común **no se le cobra a nadie individualmente**: se paga desde el saldo de
-la cuenta conjunta. Aparece en el cuadre como línea propia.
+El área común **la pagan los siete, cada uno por su flat**: entra en la base de
+mantenimiento junto con los demás gastos del mes. Lo que sale de esa base es solo
+el agua que se cobra por medidor —el consumo de cada uno más el lavado del 401—,
+porque esa no se reparte por porcentaje sino por lo que marcó el contador.
+
+> Esta regla decía antes lo contrario: que el área común no se le cobraba a nadie
+> y la absorbía el fondo de la cuenta. Era una invención del prototipo, no lo que
+> hace el edificio, y además dejaba sin sentido §3.3: si el fondo paga el común,
+> da igual cuánta agua gaste el 401 lavando el carro. Se corrigió contra la
+> planilla real de la administración, donde el área común es una línea del
+> mantenimiento que se reparte por porcentaje.
 
 ### 3.3 El lavado de vehículo del 401 · reasignación, no cargo extra
 

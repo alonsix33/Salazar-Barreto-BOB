@@ -935,7 +935,10 @@
   grid-template-columns: 1fr 1fr;
 }
 .onboarding-dpto {
-  height: 56px;
+  /* `min-height` y no `height`: con el nombre completo, algunas tarjetas
+     necesitan dos líneas y con altura fija el texto se salía. */
+  min-height: 56px;
+  padding: var(--spacing-pildora-y);
   border-radius: var(--radius-mini);
   background: var(--color-papel);
   border: 1px solid var(--color-linea);
@@ -2679,6 +2682,35 @@
   margin-top: 4px;
 }
 
+/**
+ * Todo lo que Bob escribe, y lo que se le escribe a él, **parte las palabras
+ * que no caben**.
+ *
+ * Medido antes de esto, con la respuesta llevando el CCI del edificio
+ * —veinte dígitos seguidos, que es un dato que Bob puede citar—: a 320 px la
+ * página se iba 155 px a la derecha y el globo escondía 157 px de texto. O sea
+ * que el número que Bob estaba dando salía cortado, que es la peor forma
+ * posible de fallar en una app de plata. A 430 px seguía roto, 45 px.
+ *
+ * `anywhere` y no `break-word`: los dos parten la palabra, pero solo `anywhere`
+ * reduce el ancho mínimo del elemento, que es lo que hace falta para que un
+ * hijo de flex no empuje a su padre. El `min-width: 0` es la otra mitad: sin él
+ * un hijo de flex nunca baja de su contenido, por mucho `flex: 1` que tenga.
+ *
+ * El texto largo, en cambio, ya estaba bien: las cajas crecen solas. Se midió
+ * con una respuesta de sesenta palabras y ninguna se rompió.
+ */
+.linea-bob-texto,
+.bob-nota-texto,
+.bob-mia-texto,
+.bob-suya-texto,
+.bob-invitacion,
+.bob-esperando,
+.bob-cabecera-texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .bob-conversacion {
   flex: 1;
   overflow-y: auto;
@@ -2819,4 +2851,78 @@
   background: var(--color-papel);
   color: var(--color-tinta);
   border: 1px solid var(--color-linea);
+}
+
+/* El botón que abre "¿quiénes pagan?" en el paso 5. Es texto, no un botón
+   con cara de botón: vive dentro de la línea del gasto. */
+.puntual-quien-boton {
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--color-apagado);
+}
+.puntual-quien-boton:hover {
+  color: var(--color-tinta);
+}
+/* Un departamento que NO paga: se ve apagado y tachado, no desaparece.
+   Tiene que quedar claro que está ahí y que se puede volver a meter. */
+.puntual-dpto[data-fuera] {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.puntual-elegir-nota {
+  margin-top: var(--spacing-pildora-y);
+}
+.puntual-elegir-listo {
+  margin-top: var(--spacing-interior);
+  width: 100%;
+}
+
+/* El nombre del vecino en el onboarding.
+   Va completo ("Irallys y Aaron"), así que a 320px hay que dejarlo respirar:
+   se permite una segunda línea en vez de recortar a alguien. */
+.onboarding-dpto-nombre {
+  line-height: 1.15;
+  text-align: center;
+  max-width: 100%;
+}
+
+/* El aviso de versión nueva.
+   Va abajo, sobre la navegación, y no bloquea: se puede seguir usando la app
+   con él ahí. Quien está a mitad de un cierre no puede perder el trabajo. */
+.aviso-version {
+  position: fixed;
+  /* Anclado a los dos lados y centrado con `margin-inline`, no con
+     `left: 50%`: con eso el espacio disponible es solo la mitad derecha de la
+     pantalla, la píldora se encogía a 195px antes de que actuara el
+     `max-width`, y el texto se partía en seis líneas. */
+  left: var(--spacing-pantalla);
+  right: var(--spacing-pantalla);
+  width: fit-content;
+  margin-inline: auto;
+  bottom: var(--spacing-bajo-nav);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-interior);
+  max-width: 100%;
+  padding: var(--spacing-pildora-y) var(--spacing-interior);
+  border-radius: var(--radius-pildora);
+  background: var(--color-noche);
+  color: var(--color-sobre-noche);
+  box-shadow: var(--shadow-hoja);
+}
+.aviso-version-texto {
+  min-width: 0;
+}
+.aviso-version-boton {
+  flex-shrink: 0;
+  padding: var(--spacing-pildora-y) var(--spacing-pildora-x);
+  border-radius: var(--radius-pildora);
+  background: var(--color-ambar);
+  color: var(--color-noche);
+  font-weight: 600;
+}
+.aviso-version-boton:disabled {
+  opacity: 0.7;
 }

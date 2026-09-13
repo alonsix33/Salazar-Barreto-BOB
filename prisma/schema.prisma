@@ -98,6 +98,16 @@ model GastoFijo {
   @@map("gasto_fijo")
 }
 
+/// Cómo se divide un gasto puntual entre los que lo pagan.
+enum ModoReparto {
+  /// Por flat, renormalizado entre los que participan. Lo normal.
+  porcentaje
+  /// Partes iguales. Solo para el histórico de la planilla.
+  iguales
+
+  @@map("modo_reparto")
+}
+
 enum TipoExtra {
   gasto
   credito
@@ -112,14 +122,22 @@ enum TipoExtra {
 /// - `credito` se resta de la cuota de un departamento y **sale del saldo de la
 ///   cuenta**, no del bolsillo de los demás.
 model GastoExtra {
-  id       String    @id @default(cuid())
-  mes      String    @db.VarChar(7)
-  tipo     TipoExtra
-  concepto String
-  monto    Decimal   @db.Decimal(10, 2)
+  id            String      @id @default(cuid())
+  mes           String      @db.VarChar(7)
+  tipo          TipoExtra
+  concepto      String
+  monto         Decimal     @db.Decimal(10, 2)
   /// Obligatorio si `tipo = credito`. Lo impone un CHECK en la migración.
-  dptoId   String?   @db.VarChar(8)
-  creadoEn DateTime  @default(now())
+  dptoId        String?     @db.VarChar(8)
+  /// Quiénes pagan este gasto. **Vacío = los siete**, que es lo normal.
+  ///
+  /// El portón del garaje no le sirve al primer piso, así que el 101 no entra.
+  /// Entre los que quedan se reparte renormalizando sus flats al nuevo 100 %.
+  participantes String[]    @db.VarChar(8)
+  /// `porcentaje` (lo normal) o `iguales`. Lo segundo existe solo para el
+  /// histórico: la planilla cobró así el tanque hidroneumático.
+  reparto       ModoReparto @default(porcentaje)
+  creadoEn      DateTime    @default(now())
 
   dpto Departamento? @relation(fields: [dptoId], references: [id], onDelete: Restrict)
 
@@ -373,12 +391,12 @@ model ConsultaBob {
 /// departamento. Una suscripción muerta (el navegador la revocó) se borra sola
 /// cuando el envío devuelve 404/410.
 model PushSubscription {
-  id        String   @id @default(cuid())
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  dptoId    String?  @db.VarChar(8)
-  creadoEn  DateTime @default(now())
+  id       String   @id @default(cuid())
+  endpoint String   @unique
+  p256dh   String
+  auth     String
+  dptoId   String?  @db.VarChar(8)
+  creadoEn DateTime @default(now())
 
   @@index([dptoId])
   @@map("push_subscription")

@@ -1,7 +1,8 @@
-import { COPYS } from '@/lib/copys'
+import { COPYS, detalleDe } from '@/lib/copys'
+import { BobDice } from '@/components/BobDice'
+import { MOMENTOS } from '@/lib/bob/momentos'
 import { fmt } from '@/lib/calculo/redondeo'
 import { etiquetaMes, nombreMes } from '@/lib/calculo/mes'
-import { fechaCorta } from '@/lib/formato'
 import { estadoCuota } from '@/lib/estados'
 import type { DptoId, MesId, PagosMes, ResultadoMes } from '@/lib/calculo/tipos'
 import { vistaAnual, type HistorialDpto } from '@/lib/datos/historial'
@@ -41,13 +42,8 @@ export function MiDepartamento({
 }) {
   const mia = resultado.cuotas[dpto]
   const miPago = pagos[dpto] ?? null
-  const estado = estadoCuota(miPago)
-  const detalle =
-    estado === 'sin-registrar'
-      ? COPYS.inicio.detalleSinRegistrar
-      : estado === 'en-verificacion'
-        ? COPYS.inicio.detalleEnVerificacion(fechaCorta(miPago!.fecha))
-        : COPYS.inicio.detalleAlDia(fechaCorta(miPago!.fecha), miPago!.op ?? '—')
+  const estado = estadoCuota(miPago, mia.total)
+  const detalle = detalleDe(estado, miPago)
 
   // La tira ENE→DIC y los agregados «del año» se toman del año de calendario que
   // se está mirando, no de una ventana móvil de doce meses. Ver `vistaAnual`.
@@ -56,15 +52,13 @@ export function MiDepartamento({
   const maximo = anual.maximoM3 || 1
   const promedio = anual.promedioM3
 
-  const mesesConConsumo = anual.slots.filter((f) => f && f.cuota !== null).length
-  const bobConsumo =
-    mesesConConsumo < 3
-      ? 'Todavía no tengo suficientes meses para ver un patrón.'
-      : mia.m3 > promedio * 1.2
-        ? `Es tu mes más alto del año, ${fmt(mia.m3 - promedio)} m³ sobre tu promedio.`
-        : mia.m3 < promedio * 0.8
-          ? 'Este mes consumiste bastante menos de lo habitual.'
-          : 'Tu consumo está estable, cerca de tu promedio de siempre.'
+  // Lo que Bob dice del consumo propio vive en `MOMENTOS`, con los otros seis
+  // textos que suelta sin que nadie le pregunte. Ver `lib/bob/momentos.ts`.
+  const datosConsumo = {
+    mesesConConsumo: anual.slots.filter((f) => f && f.cuota !== null).length,
+    m3: mia.m3,
+    promedio,
+  }
 
   return (
     <div className="pantalla scroll-limpio con-nav">
@@ -204,7 +198,11 @@ export function MiDepartamento({
               )
             })}
           </div>
-          <p className="tipo-cuerpo-menor text-gris midpto-bob">{bobConsumo}</p>
+          <p className="tipo-cuerpo-menor text-gris midpto-bob">
+            <BobDice momento="mi-consumo" datos={datosConsumo} mes={mes} dpto={dpto}>
+              {MOMENTOS['mi-consumo'].determinista(datosConsumo)}
+            </BobDice>
+          </p>
         </AbrirHoja>
       </section>
 

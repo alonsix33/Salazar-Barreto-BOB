@@ -34,7 +34,11 @@ export function Onboarding() {
               return (
                 <button key={id} type="submit" name="dpto" value={id} className="onboarding-dpto">
                   <span className="tipo-numero-dpto">{id}</span>
-                  <span className="tipo-contexto-mini text-gris">{dpto.nombre.split(' y ')[0]}</span>
+                  {/* El nombre completo: en un departamento vive más de una
+                      persona, y ver solo a una es raro para quien vive ahí. */}
+                  <span className="tipo-contexto-mini text-gris onboarding-dpto-nombre">
+                    {dpto.nombre}
+                  </span>
                 </button>
               )
             })}

@@ -3,13 +3,13 @@
 // Cálculo: mantenimiento por flat %, agua por consumo medido, lavado reasignado del área común.
 
 const DPTOS = [
-  { id: '101', nombre: 'Irallys y Aaron',    flat: 11.72, piso: 1 },
+  { id: '101', nombre: 'Aarón e Irallys',    flat: 11.72, piso: 1 },
   { id: '201', nombre: 'Carlos Mori',        flat: 10.21, piso: 2 },
-  { id: '202', nombre: 'Renzo',              flat: 20.11, piso: 2 },
-  { id: '301', nombre: 'Deborah y Oscar',    flat: 10.21, piso: 3 },
-  { id: '401', nombre: 'Alonso y Julisa',    flat: 10.21, piso: 4 },
-  { id: '501', nombre: 'Inmobiliaria',       flat: 17.31, piso: 5 },
-  { id: '502', nombre: 'Yara y Gianpierre',  flat: 20.23, piso: 5 },
+  { id: '202', nombre: 'Renzo y Nathaly',              flat: 20.11, piso: 2 },
+  { id: '301', nombre: 'Oscar y Deborah',    flat: 10.21, piso: 3 },
+  { id: '401', nombre: 'Julisa y Alonso',    flat: 10.21, piso: 4 },
+  { id: '501', nombre: 'Josué y Erlinda',  flat: 17.31, piso: 5 },
+  { id: '502', nombre: 'Jean Pierre y Yara',  flat: 20.23, piso: 5 },
 ];
 
 const LAVADO = { dpto: '401', m3: 1.5, desde: '2026-05', concepto: 'lavado de vehículo' };
@@ -195,7 +195,10 @@ function calcularMes(mesId, ov) {
     if (e.tipo === 'gasto') gastos.push({ concepto: e.concepto, monto: e.monto, extra: true });
   });
   const totalMes = Math.round(gastos.reduce((s, g) => s + (g.monto || 0), 0) * 100) / 100;
-  const baseMant = Math.round((totalMes - facturaAgua) * 100) / 100;
+  // El area comun se queda DENTRO de la base: la pagan los siete por su flat.
+  // Sale solo el agua que se cobra por medidor. Antes el comun lo absorbia el
+  // fondo del edificio, y con eso el lavado no reasignaba nada real.
+  const baseMant = Math.round((totalMes - facturaAgua + montoComun) * 100) / 100;
 
   const creditos = {};
   (ov.extras || []).forEach(e => { if (e.tipo === 'credito' && e.dpto) creditos[e.dpto] = (creditos[e.dpto] || 0) + e.monto; });
@@ -223,7 +226,8 @@ function calcularMes(mesId, ov) {
   // los créditos salen del saldo de la cuenta, no de los demás vecinos
   const totalCreditos = Math.round(DPTOS.reduce((s, d) => s + (cuotas[d.id].credito || 0), 0) * 100) / 100;
   const sumaCuotas = Math.round(DPTOS.reduce((s, d) => s + cuotas[d.id].total, 0) * 100) / 100;
-  const cuadraMes = Math.abs(sumaCuotas + montoComun + totalCreditos - totalMes) < 0.05;
+  // `montoComun` ya va dentro de las cuotas, asi que no se suma aparte.
+  const cuadraMes = Math.abs(sumaCuotas + totalCreditos - totalMes) < 0.05;
   const cuadra = cuadraAgua && cuadraMes;
 
   return {

@@ -25,6 +25,24 @@ export interface Pregunta {
 }
 
 /**
+ * Un turno anterior de la misma conversación.
+ *
+ * **Viene del navegador**, y hay que tratarlo como lo que es: texto de fuera.
+ * No cambia lo que Bob puede leer ni lo que puede escribir, y sobre todo no
+ * amplía las cifras permitidas —esas salen solo de las herramientas—, así que
+ * lo peor que puede hacer alguien manipulándolo es que Bob le conteste una
+ * rareza **a él mismo**. Aun así va acotado en cantidad y en tamaño.
+ */
+export interface Turno {
+  de: 'vecino' | 'bob'
+  texto: string
+}
+
+/** Cuántos turnos anteriores se mandan, y cuánto ocupa cada uno. */
+export const MAX_TURNOS = 6
+export const MAX_TURNO = 600
+
+/**
  * Una llamada a herramienta, con lo que devolvió.
  *
  * Se guarda entera —nombre, argumentos y resultado— porque de aquí sale la

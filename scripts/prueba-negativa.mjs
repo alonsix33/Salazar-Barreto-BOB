@@ -38,9 +38,11 @@ const DEFECTOS = [
   ['calcularMes.ts', 'redondear el precio del m³',
     'const precioM3 = facturaAgua / rec.aguaM3', 'const precioM3 = round2(facturaAgua / rec.aguaM3)'],
   ['calcularMes.ts', 'sumar el lavado en vez de reasignarlo',
-    'const comunReal = round2(brutoComun - lavado)', 'const comunReal = round2(brutoComun)'],
-  ['calcularMes.ts', 'sacar el tercer cuadre de la condición de publicar',
-    'cuadra: cuadraAgua && cuadraMes && sanidad.cuadra,', 'cuadra: cuadraAgua && cuadraMes,'],
+    'const comunReal = ajustado ? 0 : round2(brutoComun - lavado)',
+    'const comunReal = ajustado ? 0 : round2(brutoComun)'],
+  ['calcularMes.ts', 'sacar un cuadre de la condición de publicar',
+    'cuadra: cuadraAgua && cuadraM3 && cuadraMes && sanidad.cuadra,',
+    'cuadra: cuadraAgua && cuadraM3 && cuadraMes,'],
   ['calcularMes.ts', 'dejar que un lavadoM3 nulo desactive el lavado',
     'const lavM3 = ov.lavadoM3 ?? entradas.lavadoM3 ?? LAVADO.m3',
     'const lavM3 = ov.lavadoM3 ?? entradas.lavadoM3'],
@@ -108,13 +110,23 @@ process.on('uncaughtException', (e) => {
 })
 
 let sinDetectar = 0
+/** Inyecciones que ya no encuentran su objetivo. Ver el bloque de abajo. */
+let obsoletos = 0
 for (const [archivo, descripcion, buscar, reemplazar] of DEFECTOS) {
   const ruta = path.join(RAIZ, 'lib/calculo', archivo)
   const original = fs.readFileSync(ruta, 'utf8')
   if (!original.includes(buscar)) {
-    console.log(`  ⚠ NO APLICABLE  ${descripcion}`)
-    console.log(`      el código a sustituir ya no existe en ${archivo}; actualiza este script`)
-    sinDetectar++
+    /**
+     * El código a sustituir ya no existe: **el script se quedó viejo**.
+     *
+     * Se cuenta aparte de «no se detecta» porque son dos problemas distintos y
+     * antes se reportaban con el mismo mensaje. «No se detecta» es que falta un
+     * test; esto es que la inyección no llegó a probar nada, y arreglarlo es
+     * actualizar esta línea, no escribir un test. Confundirlos cuesta una tarde.
+     */
+    console.log(`  ⚠ OBSOLETA  ${descripcion}`)
+    console.log(`      el texto a sustituir ya no está en ${archivo}; actualiza ESTE SCRIPT, no los tests`)
+    obsoletos++
     continue
   }
   pendientes.set(ruta, original)
@@ -137,8 +149,12 @@ if (!final.verde) {
   console.error('El script dejó el árbol sucio.')
   process.exit(2)
 }
-if (sinDetectar > 0) {
-  console.error(`\n${sinDetectar} defecto(s) que la suite no atrapa. Faltan tests.`)
-  process.exit(1)
+if (obsoletos > 0) {
+  console.error(`\n${obsoletos} inyección(es) obsoleta(s): apuntan a código que ya no existe.`)
+  console.error('No faltan tests: lo que hay que actualizar es este script.')
 }
+if (sinDetectar > 0) {
+  console.error(`\n${sinDetectar} defecto(s) que la suite NO atrapa. Faltan tests.`)
+}
+if (obsoletos > 0 || sinDetectar > 0) process.exit(1)
 console.log(`\n✓ los ${DEFECTOS.length} defectos se detectan.`)

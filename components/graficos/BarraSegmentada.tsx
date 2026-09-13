@@ -4,13 +4,15 @@ import type { EstadoCuota } from '@/lib/estados'
  * La barra de siete tramos. `02` §4.5.
  *
  * Cuenta la historia "5 de 7" antes de que nadie lea la lista. Verde los
- * confirmados, celeste los que avisaron, ámbar suave los que no.
+ * confirmados, celeste los que avisaron, ámbar suave los que no, y gris el que
+ * no tenía nada que pagar.
  */
 
 const COLOR: Record<EstadoCuota, string> = {
   'al-dia': 'bg-verde',
   'en-verificacion': 'bg-agua',
   'sin-registrar': 'bg-ambar-punto',
+  'sin-cobro': 'bg-neutro-barra',
 }
 
 export function BarraSegmentada({

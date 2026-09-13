@@ -19,7 +19,7 @@
 
 import { HERRAMIENTAS, herramienta } from './herramientas'
 import { promptDelSistema } from './prompt'
-import type { Contexto, Llamada } from './tipos'
+import { MAX_TURNOS, MAX_TURNO, type Contexto, type Llamada, type Turno } from './tipos'
 
 /** Fase 8 §8.4.5. Pasado esto se cae al determinista. */
 export const PLAZO_MS = 8_000
@@ -60,14 +60,29 @@ export function hayClave(): boolean {
 export async function preguntarADeepseek(
   texto: string,
   contexto: Contexto,
+  historial: readonly Turno[] = [],
 ): Promise<{ texto: string; llamadas: Llamada[] }> {
   const clave = process.env.DEEPSEEK_API_KEY
   if (!clave) throw new SinClave('Falta DEEPSEEK_API_KEY.')
 
   const limite = Date.now() + PLAZO_MS
   const llamadas: Llamada[] = []
+  /**
+   * El hilo de la conversación.
+   *
+   * Sin esto, cada pregunta llegaba sola y «¿y el mes pasado?» no tenía con qué
+   * resolverse: Bob no había visto la pregunta anterior. Se mandan los últimos
+   * turnos, recortados, y **sin las llamadas a herramienta de antes**: lo que
+   * se recupera es de qué se estaba hablando, no las cifras, que se vuelven a
+   * pedir. Así una cifra vieja no se cuela en una respuesta nueva.
+   */
+  const previos: MensajeChat[] = historial
+    .slice(-MAX_TURNOS)
+    .map((t) => ({ role: t.de === 'bob' ? 'assistant' : 'user', content: t.texto.slice(0, MAX_TURNO) }))
+
   const mensajes: MensajeChat[] = [
     { role: 'system', content: promptDelSistema(contexto) },
+    ...previos,
     { role: 'user', content: texto },
   ]
 
@@ -87,6 +102,50 @@ export async function preguntarADeepseek(
   // Agotó las vueltas pidiendo herramientas y nunca redactó. Se trata como una
   // respuesta vacía: `index.ts` cae al determinista.
   return { texto: '', llamadas }
+}
+
+/**
+ * Redactar un texto que **se dispara solo**, sin herramientas.
+ *
+ * Los momentos automáticos no le piden nada a la base: la pantalla ya calculó
+ * lo que hay que decir y se lo pasa en `datos`. Dejarle llamar a herramientas
+ * aquí serían siete consultas por pantalla que nadie pidió, y encima con el
+ * riesgo de que traiga una cifra de otro mes y la mezcle con la que se está
+ * enseñando.
+ *
+ * Por eso esto es **una sola vuelta, sin `tools`**: se le da el dato y se le
+ * pide la frase. Lo que escriba pasa después por las mismas guardas, y los
+ * números se verifican contra estos mismos `datos`.
+ *
+ * @throws {SinClave} si falta `DEEPSEEK_API_KEY`.
+ * @throws {PlazoAgotado} si tarda más de {@link PLAZO_MS}.
+ */
+export async function redactarConDeepseek(
+  peticion: string,
+  datos: Record<string, unknown>,
+  contexto: Contexto,
+): Promise<string> {
+  const clave = process.env.DEEPSEEK_API_KEY
+  if (!clave) throw new SinClave('Falta DEEPSEEK_API_KEY.')
+
+  const mensajes: MensajeChat[] = [
+    { role: 'system', content: promptDelSistema(contexto) },
+    {
+      role: 'user',
+      content: [
+        peticion,
+        '',
+        'Estos son los datos, y son los únicos que puedes usar:',
+        JSON.stringify(datos),
+        '',
+        'Escribe solo la frase, sin comillas y sin presentarte. Ninguna cifra que no esté arriba.',
+      ].join('\n'),
+    },
+  ]
+  // `true` en `ultima`: así `pedir` manda la petición **sin herramientas**, que
+  // es justo lo que hace falta. Una sola vuelta, y el plazo entero para ella.
+  const r = await pedir(mensajes, clave, Date.now() + PLAZO_MS, true)
+  return (r.content ?? '').trim()
 }
 
 /**

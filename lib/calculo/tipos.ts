@@ -6,6 +6,8 @@
  */
 
 /** Identificador de mes, `'AAAA-MM'`. */
+import type { ModoReparto } from './reparto'
+
 export type MesId = string & { readonly __marca?: 'MesId' }
 
 /** Los siete departamentos del edificio. */
@@ -55,16 +57,43 @@ export interface LineaGasto {
   esAgua?: boolean
   /** Marca un gasto extraordinario añadido en el paso 5 del cierre. */
   extra?: boolean
+  /**
+   * Quiénes pagan el gasto puntual, si no son los siete, y cómo se reparte.
+   *
+   * Van en la línea y no solo en el `Extra` de entrada porque son la respuesta
+   * a la pregunta que el gasto genera: «¿por qué a mí me tocó más?». Sin esto,
+   * lo único que se podía enseñar del portón era el total.
+   */
+  participantes?: readonly DptoId[]
+  reparto?: ModoReparto
 }
 
 /**
  * Lo puntual del mes.
- * - `gasto` se suma a `totalMes` y lo pagan los siete por su porcentaje, como
- *   todo lo demás. No hay reparto equitativo.
+ * - `gasto` se suma a `totalMes`. Por defecto lo pagan los siete por su
+ *   porcentaje; se puede excluir a quien no lo usa, y entonces los que quedan
+ *   se renormalizan al nuevo 100 % conservando la proporción entre ellos.
+ *   `iguales` existe solo para el histórico: en el Excel hay gastos que se
+ *   cobraron en partes iguales y esos meses no se reescriben.
  * - `credito` se resta de la cuota de un departamento y sale del saldo de la cuenta.
  */
 export type Extra =
-  | { tipo: 'gasto'; concepto: string; monto: number; dpto?: null }
+  | {
+      tipo: 'gasto'
+      concepto: string
+      monto: number
+      dpto?: null
+      /**
+       * Quiénes lo pagan. Vacío o ausente = **los siete**, que es lo normal.
+       *
+       * Existe porque no todo gasto puntual le sirve a todos: el portón del
+       * garaje no le sirve al primer piso, así que el 101 no entra. Entre los
+       * que quedan se reparte renormalizando sus flats al nuevo 100 %.
+       */
+      participantes?: readonly DptoId[]
+      /** `porcentaje` (lo normal) o `iguales` (solo para el histórico). */
+      reparto?: ModoReparto
+    }
   | { tipo: 'credito'; concepto?: string; monto: number; dpto: DptoId }
 
 /**

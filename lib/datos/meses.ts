@@ -9,6 +9,7 @@
 import { balancePorDpto, serieSaldo, type MesConPagos } from '@/lib/calculo/saldo'
 import { etiquetaMes, mesAnterior, mesCorto, nombreMes, comoMes } from '@/lib/calculo/mes'
 import { DPTO_IDS } from '@/lib/calculo/constantes'
+import { nadaPendiente } from '@/lib/estados'
 import type { DptoId, FilaSaldo, MesId, ResultadoMes } from '@/lib/calculo/tipos'
 import { aNumeroObligatorio } from './decimal'
 import { entradasDeMes, pagosDe, resultadoDeMes } from './mes'
@@ -68,7 +69,15 @@ export async function listaDeMeses(): Promise<ResumenMes[]> {
       publicado: cierre?.publicado ?? false,
       paso: cierre?.paso ?? 0,
       totalMes: resultado.valido ? resultado.totalMes : null,
-      alDia: DPTO_IDS.filter((d) => pagos[d]?.estado === 'confirmado').length,
+      /**
+       * Cuántos de los siete tienen el mes resuelto: pagaron y está confirmado,
+       * **o no tenían nada que pagar**. Contar solo pagos confirmados dejaba
+       * junio de 2026 en «6 de 7 al día» con el 501 condonado en cero, o sea
+       * señalando a alguien que no debía un sol.
+       */
+      alDia: resultado.valido
+        ? DPTO_IDS.filter((d) => nadaPendiente(pagos[d], resultado.cuotas[d].total)).length
+        : DPTO_IDS.filter((d) => pagos[d]?.estado === 'confirmado').length,
       cuadra: resultado.cuadra,
     })
   }

@@ -12,13 +12,16 @@
  */
 
 import { z } from 'zod'
-import { DPTOS, DPTO_IDS } from '@/lib/calculo/constantes'
+import { DPTOS, DPTO_IDS, LAVADO } from '@/lib/calculo/constantes'
 import { mesAnterior, nombreMes, comoMes } from '@/lib/calculo/mes'
 import { fmt } from '@/lib/calculo/redondeo'
-import { serieDelSaldo, mesesPublicados } from '@/lib/datos/meses'
+import { serieDelSaldo, mesesPublicados, balanceDelDpto } from '@/lib/datos/meses'
 import { pagosDe, resultadoDeMes } from '@/lib/datos/mes'
 import { historialDeDpto } from '@/lib/datos/historial'
+import { prisma } from '@/lib/datos/prisma'
+import { CASOS, PROCEDIMIENTOS, procedimientoPara } from './procedimientos'
 import type { DptoId, MesId } from '@/lib/calculo/tipos'
+import { estadoCuota, type EstadoCuota } from '@/lib/estados'
 import type { Contexto, Herramienta } from './tipos'
 
 /** Dos decimales, que es como se guarda y como se enseña todo lo que es plata. */
@@ -161,21 +164,72 @@ export const HERRAMIENTAS: Herramienta[] = [
   },
   {
     nombre: 'estadoPagos',
-    descripcion: 'Qué departamentos pagaron un mes, cuáles avisaron y cuáles no.',
+    descripcion:
+      'Qué departamentos pagaron un mes, cuáles avisaron y cuáles no, con la fecha de cada pago ' +
+      'y la fecha de hoy. Con eso se puede decir cuántos días lleva algo sin registrarse.',
     parametros: parametrosMes,
     async ejecutar(argumentos, contexto) {
       const mes = mesDe(argumentos as { mes?: string }, contexto)
-      const pagos = await pagosDe(mes)
-      const por = (estado: string | null) =>
-        DPTO_IDS.filter((d) => (pagos[d]?.estado ?? null) === estado)
+      const [pagos, r] = await Promise.all([pagosDe(mes), resultadoDeMes(mes)])
+      /**
+       * Se usa **el mismo `estadoCuota` que pinta la píldora**, y no el estado
+       * crudo del pago.
+       *
+       * Si no, Bob decía «del 501 todavía no hay aviso» en junio y julio, con
+       * la cuota condonada en cero: exactamente la frase que se quitó de la
+       * pantalla por señalar al único que no debe nada. Una cosa es que la
+       * interfaz lo arregle y otra que Bob lo siga diciendo.
+       */
+      const por = (cual: EstadoCuota) =>
+        DPTO_IDS.filter(
+          (d) => estadoCuota(pagos[d], r.valido ? r.cuotas[d].total : undefined) === cual,
+        )
+      const alDia = por('al-dia')
+      const sinCobro = por('sin-cobro')
       return {
         mes,
         nombreMes: nombreMes(mes),
-        alDia: por('confirmado'),
-        enVerificacion: por('aviso'),
-        sinRegistrar: por(null),
-        cuantosAlDia: por('confirmado').length,
+        alDia,
+        enVerificacion: por('en-verificacion'),
+        sinRegistrar: por('sin-registrar'),
+        /** No deben nada porque su cuota quedó en cero. No es que falten. */
+        sinNadaQuePagar: sinCobro,
+        cuantosAlDia: alDia.length,
+        /** Cuántos no tienen nada pendiente: pagaron, o no había qué pagar. */
+        cuantosSinPendiente: alDia.length + sinCobro.length,
         deCuantos: DPTO_IDS.length,
+        /**
+         * Las fechas, y **hoy**.
+         *
+         * Sin esto, «¿hace cuántos días que no paga el 501?» no tenía respuesta
+         * posible: la cuenta es una resta entre dos fechas y ninguna de las dos
+         * estaba en ningún resultado. Bob no las inventa, las resta.
+         */
+        hoy: new Date().toISOString().slice(0, 10),
+        fechas: DPTO_IDS.filter((d) => pagos[d]).map((d) => ({
+          dpto: d,
+          fecha: pagos[d]!.fecha,
+          estado: pagos[d]!.estado,
+          monto: pagos[d]!.monto,
+        })),
+      }
+    },
+  },
+  {
+    nombre: 'balanceDe',
+    descripcion:
+      'Lo que un departamento trae a favor o le falta, acumulado sobre los meses cerrados. ' +
+      'Positivo es a favor, negativo es pendiente, cero es al día.',
+    parametros: parametrosMesDpto,
+    async ejecutar(argumentos, contexto) {
+      const dpto = dptoDe(argumentos as { dpto?: string }, contexto)
+      if (!dpto) return { error: 'sin-departamento' }
+      const balance = await balanceDelDpto(dpto)
+      return {
+        dpto,
+        balance: redondear(balance),
+        aFavor: balance > 0,
+        alDia: Math.abs(balance) < 0.01,
       }
     },
   },
@@ -196,7 +250,62 @@ export const HERRAMIENTAS: Herramienta[] = [
           monto: g.monto,
           anual: !!g.anual,
           porConfirmar: !!g.porConfirmar,
+          /**
+           * Quién paga un gasto puntual, y cómo se reparte.
+           *
+           * Sin esto Bob no podía explicar el portón: veía los S/ 300 y no que
+           * los pagan seis, así que a la pregunta obvia —«¿por qué a mí me
+           * tocó más?»— solo podía responder con el total.
+           */
+          extra: !!g.extra,
+          ...(g.extra ? { loPagan: g.participantes ?? DPTO_IDS, reparto: g.reparto ?? 'porcentaje' } : {}),
         })),
+      }
+    },
+  },
+  {
+    nombre: 'historialPagos',
+    descripcion:
+      'Los meses cerrados de un departamento con su cuota, si está pagado y en qué fecha. ' +
+      'Sirve para saber desde cuándo no se registra un pago.',
+    parametros: parametrosMesDpto,
+    async ejecutar(argumentos, contexto) {
+      const dpto = dptoDe(argumentos as { dpto?: string }, contexto)
+      if (!dpto) return { error: 'sin-departamento' }
+      const h = await historialDeDpto(dpto)
+      const pagados = h.filas.filter((f) => f.estado === 'confirmado' && f.fecha)
+      return {
+        dpto,
+        hoy: new Date().toISOString().slice(0, 10),
+        meses: h.filas.map((f) => ({
+          mes: f.mes,
+          cuota: f.cuota,
+          estado: f.estado,
+          fecha: f.fecha,
+        })),
+        // La más reciente, que es de donde sale el «hace N días».
+        ultimoPago: pagados.length ? pagados[pagados.length - 1]!.fecha : null,
+        mesesAlDia: h.mesesAlDia,
+        mesesEnVerificacion: h.mesesEnVerificacion,
+        totalPagado: h.totalPagado,
+      }
+    },
+  },
+  {
+    nombre: 'datosDeLaCuenta',
+    descripcion:
+      'A qué cuenta se deposita: banco, número, CCI, a nombre de quién, y qué día vence la cuota.',
+    parametros: { type: 'object', properties: {} },
+    async ejecutar() {
+      const c = await prisma.configuracionEdificio.findUnique({ where: { id: 1 } })
+      if (!c) return { hayCuenta: false }
+      return {
+        hayCuenta: true,
+        banco: c.bancoNombre,
+        cuenta: c.bancoCuenta,
+        cci: c.bancoCci,
+        titular: c.bancoTitular,
+        diaVencimiento: c.diaVencimiento,
       }
     },
   },
@@ -255,12 +364,23 @@ export const HERRAMIENTAS: Herramienta[] = [
       const mes = mesDe(argumentos as { mes?: string }, contexto)
       const r = await resultadoDeMes(mes)
       if (!r.valido) return { mes, valido: false, motivo: r.motivoInvalido }
-      if (r.lavado <= 0) return { mes, nombreMes: nombreMes(mes), activo: false }
+      /**
+       * Con el lavado apagado **también** se dice de quién es.
+       *
+       * Sin este `dpto`, la respuesta correcta —«cuando está activo, esos m³ se
+       * le cargan al 401»— llevaba un 401 que no salía de ninguna herramienta,
+       * y la guarda de números la habría descartado entera si la hubiera
+       * escrito el modelo. El catálogo la decía igual porque a él no se le
+       * aplica la guarda: o sea, la misma frase pasaba o no según quién la
+       * escribiera.
+       */
+      if (r.lavado <= 0)
+        return { mes, nombreMes: nombreMes(mes), activo: false, dpto: LAVADO.dpto }
       return {
         mes,
         nombreMes: nombreMes(mes),
         activo: true,
-        dpto: '401',
+        dpto: LAVADO.dpto,
         m3: r.lavado,
         areaComunAntes: r.brutoComun,
         areaComunDespues: r.comunReal,
@@ -277,6 +397,81 @@ export const HERRAMIENTAS: Herramienta[] = [
           `No se cobran por fuera de la factura: se restan del área común, que este mes queda en ` +
           `${fmt(r.comunReal)} m³, y se le suman al 401, así que el total del edificio sigue siendo ` +
           `exactamente lo que factura SEDAPAL.`,
+      }
+    },
+  },
+  {
+    nombre: 'quienVive',
+    descripcion:
+      'Los siete departamentos del edificio: quién vive en cada uno, su piso y su porcentaje de la escritura.',
+    parametros: {
+      type: 'object',
+      properties: { dpto: { type: 'string', description: 'Si preguntan por uno en concreto.' } },
+    },
+    async ejecutar(argumentos: { dpto?: string }) {
+      /**
+       * Los nombres salen de la **base**, no de `DPTOS`.
+       *
+       * Es lo mismo mientras nadie cambie de dueño, y deja de serlo el día que
+       * alguien se muda: la constante es la escritura, la base es quién vive
+       * hoy. Bob tiene que decir quién vive hoy. Los porcentajes sí son de la
+       * escritura y por eso se toman de la constante, que es donde el test
+       * candado los vigila.
+       */
+      const filas = await prisma.departamento.findMany({ orderBy: { id: 'asc' } })
+      const porId = new Map(filas.map((f) => [f.id, f.nombre]))
+      const todos = DPTOS.map((d) => ({
+        dpto: d.id,
+        quienVive: porId.get(d.id) ?? d.nombre,
+        piso: d.piso,
+        porcentaje: d.flat,
+      }))
+      // Si preguntaron por uno en concreto, se dice cuál es. Quién vive dónde
+      // es público entre los siete, así que esto no pasa por `dptoDe`.
+      const pedido = typeof argumentos.dpto === 'string' ? argumentos.dpto : null
+      const uno = pedido ? (todos.find((x) => x.dpto === pedido) ?? null) : null
+      return { dptos: todos, preguntadoPor: uno }
+    },
+  },
+  {
+    nombre: 'comoSeHace',
+    descripcion:
+      'El procedimiento para un caso concreto de la app: gasto extra, gasto que no paga alguien, ' +
+      'pago adelantado, pago parcial, condonar, corregir un mes publicado, cambiar un gasto fijo, ' +
+      'concepto nuevo, lavado de vehículo, cambio de dueño, publicar, o un mes que no cuadra. ' +
+      'Llámala siempre que pregunten cómo se registra o cómo se hace algo.',
+    parametros: {
+      type: 'object',
+      properties: {
+        caso: {
+          type: 'string',
+          description: `Uno de: ${CASOS.join(', ')}. También vale la pregunta tal cual la escribieron.`,
+        },
+      },
+      required: ['caso'],
+    },
+    async ejecutar(argumentos: { caso?: string }) {
+      const pedido = typeof argumentos.caso === 'string' ? argumentos.caso : ''
+      const p = procedimientoPara(pedido)
+      /**
+       * Sin receta no se improvisa una: se devuelve la lista de las que hay.
+       *
+       * Inventar un procedimiento es peor que no tenerlo. Quien administra lo
+       * seguiría, y el error terminaría en la cuota de alguien.
+       */
+      if (!p) {
+        return {
+          encontrado: false,
+          casos: PROCEDIMIENTOS.map((x) => ({ caso: x.caso, queEs: x.queEs })),
+        }
+      }
+      return {
+        encontrado: true,
+        caso: p.caso,
+        queEs: p.queEs,
+        donde: p.donde,
+        pasos: p.pasos,
+        ...(p.ojoCon ? { ojoCon: p.ojoCon } : {}),
       }
     },
   },

@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { Avatar } from '@/components/Avatar'
 
 /**
@@ -12,7 +13,7 @@ import { Avatar } from '@/components/Avatar'
  * Tarjeta de fondo ámbar suave con el avatar a la izquierda, dos líneas como
  * mucho. En celeste cuando habla de agua.
  */
-export function AvisoBob({ children, tono = 'ambar' }: { children: string; tono?: 'ambar' | 'agua' }) {
+export function AvisoBob({ children, tono = 'ambar' }: { children: ReactNode; tono?: 'ambar' | 'agua' }) {
   return (
     <div className={tono === 'agua' ? 'bob-nota bob-nota-agua' : 'bob-nota'}>
       <span className="bob-nota-avatar">

@@ -11,12 +11,14 @@ import type { EstadoCuota } from '@/lib/estados'
 
 const CLARO: Record<EstadoCuota, string> = {
   'al-dia': 'bg-verde-suave text-verde-oscuro',
+  'sin-cobro': 'bg-neutro-apenas text-gris',
   'sin-registrar': 'bg-ambar-suave text-ambar',
   'en-verificacion': 'bg-neutro-suave text-gris',
 }
 
 const SOBRE_NOCHE: Record<EstadoCuota, string> = {
   'al-dia': 'bg-pildora-dia text-verde-claro',
+  'sin-cobro': 'bg-sobre-noche-boton text-sobre-noche-cuerpo',
   'sin-registrar': 'bg-pildora-sin text-ambar-claro',
   'en-verificacion': 'bg-pildora-verificacion text-agua-claro',
 }

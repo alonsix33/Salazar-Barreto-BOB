@@ -30,6 +30,8 @@ import { Fallo } from '@/components/ui/Fallo'
 export function Paso5Puntual({ borrador, guardar, guardando, errorGuardar, avanzar }: PropsPaso) {
   const { abrir } = useNumpad()
   const [extras, setExtras] = useState<Extra[]>(() => extrasDelMes(borrador))
+  /** Índice del gasto al que se le está eligiendo quiénes lo pagan. */
+  const [eligiendoQuienes, setEligiendoQuienes] = useState<number | null>(null)
   const [eligiendoDpto, setEligiendoDpto] = useState<number | null>(null)
 
   const guardarExtras = (lista: Extra[]) => {
@@ -66,6 +68,34 @@ export function Paso5Puntual({ borrador, guardar, guardando, errorGuardar, avanz
     guardarExtras(lista)
   }
 
+  /**
+   * Alterna si un departamento paga este gasto.
+   *
+   * Se guarda la lista de los que SÍ pagan, y vacía significa "los siete": así
+   * un gasto normal no arrastra una lista de siete ids que hay que mantener en
+   * sincronía con los departamentos reales.
+   */
+  const alternarQuien = (indice: number, dpto: DptoId) => {
+    guardarExtras(
+      extras.map((e, i) => {
+        if (i !== indice || e.tipo !== 'gasto') return e
+        const actuales: DptoId[] =
+          e.participantes && e.participantes.length > 0 ? [...e.participantes] : DPTOS.map((d) => d.id)
+        const sigue = actuales.includes(dpto) ? actuales.filter((x) => x !== dpto) : [...actuales, dpto]
+        // Quitarlos a todos no tiene sentido: el gasto lo paga alguien.
+        if (sigue.length === 0) return e
+        const todos = sigue.length === DPTOS.length
+        return { ...e, participantes: todos ? [] : DPTOS.filter((d) => sigue.includes(d.id)).map((d) => d.id) }
+      }),
+    )
+  }
+
+  /** Los que NO pagan un gasto. Vacío = lo pagan los siete. */
+  const fueraDe = (e: Extra): DptoId[] =>
+    e.tipo === 'gasto' && e.participantes && e.participantes.length > 0
+      ? DPTOS.filter((d) => !e.participantes!.includes(d.id)).map((d) => d.id)
+      : []
+
   const quitar = (indice: number) => guardarExtras(extras.filter((_, i) => i !== indice))
 
   const lavado = borrador.lavado
@@ -97,9 +127,22 @@ export function Paso5Puntual({ borrador, guardar, guardando, errorGuardar, avanz
             <div key={i} className="puntual-anadido">
               <span className="min-w-0 flex-1">
                 <span className="tipo-cuerpo-lista block truncate">{e.concepto}</span>
-                <span className="tipo-contexto-chico block text-gris puntual-quien">
-                  {e.tipo === 'gasto' ? COPYS.cierre.seRepartte : COPYS.cierre.aFavorDe(e.dpto)}
-                </span>
+                {e.tipo === 'gasto' ? (
+                  <button
+                    type="button"
+                    onClick={() => setEligiendoQuienes(eligiendoQuienes === i ? null : i)}
+                    className="tipo-contexto-chico block text-gris puntual-quien puntual-quien-boton"
+                  >
+                    {fueraDe(e).length > 0
+                      ? COPYS.cierre.loPaganAlgunos(fueraDe(e))
+                      : COPYS.cierre.seRepartte}
+                    {e.reparto === 'iguales' ? ` · ${COPYS.cierre.enPartesIguales}` : ''}
+                  </button>
+                ) : (
+                  <span className="tipo-contexto-chico block text-gris puntual-quien">
+                    {COPYS.cierre.aFavorDe(e.dpto)}
+                  </span>
+                )}
               </span>
               <span className="tipo-monto-lista">{fmt(e.monto)}</span>
               <button type="button" onClick={() => quitar(i)} className="puntual-quitar" aria-label="Quitar">
@@ -110,6 +153,41 @@ export function Paso5Puntual({ borrador, guardar, guardando, errorGuardar, avanz
             </div>
           ))}
         </>
+      )}
+
+      {eligiendoQuienes !== null && extras[eligiendoQuienes]?.tipo === 'gasto' && (
+        <div className="puntual-elegir">
+          <p className="tipo-cuerpo-destacado-medio puntual-elegir-titulo">
+            {COPYS.cierre.quienesPagan}
+          </p>
+          <div className="puntual-dptos">
+            {DPTOS.map((d) => {
+              const fuera = fueraDe(extras[eligiendoQuienes]!).includes(d.id)
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  aria-pressed={!fuera}
+                  onClick={() => alternarQuien(eligiendoQuienes, d.id)}
+                  className="puntual-dpto"
+                  data-fuera={fuera ? '' : undefined}
+                >
+                  {d.id}
+                </button>
+              )
+            })}
+          </div>
+          <p className="tipo-contexto-chico text-gris puntual-elegir-nota">
+            {COPYS.cierre.comoSeReparte}
+          </p>
+          <button
+            type="button"
+            onClick={() => setEligiendoQuienes(null)}
+            className="boton-secundario puntual-elegir-listo"
+          >
+            {COPYS.cierre.listoQuienes}
+          </button>
+        </div>
       )}
 
       {eligiendoDpto !== null && (

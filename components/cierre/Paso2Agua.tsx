@@ -9,6 +9,8 @@ import { useNumpad } from '@/components/Numpad'
 import type { PropsPaso } from './Wizard'
 import { BotonAvanzar } from './BotonAvanzar'
 import { AvisoBob } from './AvisoBob'
+import { BobDice } from '@/components/BobDice'
+import { MOMENTOS } from '@/lib/bob/momentos'
 import { CampoNumerico } from './CampoNumerico'
 import { PropuestaCorreccion } from './PropuestaCorreccion'
 import { Fallo } from '@/components/ui/Fallo'
@@ -39,6 +41,20 @@ export function Paso2Agua({ borrador, guardar, guardando, errorGuardar, avanzar,
   const tieneM3 = rec.aguaM3 > 0
   const tieneMonto = rec.aguaMonto > 0
   const tieneDescuento = (rec.descuento ?? 0) > 0
+
+  /**
+   * Lo que Bob necesita para comparar. `04` §Paso 2 pide que **compare**, no
+   * que repita el número recién tecleado.
+   *
+   * Va a `MOMENTOS['cierre-agua']`, que es donde están los siete textos
+   * automáticos. La función que lo redactaba vivía aquí abajo y era invisible
+   * desde fuera del fichero.
+   */
+  const datosAgua = {
+    m3: rec.aguaM3,
+    nombreMes,
+    anteriores: borrador.m3Anteriores.map((a) => ({ mes: a.mes, valor: a.m3 })),
+  }
 
   /**
    * Las propuestas que el administrador ya descartó, en esta visita al paso.
@@ -134,7 +150,11 @@ export function Paso2Agua({ borrador, guardar, guardando, errorGuardar, avanzar,
       )}
 
       {tieneM3 && (
-        <AvisoBob tono="agua">{compararM3(rec.aguaM3, nombreMes, borrador.m3Anteriores)}</AvisoBob>
+        <AvisoBob tono="agua">
+          <BobDice momento="cierre-agua" datos={datosAgua} mes={borrador.mes} dpto={null}>
+            {MOMENTOS['cierre-agua'].determinista(datosAgua)}
+          </BobDice>
+        </AvisoBob>
       )}
       {errorGuardar && <Fallo>{errorGuardar}</Fallo>}
 
@@ -145,28 +165,3 @@ export function Paso2Agua({ borrador, guardar, guardando, errorGuardar, avanzar,
   )
 }
 
-/**
- * Lo que Bob dice del consumo del edificio. `04-cierre-del-mes.md` §Paso 2.
- *
- * El documento pide que **compare**: *«81 m³ está en línea con los últimos
- * meses: junio fueron 78 y mayo 78.»* / *«96 m³ es bastante más que los últimos
- * meses (junio 78, mayo 78). ¿Lo confirmas?»*
- *
- * Lo que había antes le repetía al administrador el número que acababa de
- * teclear y le pedía que lo revisara —que no dice nada que la cifra de al lado
- * no diga ya— y además metía el identificador crudo del mes en la frase: «el
- * recibo de 2026-07». Bob acompaña con contexto; sin meses anteriores que
- * comparar, se calla.
- */
-function compararM3(m3: number, mes: string, anteriores: { mes: string; m3: number }[]): string {
-  if (anteriores.length === 0) {
-    return `${m3} m³ es lo que llegó en el recibo de ${mes}. Es el primer mes, así que todavía no hay con qué compararlo.`
-  }
-  const lista = anteriores.map((a) => `${a.mes} ${a.m3}`).join(' y ')
-  const media = anteriores.reduce((s, a) => s + a.m3, 0) / anteriores.length
-  // "Bastante más" a partir de un 15 %: por debajo de eso la variación mensual
-  // del edificio es normal y avisar de todo es no avisar de nada.
-  return m3 > media * 1.15
-    ? `${m3} m³ es bastante más que los últimos meses (${lista}). ¿Lo confirmas?`
-    : `${m3} m³ está en línea con los últimos meses: ${lista}.`
-}

@@ -50,10 +50,24 @@ export function HojaBob({ mes, dpto }: { mes: MesId; dpto: DptoId | null }) {
 
   const preguntar = useMutation({
     mutationFn: async (texto: string): Promise<{ texto: string; lleva: Turno['lleva'] }> => {
+      /**
+       * El hilo viaja con la pregunta.
+       *
+       * Lo guarda el navegador, no el servidor, y por eso cada vecino tiene su
+       * conversación sin que exista sesión de vecino en ninguna parte: la
+       * memoria está en su pantalla. Sin esto, cada pregunta llegaba sola y
+       * «¿y el mes pasado?» no tenía con qué resolverse.
+       *
+       * Se mandan los últimos seis turnos; el servidor vuelve a acotarlo,
+       * porque un límite que solo vive en el cliente no es un límite.
+       */
+      const historial = turnos
+        .slice(-6)
+        .map((t) => ({ de: t.de === 'yo' ? ('vecino' as const) : ('bob' as const), texto: t.texto }))
       const r = await fetch('/api/bob', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ texto, mes, dpto }),
+        body: JSON.stringify({ texto, mes, dpto, historial }),
       })
       const cuerpo = await r.json()
       if (!r.ok) throw new Error(cuerpo.error ?? COPYS.error.noSePudo)
@@ -126,13 +140,23 @@ export function HojaBob({ mes, dpto }: { mes: MesId; dpto: DptoId | null }) {
           enviar(borrador)
         }}
       >
+        {/*
+          Teclado alfanumérico, que es lo que toca: aquí se escribe una pregunta
+          en español, no un número. `enterKeyHint="send"` pone «enviar» en la
+          tecla de retorno en vez de «intro», y las ayudas de escritura van
+          activas porque quien pregunta escribe en su idioma y con prisa.
+        */}
         <input
           className="bob-campo tipo-campo"
+          type="text"
           value={borrador}
           onChange={(ev) => setBorrador(ev.target.value)}
           placeholder={COPYS.bob.campo}
           aria-label={COPYS.bob.campo}
           enterKeyHint="send"
+          autoCapitalize="sentences"
+          autoComplete="off"
+          spellCheck
         />
         <button
           type="submit"

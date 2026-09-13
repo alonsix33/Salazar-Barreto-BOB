@@ -82,10 +82,12 @@ describe('los meses cerrados de la semilla, desde la base', () => {
     const r = await resultadoDeMes('2026-06')
     expect(r.valido).toBe(true)
     expect(r.totalMes).toBe(3317.98)
-    expect(r.cuotas['401'].total).toBe(384.33)
-    // 675.73 y no 675.43: el flat del 502 se corrigió a la escritura
-    // (20.22 → 20.23), lo que mueve su mantenimiento de 605.18 a 605.48.
-    expect(r.cuotas['502'].total).toBe(675.73)
+    // Estas dos subieron porque el área común ya no la absorbe el fondo: la
+    // pagan los siete por su flat. Son 1.62 m³ de común (~S/ 6.93), y a cada
+    // uno le toca su porcentaje — al 401 unos S/ 0.69 y al 502 unos S/ 1.37.
+    // El flat del 502 además está corregido a la escritura (20.22 → 20.23).
+    expect(r.cuotas['401'].total).toBe(385.02)
+    expect(r.cuotas['502'].total).toBe(677.1)
     expect(r.facturaAgua).toBe(325)
     expect(r.comunReal).toBe(1.62)
   })

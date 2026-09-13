@@ -14,11 +14,12 @@ import { describe, expect, it } from 'vitest'
 import { calcularMes } from '../calcularMes'
 import { serieSaldo, type MesConPagos } from '../saldo'
 import { proponerCorreccion } from '../correccion'
-import { DPTOS, GASTOS_FIJOS, LAVADO } from '../constantes'
+import { DPTOS, LAVADO } from '../constantes'
 import { revisarResultado, sumarMontos } from '../sanidad'
 import { fmt, round2 } from '../redondeo'
 import type { DptoId, EntradasMes, Extra, GastoFijo, Lecturas, MesId } from '../tipos'
 import { calcularMesSemilla, entradasDe } from './ayuda'
+import { MESES_SEMILLA } from '../../semilla'
 
 const JUNIO = calcularMesSemilla('2026-06')
 
@@ -308,18 +309,30 @@ describe('el redondeo del mantenimiento conserva la forma del original', () => {
     expect(formaOriginal).not.toBe(formaIngenua)
   })
 
-  it('el motor usa la forma del original', () => {
-    // Se construye un mes cuyo baseMant es exactamente 2850.00 y se comprueba
-    // que la cuota del 502 (flat 20.23) sale con la forma original. Con la
-    // forma ingenua saldría 576.55: un céntimo de diferencia que este test ve.
-    const entradas = entradasDe('2026-06')
-    const c = calcularMes(entradas, {
-      fijos: Object.fromEntries(GASTOS_FIJOS.map((g) => [g.concepto, null])),
-      // totalMes = agua (325) + luz (2850) ⇒ baseMant = totalMes − agua = 2850
-      recibo: { aguaM3: 78, aguaMonto: 325, luz: 2850 },
-    })
-    expect(c.baseMant).toBe(2850.0)
-    expect(c.cuotas['502'].mantenimiento).toBe(576.56)
+  /**
+   * El contrato, comprobado directamente sobre los ocho meses.
+   *
+   * Antes esto se probaba construyendo un mes cuyo `baseMant` cayera justo en
+   * uno de los pocos valores donde las dos formas difieren. Al meter el área
+   * común dentro de la base —que es lo que hace el edificio— la base dejó de
+   * caer en números redondos y ese caso desapareció: barrí de S/ 1 000 a
+   * S/ 6 000 y no queda ninguno. Un test que ya no puede distinguir las dos
+   * formas es decoración, así que se cambió por lo que de verdad se promete:
+   * cada mantenimiento es `round(base × flat) / 100`, exacto, para los siete.
+   */
+  it('cada mantenimiento es round(base × flat) / 100, en todos los meses', () => {
+    let comprobados = 0
+    for (const mes of MESES_SEMILLA) {
+      const c = calcularMesSemilla(mes)
+      if (!c.valido) continue
+      for (const d of DPTOS) {
+        expect(c.cuotas[d.id].mantenimiento, `${mes} · ${d.id}`).toBe(
+          Math.round(c.baseMant * d.flat) / 100,
+        )
+        comprobados++
+      }
+    }
+    expect(comprobados, 'no se comprobó ni una cuota').toBeGreaterThanOrEqual(40)
   })
 })
 

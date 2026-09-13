@@ -20,9 +20,11 @@
  * Todas las cifras salen de las herramientas. Ninguna se escribe aquí.
  */
 
+import { DPTO_IDS } from '@/lib/calculo/constantes'
 import { fmt } from '@/lib/calculo/redondeo'
 import { capitalizar, enumerar } from '@/lib/formato'
 import { herramienta } from './herramientas'
+import { procedimientoPara, suenaAComo } from './procedimientos'
 import type { Contexto, Llamada, Respuesta } from './tipos'
 
 /** Ejecuta una herramienta y deja constancia, que es de donde sale la guarda. */
@@ -61,15 +63,34 @@ const INTENCIONES = [
   { id: 'comparar', palabras: ['mas que', 'menos que', 'comparado', 'mes pasado', 'subio', 'bajo'] },
   { id: 'banco', palabras: ['deposito', 'transferencia', 'banco', 'viste mi pago', 'ya pague'] },
   { id: 'escribir', palabras: ['confirma', 'cambia', 'publica', 'registra', 'corrige', 'modifica', 'borra'] },
+  { id: 'quienes', palabras: ['quien vive', 'quienes viven', 'quien es el', 'duenos', 'propietarios', 'vecinos', 'los nombres'] },
 ] as const
 
-type Intencion = (typeof INTENCIONES)[number]['id'] | 'nada'
+type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "nada"
 
 /** Qué está preguntando. La primera que encaja gana. */
 export function intencionDe(texto: string): Intencion {
   const t = normalizar(texto)
-  // Lo que Bob **no** puede hacer se mira primero: si alguien pide que confirme
-  // un pago hablando del banco, la respuesta correcta es la del banco.
+  /**
+   * Antes que nada, «cómo se hace esto».
+   *
+   * Hacen falta **las dos señales a la vez**: que suene a trámite y que exista
+   * un procedimiento para lo que menciona. Una sola no basta, y las dos solas
+   * se equivocan en direcciones opuestas: «¿cuánto subió el agua?» suena a
+   * pregunta pero no es un trámite, y «se malogró la bomba» menciona un caso
+   * pero no pide instrucciones.
+   *
+   * Va **delante de `escribir`**: «cómo registro un pago adelantado» es una
+   * pregunta de procedimiento, no un pedido de que Bob lo registre, y la
+   * palabra «registro» está en las dos listas. Sin esto, la pregunta más útil
+   * que puede hacer quien administra se respondía con «eso lo cambia quien
+   * administra», que es cierto e inútil. Lo mismo con «no me deja publicar»,
+   * que caía en `escribir` por la palabra «publicar».
+   */
+  if (suenaAComo(t) && procedimientoPara(t)) return 'como'
+
+  // Después, las dos prohibiciones: si alguien pide que confirme un pago
+  // hablando del banco, la respuesta correcta es la del banco.
   for (const id of ['escribir', 'banco'] as const) {
     const i = INTENCIONES.find((x) => x.id === id)!
     if (i.palabras.some((p) => t.includes(p))) return id
@@ -98,6 +119,71 @@ async function redactar(
   llamadas: Llamada[],
 ): Promise<{ texto: string; lleva: Respuesta['lleva'] }> {
   switch (intencionDe(texto)) {
+    /**
+     * Cómo se hace algo en la app. El caso atípico del mes.
+     *
+     * La receta **no se escribe aquí**: se pide a la herramienta `comoSeHace`,
+     * igual que una cifra. No es ceremonia. La guarda de números descarta la
+     * respuesta entera si aparece un número sin herramienta detrás, y una
+     * instrucción está llena de ellos: «paso 5», «el 502», «los siete». Con la
+     * receta dentro de una llamada, esos números quedan respaldados, y de paso
+     * el procedimiento que se le dio a alguien queda en `consulta_bob`.
+     */
+    case 'como': {
+      const p = await llamar('comoSeHace', { caso: texto }, contexto, llamadas)
+      if (p.encontrado === false) {
+        /**
+         * Sin receta, se dice qué recetas hay, **por su nombre y no por su
+         * descripción**. Enumerar cuatro descripciones enteras daba una segunda
+         * frase de cuarenta palabras que se leía como un formulario, y encima
+         * mezclaba comas suyas con las comas de la enumeración.
+         */
+        const casos = p.casos as { caso: string; queEs: string }[]
+        const nombres = casos.map((c) => c.caso.replace(/-/g, ' '))
+        return {
+          texto: `De eso no tengo el procedimiento. Lo que sí: ${enumerar(nombres)}.`,
+          lleva: null,
+        }
+      }
+      /**
+       * Dos frases: qué es y dónde se hace. Los pasos quedan en el resultado de
+       * la herramienta, que es lo que ve el modelo cuando redacta la versión
+       * larga, y aquí no caben: `05` §3 dice dos, y dos es dos.
+       */
+      return { texto: `${String(p.queEs)} ${String(p.donde)}`, lleva: null }
+    }
+
+    /**
+     * Quién vive en cada departamento.
+     *
+     * Los nombres son públicos entre los siete —la transparencia es el punto
+     * del producto— y no llevan ningún dato de contacto. Lo que **no** se dice
+     * aquí es cuánto debe cada uno: eso sigue siendo del administrador, y esta
+     * rama no llama a `estadoPagos` a propósito.
+     */
+    case 'quienes': {
+      /**
+       * Si la pregunta nombra un departamento, se responde por **ese**.
+       *
+       * «¿Quién vive en el 202?» respondía con los datos del 401, que es el de
+       * quien preguntaba. La pregunta traía la respuesta y Bob la ignoraba.
+       */
+      const mencionado = DPTO_IDS.find((id) => texto.includes(id)) ?? undefined
+      const d = await llamar('quienVive', mencionado ? { dpto: mencionado } : {}, contexto, llamadas)
+      const dptos = d.dptos as { dpto: string; quienVive: string; porcentaje: number }[]
+      const uno =
+        (d.preguntadoPor as (typeof dptos)[number] | null) ??
+        (contexto.dpto ? (dptos.find((x) => x.dpto === contexto.dpto) ?? null) : null)
+      const lista = enumerar(dptos.map((x) => `${x.dpto} ${x.quienVive}`))
+      if (uno) {
+        return {
+          texto: `En el ${uno.dpto} están ${uno.quienVive}, con ${fmt(uno.porcentaje)} % de la escritura. Los siete: ${lista}.`,
+          lleva: null,
+        }
+      }
+      return { texto: `Los siete departamentos son: ${lista}.`, lleva: null }
+    }
+
     /**
      * Lo que Bob **no** puede hacer. `05` §2, que es un contrato.
      *
