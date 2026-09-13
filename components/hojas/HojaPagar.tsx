@@ -5,8 +5,9 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { fmt } from '@/lib/calculo/redondeo'
 import { etiquetaMes } from '@/lib/calculo/mes'
-import type { DptoId, MesId } from '@/lib/calculo/tipos'
+import type { DptoId, MesId, Pago } from '@/lib/calculo/tipos'
 import { COPYS } from '@/lib/copys'
+import { estadoCuota } from '@/lib/estados'
 import { useAnuncio } from '@/components/Anuncio'
 import { Hoja } from './Hoja'
 import { useHoja } from './Hojas'
@@ -19,19 +20,27 @@ import { mensajeDeError } from '@/lib/errores-ui'
  * Los datos de la cuenta, el monto exacto, y el botón que dispara el aviso.
  * El aviso **no confirma el pago**: lo verifica una persona contra el estado de
  * cuenta.
+ *
+ * `pago` decide qué va debajo de la cuenta: sin él, el botón de avisar de
+ * siempre; avisado o confirmado, un mensaje en su lugar y **sin** botón de
+ * avisar. Antes esta hoja no recibía `pago` y ofrecía "Ya transferí, avisar"
+ * sin importar que el mes ya estuviera avisado o confirmado.
  */
 export function HojaPagar({
   mes,
   dpto,
   monto,
   cuenta,
+  pago,
 }: {
   mes: MesId
   dpto: DptoId
   monto: number
   cuenta: { banco: string; numero: string; cci: string; titular: string }
+  pago: Pago | null
 }) {
   const { abrir, cerrar } = useHoja()
+  const estado = estadoCuota(pago, monto)
   const anunciar = useAnuncio()
   const router = useRouter()
   const [copiado, setCopiado] = useState(false)
@@ -100,24 +109,38 @@ export function HojaPagar({
 
         <div className="pagar-nota">
           <p className="tipo-cuerpo-chico text-gris">
-            Cuando transfieras, avisa aquí con el número de operación. Quien administra lo confirma contra el
-            estado de cuenta.
+            {estado === 'al-dia' && COPYS.hojas.pagar.yaConfirmado.texto}
+            {estado === 'en-verificacion' && COPYS.hojas.pagar.yaAvisado.texto}
+            {estado === 'sin-cobro' && COPYS.inicio.detalleSinCobro}
+            {estado === 'sin-registrar' &&
+              'Cuando transfieras, avisa aquí con el número de operación. Quien administra lo confirma contra el estado de cuenta.'}
           </p>
         </div>
 
         {avisar.isError && <Fallo>{mensajeDeError(avisar.error)}</Fallo>}
 
-        <button
-          type="button"
-          onClick={() => avisar.mutate()}
-          aria-disabled={avisar.isPending}
-          className="pagar-boton"
-        >
-          {avisar.isPending ? 'Avisando…' : 'Ya transferí, avisar'}
-        </button>
-        <button type="button" onClick={cerrar} className="pagar-cancelar tipo-cuerpo-enlace text-gris">
-          Todavía no
-        </button>
+        {estado === 'sin-registrar' ? (
+          <>
+            <button
+              type="button"
+              onClick={() => avisar.mutate()}
+              aria-disabled={avisar.isPending}
+              className="pagar-boton"
+            >
+              {avisar.isPending ? 'Avisando…' : 'Ya transferí, avisar'}
+            </button>
+            <button type="button" onClick={cerrar} className="pagar-cancelar tipo-cuerpo-enlace text-gris">
+              Todavía no
+            </button>
+          </>
+        ) : (
+          // Ya avisado, ya confirmado, o sin cobro este mes: nada que disparar,
+          // solo cerrar. Repetir el aviso aquí es lo que rechazaba el servidor
+          // con un 409 — mostrarlo así evita que el vecino llegue a verlo.
+          <button type="button" onClick={cerrar} className="pagar-boton">
+            Entendido
+          </button>
+        )}
       </div>
     </Hoja>
   )

@@ -45,7 +45,7 @@ export function Hoja({
    */
   columna?: boolean
 }) {
-  const { cerrar } = useHoja()
+  const { cerrar, cerrando } = useHoja()
   const panel = useRef<HTMLDivElement>(null)
   const antes = useRef<HTMLElement | null>(null)
 
@@ -92,18 +92,24 @@ export function Hoja({
 
   return (
     <>
-      <button type="button" className="velo" onClick={cerrar} aria-label="Cerrar" tabIndex={-1} />
+      <button
+        type="button"
+        className={`velo ${cerrando ? 'animar-velo-cerrar' : 'animar-velo'}`}
+        onClick={cerrar}
+        aria-label="Cerrar"
+        tabIndex={-1}
+      />
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
         tabIndex={0}
-        className={`hoja animar-hoja ${columna ? 'hoja-columna' : 'scroll-limpio'} ${ALTURAS[altura]}`}
+        className={`hoja ${cerrando ? 'animar-hoja-cerrar' : 'animar-hoja'} ${columna ? 'hoja-columna' : 'scroll-limpio'} ${ALTURAS[altura]}`}
       >
-        <div className="asa-contenedor">
-          <span className="asa" />
-        </div>
+        <button type="button" className="asa-contenedor" onClick={cerrar} aria-label="Cerrar">
+          <span className="asa" aria-hidden="true" />
+        </button>
         {children}
       </div>
     </>

@@ -129,6 +129,19 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
             </span>
           </button>
         )}
+        {/* Arriba, "Avisaron"/"Sin aviso" solo miran `datos.mesPublicado` —el
+            último—. Esta es la puerta para confirmar el pago de un mes
+            publicado anterior, que antes no tenía dónde vivir en la app. */}
+        {datos.publicados.length > 0 && (
+          <button type="button" onClick={() => abrir('confirmar-pagos')} className="admin-accion">
+            <span className="tipo-cuerpo-destacado">{COPYS.pagos.confirmarPasados}</span>
+            <span className="tipo-contexto text-gris">
+              {datos.publicados.length === 1
+                ? datos.etiquetaPublicado
+                : `${datos.publicados.length} meses publicados`}
+            </span>
+          </button>
+        )}
         <button type="button" onClick={() => abrir('export')} className="admin-accion">
           <span className="tipo-cuerpo-destacado">Exportar el año en Excel</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-apagado" aria-hidden="true">

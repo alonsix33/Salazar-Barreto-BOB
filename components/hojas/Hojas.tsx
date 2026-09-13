@@ -20,10 +20,17 @@ import {
 
 export type ClaveHoja =
   | 'bob' | 'calculo' | 'pagos' | 'agua' | 'pagar' | 'aviso-ok'
-  | 'wizard' | 'cargos' | 'export' | 'corregir'
+  | 'wizard' | 'cargos' | 'export' | 'corregir' | 'confirmar-pagos'
 
 interface Contexto {
   hoja: ClaveHoja | null
+  /**
+   * La hoja sigue montada durante su animación de salida: `hoja` todavía dice
+   * cuál es, pero `cerrando` le dice a `Hoja.tsx` que anime hacia abajo en vez
+   * de quedarse. Sin esto, cerrar es un corte seco —la hoja que se veía bajar
+   * al abrir desaparecía de golpe al cerrar— en vez de un solo gesto completo.
+   */
+  cerrando: boolean
   abrir: (hoja: ClaveHoja) => void
   cerrar: () => void
 }
@@ -38,47 +45,119 @@ export function useHoja(): Contexto {
 
 const MARCA = 'sb-hoja'
 
+/** Tiene que coincidir con `--duracion-hoja-cierre` de `globals.css`. */
+const DURACION_CIERRE_MS = 240
+
 export function ProveedorHojas({ children }: { children: ReactNode }) {
   const [hoja, setHoja] = useState<ClaveHoja | null>(null)
+  const [cerrando, setCerrando] = useState(false)
   // Distingue "cerré yo" de "el usuario dio atrás", para no desandar dos veces.
   const cerrandoPorHistoria = useRef(false)
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const abrir = useCallback((clave: ClaveHoja) => {
-    setHoja((actual) => {
-      if (actual === null) {
-        window.history.pushState({ [MARCA]: clave }, '')
-      } else {
-        window.history.replaceState({ [MARCA]: clave }, '')
-      }
-      return clave
-    })
+  const cancelarTemporizador = useCallback(() => {
+    if (temporizador.current !== null) {
+      clearTimeout(temporizador.current)
+      temporizador.current = null
+    }
   }, [])
+
+  useEffect(() => cancelarTemporizador, [cancelarTemporizador])
+
+  const abrir = useCallback(
+    (clave: ClaveHoja) => {
+      cancelarTemporizador()
+      setCerrando(false)
+      setHoja((actual) => {
+        if (actual === null) {
+          window.history.pushState({ [MARCA]: clave }, '')
+        } else {
+          window.history.replaceState({ [MARCA]: clave }, '')
+        }
+        return clave
+      })
+    },
+    [cancelarTemporizador],
+  )
+
+  /**
+   * Deja la hoja actual montada `DURACION_CIERRE_MS` más, animándose hacia
+   * abajo, y solo entonces la desmonta. Es lo mismo pase lo que pase: un
+   * toque en el velo, Escape, el asa, o el botón/gesto atrás del sistema.
+   *
+   * **El `history.back()` se dispara al final, no al empezar.** Era al
+   * revés, y eso abría una carrera real: si `abrir()` se llamaba mientras la
+   * hoja todavía se veía bajando —240ms es tiempo de sobra para un toque en
+   * la pantalla de atrás, que `pointer-events:none` en el velo deja
+   * alcanzable a propósito—, el `back()` de la hoja que se estaba cerrando
+   * seguía en vuelo cuando la nueva ya se había abierto. Al resolverse, ese
+   * `back()` volvía a una entrada de historial que ya no correspondía a lo
+   * que se veía en pantalla, y la hoja recién abierta se cerraba sola.
+   *
+   * Al esperar al final: si `abrir()` llega antes de que el plazo se cumpla,
+   * `cancelarTemporizador()` mata este temporizador **antes de que exista
+   * ningún `back()` que competir con nada** — nunca se llega a tocar el
+   * historial por la hoja que se estaba cerrando, y `abrir()` reemplaza su
+   * entrada tranquilamente, como si nunca hubiera empezado a cerrarse.
+   */
+  const empezarCierre = useCallback(
+    (conRetroceso: boolean) => {
+      cancelarTemporizador()
+      setCerrando(true)
+      temporizador.current = setTimeout(() => {
+        if (conRetroceso) window.history.back()
+        setHoja(null)
+        setCerrando(false)
+        temporizador.current = null
+      }, DURACION_CIERRE_MS)
+    },
+    [cancelarTemporizador],
+  )
 
   const cerrar = useCallback(() => {
+    /**
+     * Sin esta guarda: un segundo toque en el velo o el asa mientras la hoja
+     * todavía se ve bajando —240ms es tiempo de sobra para un segundo toque
+     * de quien no ve reaccionar nada todavía— pedía un segundo cierre sobre
+     * uno que ya estaba en curso.
+     */
+    if (cerrando) return
     setHoja((actual) => {
-      if (actual !== null && !cerrandoPorHistoria.current) {
-        // Desandar el `pushState`: así el atrás del sistema no queda desfasado.
-        window.history.back()
-      }
-      return null
+      if (actual === null) return null
+      // Si esto llegó por `alVolver` (el back del sistema), el historial ya
+      // se movió solo: pedir otro `back()` aquí duplicaría la navegación.
+      empezarCierre(!cerrandoPorHistoria.current)
+      return actual
     })
-  }, [])
+  }, [cerrando, empezarCierre])
 
   useEffect(() => {
     const alVolver = (ev: PopStateEvent) => {
       // `history.state` es `any` por definición del DOM; se lee una sola marca.
-    const clave = (ev.state as Record<string, unknown> | null)?.[MARCA]
+      const clave = (ev.state as Record<string, unknown> | null)?.[MARCA]
       cerrandoPorHistoria.current = true
       // `clave` se guardó con `pushState` desde `abrir(clave: ClaveHoja)`, así que
-    // si es una cadena, es una de las claves de hoja.
-    setHoja(typeof clave === 'string' ? (clave as ClaveHoja) : null)
+      // si es una cadena, es una de las claves de hoja.
+      if (typeof clave === 'string') {
+        cancelarTemporizador()
+        setCerrando(false)
+        setHoja(clave as ClaveHoja)
+      } else {
+        setHoja((actual) => {
+          if (actual === null) return null
+          // El historial ya se movió —esto es la respuesta a ese cambio—,
+          // así que el cierre no vuelve a tocarlo.
+          empezarCierre(false)
+          return actual
+        })
+      }
       queueMicrotask(() => {
         cerrandoPorHistoria.current = false
       })
     }
     window.addEventListener('popstate', alVolver)
     return () => window.removeEventListener('popstate', alVolver)
-  }, [])
+  }, [cancelarTemporizador, empezarCierre])
 
   /**
    * Escape cierra, como en cualquier modal.
@@ -89,14 +168,14 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
    * de cerrarlo salvo recargar la página.
    */
   useEffect(() => {
-    if (!hoja) return
+    if (!hoja || cerrando) return
     const alTeclear = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') cerrar()
     }
     window.addEventListener('keydown', alTeclear)
     return () => window.removeEventListener('keydown', alTeclear)
-  }, [hoja, cerrar])
+  }, [hoja, cerrando, cerrar])
 
-  const valor = useMemo(() => ({ hoja, abrir, cerrar }), [hoja, abrir, cerrar])
+  const valor = useMemo(() => ({ hoja, cerrando, abrir, cerrar }), [hoja, cerrando, abrir, cerrar])
   return <ContextoHoja.Provider value={valor}>{children}</ContextoHoja.Provider>
 }

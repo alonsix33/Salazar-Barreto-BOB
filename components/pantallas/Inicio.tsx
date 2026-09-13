@@ -121,7 +121,7 @@ export function Inicio({
               </p>
             )}
           </div>
-          <AccionesCuota />
+          <AccionesCuota estado={estado} />
         </TarjetaNoche>
       </div>
 

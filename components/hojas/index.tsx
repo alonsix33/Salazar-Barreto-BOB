@@ -45,6 +45,8 @@ export function Hojas() {
       // La lista de meses publicados la trae la misma consulta del panel: la
       // hoja deja elegir cuál se corrige, no solo el último.
       return <HojaAdminDatos modo="corregir" />
+    case 'confirmar-pagos':
+      return <HojaAdminDatos modo="pagos" />
     default:
       return null
   }

@@ -10,7 +10,9 @@ import { expect, test, type Page } from '@playwright/test'
  */
 
 const ANCHOS = [320, 360, 390, 430, 768, 1024, 1440]
-const ALTURAS = [844, 560]
+// 844/560: teléfono vertical/horizontal. 1133: iPad Mini vertical de verdad,
+// el techo del rango que la app soporta de forma fluida (`--spacing-app-tablet`).
+const ALTURAS = [844, 560, 1133]
 
 /**
  * Cada pantalla, con **un texto que solo aparece si de verdad se cargó**.
@@ -155,38 +157,58 @@ test.describe('sin desbordes horizontales', () => {
   }
 })
 
-test.describe('el marco solo existe en escritorio', () => {
-  test('en un teléfono la app ocupa la pantalla, sin marco ni sombra', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/')
-    const estilo = await page.locator('.marco-app').evaluate((el) => {
-      const s = getComputedStyle(el)
-      return { radio: s.borderTopLeftRadius, sombra: s.boxShadow, ancho: el.clientWidth }
-    })
-    expect(estilo.radio).toBe('0px')
-    expect(estilo.sombra).toBe('none')
-    expect(estilo.ancho).toBe(390)
+/**
+ * El marco fue una tarjeta de teléfono fija (390×844, con radio y sombra)
+ * desde tablet para arriba. Se cambió a pedido explícito: la app tiene que
+ * verse bien de un teléfono chico a un iPad Mini vertical con el ancho
+ * fluido, sin saltar a una tarjeta flotante. Estos tests protegían la
+ * tarjeta fija; ahora protegen lo contrario, a propósito.
+ */
+test.describe('el ancho es fluido, sin marco en ningún tamaño', () => {
+  test('nunca hay radio ni sombra, ni en teléfono ni en tablet', async ({ page }) => {
+    for (const [ancho, alto] of [
+      [390, 844],
+      [768, 1024],
+      [1440, 900],
+    ] as const) {
+      await page.setViewportSize({ width: ancho, height: alto })
+      await page.goto('/')
+      const estilo = await page.locator('.marco-app').evaluate((el) => {
+        const s = getComputedStyle(el)
+        return { radio: s.borderTopLeftRadius, sombra: s.boxShadow }
+      })
+      expect(estilo.radio, `${ancho}×${alto}`).toBe('0px')
+      expect(estilo.sombra, `${ancho}×${alto}`).toBe('none')
+    }
   })
 
-  test('en escritorio sí hay marco de 390 centrado', async ({ page }) => {
+  test('el ancho crece con la ventana hasta el techo de iPad Mini vertical, y se topa ahí', async ({ page }) => {
+    // Por debajo del techo (768px): el marco ocupa la ventana entera.
+    for (const ancho of [320, 390, 430, 768]) {
+      await page.setViewportSize({ width: ancho, height: 1024 })
+      await page.goto('/')
+      const medido = await page.locator('.marco-app').evaluate((el) => el.clientWidth)
+      expect(medido, `a ${ancho}px de ventana`).toBe(ancho)
+    }
+
+    // Por encima (una ventana de escritorio, fuera del rango que se diseñó):
+    // se queda capado en el techo, centrado, en vez de seguir estirándose.
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    const estilo = await page.locator('.marco-app').evaluate((el) => {
-      const s = getComputedStyle(el)
-      return { radio: s.borderTopLeftRadius, sombra: s.boxShadow, ancho: el.clientWidth }
-    })
-    expect(estilo.radio).toBe('38px')
-    expect(estilo.sombra).not.toBe('none')
-    expect(estilo.ancho).toBeLessThanOrEqual(392)
+    const conTecho = await page.locator('.marco-app').evaluate((el) => el.clientWidth)
+    expect(conTecho).toBe(768)
   })
 
   test('no hay layout de escritorio de dos columnas', async ({ page }) => {
-    // Decisión tomada: son siete vecinos consultando desde el celular. Una
-    // versión ancha sería una pantalla que nadie usa y hay que mantener igual.
+    // Decisión tomada: son siete vecinos consultando desde el celular o la
+    // tablet, en vertical. Una versión ancha de verdad —dos columnas— sería
+    // una pantalla que nadie usa y hay que mantener igual. El ancho fluido
+    // hasta 768px no es eso: sigue siendo una sola columna, solo que no
+    // recortada a 390px en una tablet.
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     const ancho = await page.locator('.marco-app').evaluate((el) => el.clientWidth)
-    expect(ancho).toBeLessThan(500)
+    expect(ancho).toBeLessThanOrEqual(768)
   })
 })
 

@@ -40,6 +40,17 @@ export function NavInferior() {
             <Link
               key={d.href}
               href={d.href}
+              /**
+               * Por defecto Next.js solo precarga el esqueleto de una ruta
+               * dinámica, no sus datos —los cuatro destinos pegan contra
+               * Postgres—, así que tocar la pestaña disparaba la consulta
+               * recién en ese momento. Con solo cuatro destinos fijos, sin
+               * costo real de precargar los cuatro enteros, `prefetch` trae
+               * los datos de verdad en cuanto la barra entra en pantalla —
+               * casi siempre, porque está fija abajo— para que tocar se
+               * sienta instantáneo en vez de disparar la espera recién ahí.
+               */
+              prefetch={true}
               aria-label={d.etiqueta}
               aria-current={activo ? 'page' : undefined}
               className={`nav-destino ${activo ? 'bg-sobre-noche-activo' : ''}`}

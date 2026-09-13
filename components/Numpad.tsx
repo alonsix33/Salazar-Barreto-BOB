@@ -201,7 +201,15 @@ function Teclado({
         <div className="numpad-rejilla">
           {teclas.map((k, i) =>
             k === '' ? (
-              <span key={i} />
+              /**
+               * Sin punto decimal (la lectura de SEDAPAL, `Paso2Agua.tsx`), la
+               * fila de abajo era `[vacío][0][←]`: un `<span>` sin estilo no
+               * ocupa el alto de una tecla, así que "0" y "←" quedaban
+               * corridos hacia la derecha con un hueco muerto a la izquierda
+               * — el teclado "pegado hacia un lado" que se reportó. La celda
+               * ocupa el sitio de una tecla real, solo que invisible.
+               */
+              <span key={i} className="numpad-tecla numpad-tecla-vacia" aria-hidden="true" />
             ) : (
               <button
                 key={i}

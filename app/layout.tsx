@@ -7,6 +7,7 @@ import { Hojas } from '@/components/hojas'
 import { NavSiCorresponde } from '@/components/NavSiCorresponde'
 import { AvisoVersion } from '@/components/AvisoVersion'
 import { SinConexion } from '@/components/SinConexion'
+import { AvisoVertical } from '@/components/AvisoVertical'
 import { dptoElegido } from '@/lib/sesion'
 import { COLOR_TEMA } from '@/lib/tema'
 import './globals.css'
@@ -66,6 +67,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  /**
+   * `maximumScale: 5` a propósito, no 1: apagar el pellizco de zoom con
+   * `userScalable: false` viola WCAG 1.4.4 —quien necesita agrandar el texto
+   * se queda sin forma de hacerlo— y es justo lo que
+   * `tests/e2e/bob.spec.ts` («sin violaciones de accesibilidad críticas ni
+   * serias») comprueba que no pase. El zoom que sí molesta —el automático de
+   * iOS al enfocar un campo— no lo causa esto: lo causa un `font-size` de
+   * campo por debajo de 16px, y se arregla ahí, no aquí.
+   */
   maximumScale: 5,
   viewportFit: 'cover',
   themeColor: COLOR_TEMA,
@@ -76,6 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="es-PE" className={`${syne.variable} ${dmSans.variable} ${jetbrains.variable}`}>
       <body>
+        <AvisoVertical />
         <ProveedoresCliente>
           <Marco>
             <SinConexion />

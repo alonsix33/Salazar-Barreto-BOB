@@ -7,6 +7,7 @@ import { ProveedorHojas } from '@/components/hojas/Hojas'
 import { ProveedorNumpad } from '@/components/Numpad'
 import { ProveedorContexto } from '@/components/hojas/Contexto'
 import { ProveedorAnuncio } from '@/components/Anuncio'
+import { useBloqueoDeOrientacion } from '@/lib/orientacion'
 
 /**
  * Los proveedores de cliente.
@@ -28,6 +29,7 @@ export function ProveedoresCliente({ children }: { children: ReactNode }) {
         },
       }),
   )
+  useBloqueoDeOrientacion()
   return (
     <QueryClientProvider client={cliente}>
       <ProveedorAnuncio>

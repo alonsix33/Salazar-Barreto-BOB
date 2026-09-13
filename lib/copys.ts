@@ -45,6 +45,14 @@ export const COPYS = {
     direccion: 'Jr. Enrique Salazar Barreto',
   },
 
+  // La app es solo vertical: el teclado numérico, la navegación inferior y las
+  // hojas están pensados para ese ancho. `@media (orientation: landscape)` la
+  // cubre entera con esto en vez de dejar ver la interfaz descuadrada.
+  giraElTelefono: {
+    titulo: 'Gira tu teléfono',
+    texto: 'Esta app se usa en vertical.',
+  },
+
   /** `01` §7 · nunca "deudor", "moroso" ni "vencido". */
   estados: {
     'al-dia': 'Al día',
@@ -311,6 +319,19 @@ export const COPYS = {
       texto:
         'Tu mes pasó a «en verificación». Deja de figurar como pendiente y quien administra lo confirma contra el estado de cuenta.',
     },
+    pagar: {
+      // `HojaPagar`: el vecino que abre "Cómo pagar" con un pago que ya avisó
+      // o que ya está confirmado no ve el botón de avisar — verlo dos veces
+      // no tiene sentido y el servidor lo iba a rechazar con un 409 igual.
+      yaAvisado: {
+        titulo: 'Ya avisaste este mes',
+        texto: 'Quien administra todavía no lo confirma contra el estado de cuenta. No hace falta avisar de nuevo.',
+      },
+      yaConfirmado: {
+        titulo: 'Gracias, ya está al día',
+        texto: 'Este mes ya quedó confirmado contra el estado de cuenta.',
+      },
+    },
   },
 
   // ── Bob ────────────────────────────────────────────────────────────────
@@ -530,6 +551,11 @@ export const COPYS = {
     // Confirmar un pago que entró por un monto distinto de la cuota.
     otroMonto: 'Entró otro monto',
     otroMontoEtiqueta: (dpto: string) => `¿Cuánto entró del ${dpto}?`,
+    // Confirmar pagos de un mes publicado que no es el último. `RegistrarPago`
+    // en el panel solo se montaba con el mes más reciente; esto era imposible.
+    confirmarPasados: 'Confirmar pagos de un mes anterior',
+    confirmarPasadosIntro: (mes: string) =>
+      `Los siete departamentos de ${mes}, con el mismo botón de confirmar del mes actual.`,
   },
   push: {
     titulo: 'Avisos en este teléfono',

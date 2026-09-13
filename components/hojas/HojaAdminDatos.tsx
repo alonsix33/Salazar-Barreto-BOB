@@ -7,6 +7,7 @@ import { Hoja } from './Hoja'
 import { HojaCargos } from './HojaCargos'
 import { HojaExport } from './HojaExport'
 import { HojaCorregir } from './HojaCorregir'
+import { HojaPagosPasados } from './HojaPagosPasados'
 import { Fallo } from '@/components/ui/Fallo'
 import { mensajeDeError } from '@/lib/errores-ui'
 
@@ -20,13 +21,15 @@ import { mensajeDeError } from '@/lib/errores-ui'
  * igual en la rama de carga. Un PIN caducado o un 500 se veían como un giro sin
  * fin y sin una palabra.
  */
-export function HojaAdminDatos({ modo }: { modo: 'export' | 'cargos' | 'corregir' }) {
+export function HojaAdminDatos({ modo }: { modo: 'export' | 'cargos' | 'corregir' | 'pagos' }) {
   const titulo =
     modo === 'export'
       ? 'Exportar el año'
       : modo === 'cargos'
         ? 'Cargos y créditos'
-        : 'Corregir un mes publicado'
+        : modo === 'pagos'
+          ? COPYS.pagos.confirmarPasados
+          : 'Corregir un mes publicado'
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ['admin'],
     queryFn: async (): Promise<DatosAdmin> => {
@@ -64,5 +67,6 @@ export function HojaAdminDatos({ modo }: { modo: 'export' | 'cargos' | 'corregir
 
   if (modo === 'export') return <HojaExport anios={data.anios} />
   if (modo === 'cargos') return <HojaCargos lavado={data.lavado} />
+  if (modo === 'pagos') return <HojaPagosPasados publicados={data.publicados} />
   return <HojaCorregir publicados={data.publicados} />
 }
