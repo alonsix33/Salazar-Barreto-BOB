@@ -178,6 +178,29 @@ test.describe('el cierre del mes, paso a paso', () => {
     const julio = meses.find((m: { mes: string }) => m.mes === '2026-07')
     expect(julio.publicado).toBe(true)
     expect(julio.cuadra).toBe(true)
+
+    /**
+     * Y, sobre todo: **que el vecino lo vea al momento**.
+     *
+     * Las pantallas de vecino leen de una foto del edificio cacheada, que se
+     * tira sola en cuanto algo se escribe (`lib/datos/almanaque.ts`). Si esa
+     * invalidación fallara, aquí no habría error de ninguna clase: Historial
+     * seguiría pintando el mes anterior, rápido y con números coherentes, y la
+     * única señal sería que julio no aparece. De ahí que se comprueben las dos
+     * caras —que julio está y que su cuota es la que publicó el motor— y no solo
+     * que la página carga.
+     *
+     * Cubre además la caché del enrutador de Next, que es del navegador y no se
+     * ve desde el servidor: llegar navegando no es lo mismo que recargar.
+     */
+    await page.goto('/historial')
+    await expect(
+      page.locator('a[href="/mes/2026-07"]'),
+      'julio no aparece en Historial tras publicarlo',
+    ).toBeVisible()
+
+    await page.goto('/mes/2026-07')
+    await expect(page.getByText(ESPERADO_JULIO.totalMes).first()).toBeVisible()
   })
 
   test('se sale a mitad y se vuelve al mismo paso, con los datos escritos', async ({ page }) => {

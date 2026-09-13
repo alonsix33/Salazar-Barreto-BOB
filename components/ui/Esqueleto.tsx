@@ -16,9 +16,13 @@
  *  - **Se queda quieto si el sistema lo pide.** Con `prefers-reduced-motion` no
  *    late: se ve el mismo gris, sin animación.
  */
-export function Esqueleto({ filas = 4 }: { filas?: number }) {
+export function Esqueleto({ filas = 4, conNav = true }: { filas?: number; conNav?: boolean }) {
   return (
-    <div className="pantalla scroll-limpio con-nav" role="status" aria-live="polite">
+    <div
+      className={`pantalla scroll-limpio${conNav ? ' con-nav' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       <span className="sr-only">Cargando…</span>
       <div className="esqueleto-cabecera">
         <span className="esqueleto-bloque esqueleto-titulo" />
