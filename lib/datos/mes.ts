@@ -19,6 +19,8 @@ import type {
   Recibo,
   ResultadoMes,
 } from '@/lib/calculo/tipos'
+import { almanaque } from './almanaque'
+import { extraDeLaFila, fijosDeLasFilas, lavadoDeLasFilas, pagoDeLaFila } from './filas'
 import { aNumero, aNumeroObligatorio } from './decimal'
 import { prisma } from './prisma'
 
@@ -69,34 +71,22 @@ export async function fijosVigentesEn(mes: MesId, db: Lector = prisma): Promise<
     where: { vigenteDesde: { lte: mes } },
     orderBy: [{ orden: 'asc' }, { vigenteDesde: 'asc' }],
   })
-  const porConcepto = new Map<string, (typeof filas)[number]>()
-  for (const f of filas) porConcepto.set(f.concepto, f) // la última gana: es la más reciente
-  return [...porConcepto.values()]
-    .sort((a, b) => a.orden - b.orden || a.concepto.localeCompare(b.concepto))
-    .map((f) => ({
-      concepto: f.concepto,
-      monto: aNumero(f.monto),
-      ...(f.anual ? { anual: true } : {}),
-      ...(f.monto === null ? { porConfirmar: true } : {}),
-    }))
+  // La regla —cuál gana de cada concepto— vive en `filas.ts`, una sola vez.
+  return fijosDeLasFilas(
+    filas.map((f) => ({ ...f, monto: aNumero(f.monto) })),
+    mes,
+  )
 }
 
 /** Los gastos extraordinarios y créditos de un mes. */
 export async function extrasDe(mes: MesId, db: Lector = prisma): Promise<Extra[]> {
-  const filas = await db.gastoExtra.findMany({ where: { mes }, orderBy: { creadoEn: 'asc' } })
-  return filas.map((f): Extra =>
-    f.tipo === 'credito'
-      ? { tipo: 'credito', concepto: f.concepto, monto: aNumeroObligatorio(f.monto), dpto: f.dptoId as DptoId }
-      : {
-          tipo: 'gasto',
-          concepto: f.concepto,
-          monto: aNumeroObligatorio(f.monto),
-          // `as`: la columna guarda ids de departamento, los mismos siete de
-          // `DPTOS`. Vacío significa "lo pagan todos" y el motor lo trata así.
-          participantes: f.participantes as DptoId[],
-          reparto: f.reparto,
-        },
-  )
+  const filas = await db.gastoExtra.findMany({
+    where: { mes },
+    // `id` de desempate: dos gastos creados en el mismo milisegundo salían en
+    // el orden que decidiera Postgres, y el orden de los extras mueve céntimos.
+    orderBy: [{ creadoEn: 'asc' }, { id: 'asc' }],
+  })
+  return filas.map((f) => extraDeLaFila({ ...f, monto: aNumeroObligatorio(f.monto) }))
 }
 
 /**
@@ -106,48 +96,44 @@ export async function extrasDe(mes: MesId, db: Lector = prisma): Promise<Extra[]
  * explícita, se hereda: viene marcada si estuvo activa el mes anterior.
  */
 export async function lavadoM3En(mes: MesId, db: Lector = prisma): Promise<number> {
-  const reasignacion = await db.reasignacionAgua.findFirst({
-    where: { desde: { lte: mes } },
+  const filas = await db.reasignacionAgua.findMany({
+    /**
+     * Con orden, y el mismo que usa la ruta que las edita
+     * (`PUT /api/reasignaciones`). Antes era un `findFirst` sin `orderBy`: con
+     * una sola reasignación —que es lo que hay— da igual, pero el día que haya
+     * dos leería una al azar, y podría no ser la que se escribe.
+     */
+    orderBy: [{ desde: 'desc' }, { creadoEn: 'desc' }],
     include: { activaEn: true },
   })
-  if (!reasignacion) return 0
-
-  /**
-   * Los m³ de **este** mes, no los de hoy.
-   *
-   * Si el mes tiene un valor congelado, manda ese: se grabó al publicarlo y es
-   * con el que se calcularon las siete cuotas que la gente ya vio. Sin esta
-   * línea, subir el consumo del lavado de 1.50 a 3.00 movía la cuota del 401 en
-   * junio de 2026 en S/ 6.25 —un mes cerrado y avisado— mientras el aviso a los
-   * siete decía que los meses cerrados no se tocan.
-   */
-  const vigente = (congelado: unknown) =>
-    congelado === null || congelado === undefined
-      ? aNumeroObligatorio(reasignacion.m3)
-      : aNumeroObligatorio(congelado as typeof reasignacion.m3)
-
-  const marcaDelMes = reasignacion.activaEn.find((a) => a.mes === mes)
-  if (marcaDelMes) return marcaDelMes.activa ? vigente(marcaDelMes.m3) : 0
-  // Sin marca explícita: se hereda la del mes anterior, y si tampoco la hay,
-  // se asume activa desde la fecha en que empieza a aplicar. El valor, en
-  // cambio, no se hereda: un mes sin cerrar sigue el actual.
-  const anterior = reasignacion.activaEn.find((a) => a.mes === mesAnterior(mes))
-  if (anterior) return anterior.activa ? aNumeroObligatorio(reasignacion.m3) : 0
-  return aNumeroObligatorio(reasignacion.m3)
+  // La herencia y el valor congelado viven en `filas.ts`, una sola vez.
+  return lavadoDeLasFilas(
+    filas.map((r) => ({
+      m3: aNumeroObligatorio(r.m3),
+      desde: r.desde,
+      activaEn: r.activaEn.map((a) => ({ mes: a.mes, activa: a.activa, m3: aNumero(a.m3) })),
+    })),
+    mes,
+  )
 }
 
-/** Los pagos de un mes, por departamento. */
-export async function pagosDe(mes: MesId, db: Lector = prisma): Promise<PagosMes> {
+/**
+ * Los pagos de un mes, por departamento.
+ *
+ * Sin `db`, sale de la foto del edificio: una tanda de consultas para todos los
+ * meses en vez de una por mes. Con `db` —dentro de una transacción— se lee de
+ * la base, que es lo que necesita quien acaba de escribir.
+ */
+export async function pagosDe(mes: MesId, db?: Lector): Promise<PagosMes> {
+  if (!db) return (await almanaque()).pagosDe(mes)
   const filas = await db.pago.findMany({ where: { mes } })
   const salida: PagosMes = {}
   for (const f of filas) {
-    salida[f.dptoId as DptoId] = {
-      estado: f.estado,
+    salida[f.dptoId as DptoId] = pagoDeLaFila({
+      ...f,
       fecha: f.fecha.toISOString().slice(0, 10),
       monto: aNumero(f.monto),
-      op: f.operacion,
-      texto: f.texto,
-    }
+    })
   }
   return salida
 }
@@ -165,11 +151,22 @@ export async function entradasDeMes(mes: MesId, db: Lector = prisma): Promise<En
   return { mesId: mes, recibo, lecturas, lecturasAnteriores, fijos, extras, lavadoM3 }
 }
 
-/** El mes ya calculado. Es lo que consumen las pantallas y la API. */
+/**
+ * El mes ya calculado. Es lo que consumen las pantallas y la API.
+ *
+ * El camino normal —sin `db` y sin overrides— sale de la foto del edificio, que
+ * ya trae todos los meses calculados con este mismo motor. Pintar Historial
+ * hacía 66 consultas para llegar a lo mismo.
+ *
+ * Con `db` se calcula contra la base: es el camino de las transacciones, donde
+ * hay que ver lo que se acaba de escribir y todavía no está confirmado. Con
+ * overrides, también: la foto se guarda sin ellos.
+ */
 export async function resultadoDeMes(
   mes: MesId,
   ov: Overrides = {},
-  db: Lector = prisma,
+  db?: Lector,
 ): Promise<ResultadoMes> {
-  return calcularMes(await entradasDeMes(mes, db), ov)
+  if (!db && Object.keys(ov).length === 0) return (await almanaque()).resultadoDe(mes)
+  return calcularMes(await entradasDeMes(mes, db ?? prisma), ov)
 }

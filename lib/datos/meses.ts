@@ -11,10 +11,7 @@ import { etiquetaMes, mesAnterior, mesCorto, nombreMes, comoMes } from '@/lib/ca
 import { DPTO_IDS } from '@/lib/calculo/constantes'
 import { nadaPendiente } from '@/lib/estados'
 import type { DptoId, FilaSaldo, MesId, ResultadoMes } from '@/lib/calculo/tipos'
-import { aNumeroObligatorio } from './decimal'
-import { entradasDeMes, pagosDe, resultadoDeMes } from './mes'
-import { prisma } from './prisma'
-import { calcularMes } from '@/lib/calculo/calcularMes'
+import { almanaque, almanaqueFresco, type Almanaque } from './almanaque'
 
 export interface ResumenMes {
   mes: MesId
@@ -31,9 +28,7 @@ export interface ResumenMes {
 
 /** Los meses que tienen recibo, del más antiguo al más nuevo. */
 export async function mesesConDatos(): Promise<MesId[]> {
-  const filas = await prisma.recibo.findMany({ select: { mes: true }, orderBy: { mes: 'asc' } })
-  // `comoMes` estrecha y comprueba la cadena de la base (ver su docstring).
-  return filas.map((f) => comoMes(f.mes))
+  return (await almanaque()).mesesConRecibo
 }
 
 /**
@@ -43,25 +38,18 @@ export async function mesesConDatos(): Promise<MesId[]> {
  * anterior al segundo, así que no tiene por qué estar publicado.
  */
 export async function mesesPublicados(): Promise<MesId[]> {
-  const filas = await prisma.cierre.findMany({
-    where: { publicado: true },
-    select: { mes: true },
-    orderBy: { mes: 'asc' },
-  })
-  // `comoMes` estrecha y comprueba la cadena de la base (ver su docstring).
-  return filas.map((f) => comoMes(f.mes))
+  return (await almanaque()).mesesPublicados
 }
 
 /** La lista de meses con su estado, para la pantalla de Historial y la API. */
 export async function listaDeMeses(): Promise<ResumenMes[]> {
-  const meses = await mesesConDatos()
-  const cierres = await prisma.cierre.findMany()
-  const porMes = new Map(cierres.map((c) => [c.mes, c]))
+  const foto = await almanaque()
 
   const salida: ResumenMes[] = []
-  for (const mes of meses) {
-    const [resultado, pagos] = await Promise.all([resultadoDeMes(mes), pagosDe(mes)])
-    const cierre = porMes.get(mes)
+  for (const mes of foto.mesesConRecibo) {
+    const resultado = foto.resultadoDe(mes)
+    const pagos = foto.pagosDe(mes)
+    const cierre = foto.cierreDe(mes)
     salida.push({
       mes,
       etiqueta: etiquetaMes(mes),
@@ -86,7 +74,8 @@ export async function listaDeMeses(): Promise<ResumenMes[]> {
 
 /** La serie del saldo, acumulando hacia adelante desde el saldo inicial real. */
 export async function serieDelSaldo(): Promise<FilaSaldo[]> {
-  const config = await prisma.configuracionEdificio.findUnique({ where: { id: 1 } })
+  const foto = await almanaque()
+  const config = foto.config
   if (!config) return []
   /**
    * **Solo meses publicados**, no meses con recibo.
@@ -100,14 +89,7 @@ export async function serieDelSaldo(): Promise<FilaSaldo[]> {
    * enseñaba otra cifra dos centímetros más allá. Inicio e Historial ya
    * filtraban; esto no, y era el único camino que no lo hacía.
    */
-  const publicados = await mesesPublicados()
-  const meses = publicados.filter((m) => m >= config.mesInicial)
-  const conPagos: MesConPagos[] = []
-  for (const mes of meses) {
-    const [resultado, pagos] = await Promise.all([resultadoDeMes(mes), pagosDe(mes)])
-    conPagos.push({ mesId: mes, resultado, pagos })
-  }
-  return serieSaldo(conPagos, aNumeroObligatorio(config.saldoInicial))
+  return serieSaldo(mesesDelSaldo(foto), config.saldoInicial)
 }
 
 /**
@@ -118,16 +100,23 @@ export async function serieDelSaldo(): Promise<FilaSaldo[]> {
  * mismos meses cerrados que la cuenta conjunta, así los dos números concuerdan.
  */
 export async function balanceDelDpto(dpto: DptoId): Promise<number> {
-  const config = await prisma.configuracionEdificio.findUnique({ where: { id: 1 } })
-  if (!config) return 0
-  const publicados = await mesesPublicados()
-  const meses = publicados.filter((m) => m >= config.mesInicial)
-  const conPagos: MesConPagos[] = []
-  for (const mes of meses) {
-    const [resultado, pagos] = await Promise.all([resultadoDeMes(mes), pagosDe(mes)])
-    conPagos.push({ mesId: mes, resultado, pagos })
-  }
-  return balancePorDpto(conPagos)[dpto]
+  const foto = await almanaque()
+  if (!foto.config) return 0
+  return balancePorDpto(mesesDelSaldo(foto))[dpto]
+}
+
+/**
+ * Los meses que entran en la cuenta conjunta, con su cálculo y sus pagos.
+ *
+ * Lo comparten la serie del saldo y el balance por departamento a propósito: es
+ * la misma lista, y cuando eran dos copias bastaba tocar una para que los dos
+ * números dejaran de concordar en pantalla.
+ */
+function mesesDelSaldo(foto: Almanaque): MesConPagos[] {
+  const desde = foto.config?.mesInicial ?? ''
+  return foto.mesesPublicados
+    .filter((m) => m >= desde)
+    .map((mes) => ({ mesId: mes, resultado: foto.resultadoDe(mes), pagos: foto.pagosDe(mes) }))
 }
 
 export interface Borrador {
@@ -170,11 +159,19 @@ export interface Borrador {
   lavado: { m3: number; activo: boolean; aplicado: boolean; dpto: string; concepto: string } | null
 }
 
-/** Todo lo que el cierre del mes necesita para pintarse. */
+/**
+ * Todo lo que el cierre del mes necesita para pintarse.
+ *
+ * Lee con `almanaqueFresco()`, **sin la caché entre peticiones**: quien está
+ * cerrando acaba de teclear y tiene que ver lo que acaba de guardar. Sigue
+ * siendo una sola tanda de consultas —antes esta pantalla hacía una por mes
+ * solo para el promedio de consumo—, así que es rápida igual.
+ */
 export async function borradorDeMes(mes: MesId): Promise<Borrador> {
-  const cierre = await prisma.cierre.findUnique({ where: { mes } })
-  const entradas = await entradasDeMes(mes)
-  const resultado = calcularMes(entradas)
+  const foto = await almanaqueFresco()
+  const cierre = foto.cierreDe(mes)
+  const entradas = foto.entradasDe(mes)
+  const resultado = foto.resultadoDe(mes)
 
   /**
    * La cuota de cada dpto el mes anterior, para que el paso 6 muestre cuánto se
@@ -183,19 +180,16 @@ export async function borradorDeMes(mes: MesId): Promise<Borrador> {
    * publicado: comparar contra un borrador a medias no dice nada.
    */
   const anterior = mesAnterior(mes)
-  const cierreAnterior = await prisma.cierre.findUnique({ where: { mes: anterior } })
   let cuotasAnteriores: Record<string, number> | null = null
-  if (cierreAnterior?.publicado) {
-    const rAnt = await resultadoDeMes(anterior)
+  if (foto.cierreDe(anterior)?.publicado) {
+    const rAnt = foto.resultadoDe(anterior)
     if (rAnt.valido) {
       cuotasAnteriores = Object.fromEntries(DPTO_IDS.map((d) => [d, rAnt.cuotas[d].total]))
     }
   }
 
-  const reasignacion = await prisma.reasignacionAgua.findFirst({
-    where: { desde: { lte: mes } },
-    include: { activaEn: true },
-  })
+  // La misma que usa el cálculo del mes: la más reciente que ya aplica.
+  const reasignacion = foto.crudos.reasignaciones.find((r) => r.desde <= mes) ?? null
 
   return {
     mes,
@@ -211,13 +205,16 @@ export async function borradorDeMes(mes: MesId): Promise<Borrador> {
     // como diccionario llano para la interfaz, que las lee por id de dpto.
     lecturas: entradas.lecturas as Record<string, number>,
     lecturasAnteriores: entradas.lecturasAnteriores as Record<string, number>,
-    promedios: await promediosDeConsumo(mes),
-    m3Anteriores: await m3DeLosMesesAnteriores(mes),
-    luzAnteriores: await luzDeLosMesesAnteriores(mes),
+    promedios: await promediosDeConsumo(mes, foto),
+    m3Anteriores: mesesAnterioresDe(foto, mes, (r) => r.aguaM3),
+    luzAnteriores: mesesAnterioresDe(foto, mes, (r) => r.luz).map((x) => ({
+      mes: x.mes,
+      luz: x.m3,
+    })),
     cuotasAnteriores,
     lavado: reasignacion
       ? {
-          m3: aNumeroObligatorio(reasignacion.m3),
+          m3: reasignacion.m3,
           // `activo` es el interruptor: lo que el administrador dejó marcado.
           activo: entradas.lavadoM3 > 0,
           // `aplicado` es lo que de verdad pasó. `01` §3.3: el lavado puede estar
@@ -243,13 +240,20 @@ export async function borradorDeMes(mes: MesId): Promise<Borrador> {
 export async function m3DeLosMesesAnteriores(
   hasta: MesId,
 ): Promise<{ mes: string; m3: number }[]> {
-  const filas = await prisma.recibo.findMany({
-    where: { mes: { lt: hasta } },
-    orderBy: { mes: 'desc' },
-    take: 2,
-    select: { mes: true, aguaM3: true },
-  })
-  return filas.map((f) => ({ mes: nombreMes(comoMes(f.mes)), m3: f.aguaM3 }))
+  return mesesAnterioresDe(await almanaque(), hasta, (r) => r.aguaM3)
+}
+
+/** Los dos recibos anteriores a un mes, del más reciente al más antiguo. */
+function mesesAnterioresDe(
+  foto: Almanaque,
+  hasta: MesId,
+  de: (r: Almanaque['crudos']['recibos'][number]) => number,
+): { mes: string; m3: number }[] {
+  return foto.crudos.recibos
+    .filter((r) => r.mes < hasta)
+    .slice(-2)
+    .reverse()
+    .map((r) => ({ mes: nombreMes(comoMes(r.mes)), m3: de(r) }))
 }
 
 /**
@@ -259,13 +263,10 @@ export async function m3DeLosMesesAnteriores(
 export async function luzDeLosMesesAnteriores(
   hasta: MesId,
 ): Promise<{ mes: string; luz: number }[]> {
-  const filas = await prisma.recibo.findMany({
-    where: { mes: { lt: hasta } },
-    orderBy: { mes: 'desc' },
-    take: 2,
-    select: { mes: true, luz: true },
-  })
-  return filas.map((f) => ({ mes: nombreMes(comoMes(f.mes)), luz: aNumeroObligatorio(f.luz) }))
+  return mesesAnterioresDe(await almanaque(), hasta, (r) => r.luz).map((x) => ({
+    mes: x.mes,
+    luz: x.m3,
+  }))
 }
 
 /**
@@ -274,12 +275,16 @@ export async function luzDeLosMesesAnteriores(
  * Lo usa el paso 1 para pintar en ámbar una lectura que se sale de lo normal, y
  * `proponerCorreccion` para descartar candidatas absurdas.
  */
-export async function promediosDeConsumo(hasta: MesId): Promise<Record<string, number>> {
-  const meses = (await mesesConDatos()).filter((m) => m < hasta)
+export async function promediosDeConsumo(
+  hasta: MesId,
+  foto?: Almanaque,
+): Promise<Record<string, number>> {
+  const f = foto ?? (await almanaque())
+  const meses = f.mesesConRecibo.filter((m) => m < hasta)
   const suma: Record<string, number> = {}
   const cuenta: Record<string, number> = {}
   for (const mes of meses) {
-    const r = await resultadoDeMes(mes)
+    const r = f.resultadoDe(mes)
     if (!r.valido) continue
     for (const d of DPTO_IDS) {
       suma[d] = (suma[d] ?? 0) + r.consumos[d]

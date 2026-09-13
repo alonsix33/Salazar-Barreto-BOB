@@ -11,3 +11,6 @@ playwright-report/
 blob-report/
 .playwright/
 coverage/
+
+# Scripts de medición de usar y tirar.
+scripts/tmp/

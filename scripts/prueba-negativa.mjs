@@ -22,38 +22,64 @@ const RAIZ = path.resolve(import.meta.dirname, '..')
 
 /** `[archivo, descripción, buscar, reemplazar]` */
 const DEFECTOS = [
-  ['calcularMes.ts', 'no exigir las siete lecturas del mes',
+  ['calculo/calcularMes.ts', 'no exigir las siete lecturas del mes',
     'if (faltanLecturas.length > 0) {', 'if (false) {'],
-  ['calcularMes.ts', 'ignorar los extras guardados y mirar solo el borrador',
+  ['calculo/calcularMes.ts', 'ignorar los extras guardados y mirar solo el borrador',
     'ov.extras ?? entradas.extras', 'ov.extras ?? []'],
-  ['calcularMes.ts', 'ignorar las lecturas que se están tecleando',
+  ['calculo/calcularMes.ts', 'ignorar las lecturas que se están tecleando',
     'DPTOS.map((d) => [d.id, (ov.lecturas?.[d.id] ?? entradas.lecturas[d.id])!]),',
     'DPTOS.map((d) => [d.id, entradas.lecturas[d.id]!]),'],
-  ['calcularMes.ts', 'ignorar el descuento del borrador',
+  ['calculo/calcularMes.ts', 'ignorar el descuento del borrador',
     'descuento: pisa(ov.recibo?.descuento, base?.descuento, null),',
     'descuento: base?.descuento ?? null,'],
-  ['calcularMes.ts', 'simplificar el redondeo del mantenimiento a round2',
+  ['calculo/calcularMes.ts', 'simplificar el redondeo del mantenimiento a round2',
     'const mant = Math.round(baseMant * d.flat) / 100',
     'const mant = round2((baseMant * d.flat) / 100)'],
-  ['calcularMes.ts', 'redondear el precio del m³',
+  ['calculo/calcularMes.ts', 'redondear el precio del m³',
     'const precioM3 = facturaAgua / rec.aguaM3', 'const precioM3 = round2(facturaAgua / rec.aguaM3)'],
-  ['calcularMes.ts', 'sumar el lavado en vez de reasignarlo',
+  ['calculo/calcularMes.ts', 'sumar el lavado en vez de reasignarlo',
     'const comunReal = ajustado ? 0 : round2(brutoComun - lavado)',
     'const comunReal = ajustado ? 0 : round2(brutoComun)'],
-  ['calcularMes.ts', 'sacar un cuadre de la condición de publicar',
+  ['calculo/calcularMes.ts', 'sacar un cuadre de la condición de publicar',
     'cuadra: cuadraAgua && cuadraM3 && cuadraMes && sanidad.cuadra,',
     'cuadra: cuadraAgua && cuadraM3 && cuadraMes,'],
-  ['calcularMes.ts', 'dejar que un lavadoM3 nulo desactive el lavado',
+  ['calculo/calcularMes.ts', 'dejar que un lavadoM3 nulo desactive el lavado',
     'const lavM3 = ov.lavadoM3 ?? entradas.lavadoM3 ?? LAVADO.m3',
     'const lavM3 = ov.lavadoM3 ?? entradas.lavadoM3'],
-  ['sanidad.ts', 'volver al `|| 0` que concatena cadenas al sumar los gastos',
+  ['calculo/sanidad.ts', 'volver al `|| 0` que concatena cadenas al sumar los gastos',
     'for (const l of lineas) if (esFinito(l.monto)) total += l.monto',
     'for (const l of lineas) total += (l.monto || 0)'],
-  ['calcularMes.ts', 'tratar un override undefined como "por confirmar"',
+  ['calculo/calcularMes.ts', 'tratar un override undefined como "por confirmar"',
     "    const escrito = ov.fijos?.[concepto]\n    if (escrito !== undefined) return escrito",
     "    if (ov.fijos && Object.prototype.hasOwnProperty.call(ov.fijos, concepto)) return ov.fijos[concepto] ?? null"],
-  ['constantes.ts', 'aflojar la tolerancia del cuadre del agua cien veces',
+  ['calculo/constantes.ts', 'aflojar la tolerancia del cuadre del agua cien veces',
     'export const TOLERANCIA_AGUA = 0.03', 'export const TOLERANCIA_AGUA = 3'],
+  /**
+   * Las reglas de lectura (`datos/filas.ts`). No son del motor, pero deciden
+   * **qué entra** en él, y equivocarse ahí da cuotas plausibles y falsas.
+   *
+   * Están aquí porque la regla es pura: no hace falta base de datos para
+   * probarla. Y hacen falta porque vivieron un rato duplicadas —una copia en la
+   * lectura por transacción y otra en la foto del edificio—, que es el fallo que
+   * este proyecto ya había pagado una vez.
+   */
+  ['datos/filas.ts', 'perder la herencia del lavado del mes anterior',
+    '  const anterior = r.activaEn.find((a) => a.mes === mesAnterior(mes))\n  if (anterior) return anterior.activa ? r.m3 : 0',
+    '  // defecto inyectado'],
+  ['datos/filas.ts', 'ignorar los m³ congelados al publicar · reescribe el pasado',
+    '    congelado === null || congelado === undefined ? r.m3 : congelado',
+    '    r.m3'],
+  ['datos/filas.ts', 'cobrar el lavado en un mes con la casilla desmarcada',
+    '  if (marcaDelMes) return marcaDelMes.activa ? vigente(marcaDelMes.m3) : 0',
+    '  if (marcaDelMes) return vigente(marcaDelMes.m3)'],
+  ['datos/filas.ts', 'cobrar gastos fijos que aún no estaban vigentes',
+    '  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
+    '  for (const f of fijos) porConcepto.set(f.concepto, f)'],
+  ['datos/filas.ts', 'quedarse con el monto viejo de un gasto fijo, no el vigente',
+    '  const porConcepto = new Map<string, FilaFijo>()\n  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
+    '  const porConcepto = new Map<string, FilaFijo>()\n  for (const f of fijos) if (f.vigenteDesde <= mes && !porConcepto.has(f.concepto)) porConcepto.set(f.concepto, f)'],
+  ['datos/filas.ts', 'repartir un gasto entre los siete ignorando a los participantes',
+    '        participantes: e.participantes as DptoId[],', '        participantes: [] as DptoId[],'],
 ]
 
 function correrSuite() {
@@ -113,7 +139,9 @@ let sinDetectar = 0
 /** Inyecciones que ya no encuentran su objetivo. Ver el bloque de abajo. */
 let obsoletos = 0
 for (const [archivo, descripcion, buscar, reemplazar] of DEFECTOS) {
-  const ruta = path.join(RAIZ, 'lib/calculo', archivo)
+  // La ruta va relativa a `lib/`: casi todos los defectos son de `calculo/`,
+  // pero las reglas de lectura viven en `datos/filas.ts` y también se inyectan.
+  const ruta = path.join(RAIZ, 'lib', archivo)
   const original = fs.readFileSync(ruta, 'utf8')
   if (!original.includes(buscar)) {
     /**

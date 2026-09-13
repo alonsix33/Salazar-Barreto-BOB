@@ -28,9 +28,43 @@ import type { Contexto, Llamada, MotivoCaida, Respuesta, Turno } from './tipos'
 
 export type { Contexto, Respuesta } from './tipos'
 
-/** `determinista` si no se dice otra cosa: sin clave, sin coste y sin red. */
+/**
+ * Con qué responde Bob. **La clave manda.**
+ *
+ * Antes hacían falta dos variables de acuerdo —`DEEPSEEK_API_KEY` y
+ * `BOB_MODO=deepseek`—, y una implica a la otra: nadie paga una clave para no
+ * usarla. En producción estaba la clave y no estaba `BOB_MODO`, así que Bob
+ * contestaba con el catálogo, que responde a todo y nunca falla. No había error
+ * en ningún sitio; solo un Bob más tonto de lo que debía, y ninguna forma de
+ * notarlo desde fuera. Por eso `panelDeAdmin` publica ahora el modo y el motivo:
+ * el estado de Bob se mira, no se deduce.
+ *
+ * Las tres reglas, en orden:
+ *
+ *  1. `BOB_SIN_MODELO` con cualquier valor → catálogo, aunque haya clave. Es el
+ *     freno de mano explícito: para cortar el gasto sin borrar la clave.
+ *  2. `BOB_MODO=deepseek` → modelo. Fuerza el camino aunque no haya clave, que
+ *     es lo que necesitan los tests del caso «sin clave, ni lo intenta».
+ *  3. Si no, **manda la clave**: con clave, el modelo; sin clave, el catálogo.
+ *
+ * `BOB_MODO=determinista` ya no apaga el modelo, y no es un descuido: era el
+ * valor que `docs/DESPLIEGUE.md` mandaba poner antes de que existiera la clave,
+ * y quedarse ahí callando a Bob es justo el fallo que esto arregla.
+ */
 export function modoDeBob(): 'determinista' | 'deepseek' {
-  return process.env.BOB_MODO === 'deepseek' ? 'deepseek' : 'determinista'
+  if (process.env.BOB_SIN_MODELO) return 'determinista'
+  if (process.env.BOB_MODO === 'deepseek') return 'deepseek'
+  return hayClave() ? 'deepseek' : 'determinista'
+}
+
+/** Por qué Bob está en el modo en el que está, en una frase para el panel. */
+export function porQueEseModo(): string {
+  if (process.env.BOB_SIN_MODELO) return 'BOB_SIN_MODELO está puesta: responde solo con el catálogo.'
+  if (process.env.BOB_MODO === 'deepseek' && !hayClave()) {
+    return 'BOB_MODO=deepseek pero falta DEEPSEEK_API_KEY: responde con el catálogo.'
+  }
+  if (hayClave()) return 'Hay DEEPSEEK_API_KEY: Bob responde con el modelo.'
+  return 'No hay DEEPSEEK_API_KEY: Bob responde con el catálogo.'
 }
 
 /** Lo más largo que se acepta de una pregunta. Más que esto no es una pregunta. */

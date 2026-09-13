@@ -8,6 +8,8 @@
 import { NextResponse } from 'next/server'
 import { ZodError, type ZodTypeAny, type output } from 'zod'
 import { cookies, headers } from 'next/headers'
+import { revalidateTag } from 'next/cache'
+import { selloDeEscrituras, TAG_EDIFICIO } from '@/lib/datos/etiquetas'
 import { COOKIE_ADMIN, sesionValida } from './admin'
 import { ErrorDeApi, peticionMala, sinPermiso } from './errores'
 
@@ -101,8 +103,21 @@ export async function ipDeLaPeticion(): Promise<string> {
  * en el servidor y al cliente le llega un mensaje sobrio.
  */
 export async function responder<T>(accion: () => Promise<T>): Promise<NextResponse> {
+  const antes = selloDeEscrituras()
   try {
-    return NextResponse.json(await accion())
+    const salida = await accion()
+    /**
+     * La segunda invalidación, la de después del commit.
+     *
+     * La primera la lanza la extensión de Prisma en cuanto pasa una escritura,
+     * y eso ocurre **dentro** de la transacción. Entre ese momento y el commit
+     * hay una rendija en la que otra lectura puede repoblar la caché con lo de
+     * antes y dejarla vieja hasta la siguiente escritura. Aquí ya está todo
+     * confirmado. Solo se hace si algo se escribió de verdad: invalidar en cada
+     * GET dejaría la caché sin efecto.
+     */
+    if (selloDeEscrituras() !== antes) revalidateTag(TAG_EDIFICIO)
+    return NextResponse.json(salida)
   } catch (e) {
     if (e instanceof ErrorDeApi) {
       return NextResponse.json({ error: e.message, detalle: e.detalle }, { status: e.estado })

@@ -2002,12 +2002,70 @@
   border-bottom: 1px solid var(--color-linea);
   text-align: left;
 }
+/* El estado de Bob, debajo de las acciones. Texto corriente, que se ajusta
+   solo: el motivo puede ser una frase larga y no puede desbordar en un móvil. */
+.admin-estado-bob {
+  margin-top: 22px;
+  padding-top: var(--spacing-fila-alta);
+  border-top: 1px solid var(--color-linea);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
 .admin-salir-form {
   margin: 0;
 }
 .admin-salir {
   margin-top: 22px;
   height: var(--spacing-toque);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   El esqueleto de carga · components/ui/Esqueleto.tsx
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Bloques grises, nunca cifras de ejemplo: un cero que significa «todavía no lo
+   sé» se lee como saldo. El latido se apaga solo con `prefers-reduced-motion`,
+   por el bloque global de §animaciones. */
+.esqueleto-bloque {
+  display: block;
+  background: var(--color-neutro-suave);
+  border-radius: var(--radius-bloque);
+  animation: esqueleto-late 1.4s ease-in-out infinite;
+}
+@keyframes esqueleto-late {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.esqueleto-cabecera {
+  padding: var(--spacing-pantalla) var(--spacing-pantalla) 0;
+}
+.esqueleto-titulo {
+  width: 60%;
+  max-width: 220px;
+  height: 26px;
+  border-radius: var(--radius-mini);
+}
+.esqueleto-subtitulo {
+  width: 80%;
+  max-width: 300px;
+  height: 15px;
+  margin-top: 10px;
+  border-radius: var(--radius-mini);
+}
+.esqueleto-tarjeta {
+  height: 150px;
+  margin: 22px var(--spacing-tarjetas) 0;
+  border-radius: var(--radius-noche);
+}
+.esqueleto-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px var(--spacing-tarjetas) 0;
+}
+.esqueleto-fila {
+  height: 58px;
+  border-radius: var(--radius-tarjeta);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

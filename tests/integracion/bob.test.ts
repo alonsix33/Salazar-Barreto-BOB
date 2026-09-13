@@ -31,6 +31,7 @@ beforeAll(async () => {
 afterEach(() => {
   globalThis.fetch = fetchDeVerdad
   delete process.env.BOB_MODO
+  delete process.env.BOB_SIN_MODELO
   delete process.env.DEEPSEEK_API_KEY
 })
 

@@ -36,7 +36,7 @@ tienen un valor por defecto sensato o se pueden dejar vacías.
 
 | Variable | ¿De dónde la saco? | ¿Dónde la configuro? | ¿Obligatoria? |
 |---|---|---|---|
-| `DATABASE_URL` | Railway → servicio Postgres → pestaña **Variables** → `DATABASE_URL`. Al final le añades `?connection_limit=1` | `.env` local **y** Vercel | **Sí** |
+| `DATABASE_URL` | Railway → servicio Postgres → pestaña **Variables** → `DATABASE_URL`. Al final le añades `?connection_limit=5` | `.env` local **y** Vercel | **Sí** |
 | `DIRECT_URL` | La misma `DATABASE_PUBLIC_URL`, **sin** el `?connection_limit` | `.env` local **y** Vercel | **Sí** |
 | `ADMIN_PIN` | Lo eliges tú. Cuatro dígitos | `.env` local **y** Vercel | **Sí** |
 | `ADMIN_SECRETO` | Lo generas: `openssl rand -base64 32` | `.env` local **y** Vercel | **Sí** |
@@ -44,8 +44,8 @@ tienen un valor por defecto sensato o se pueden dejar vacías.
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `npx web-push generate-vapid-keys` → mitad **pública** | `.env` local **y** Vercel | No (sin ella no hay push) |
 | `VAPID_PRIVATE_KEY` | El mismo comando → mitad **privada** | `.env` local **y** Vercel. **Nunca** con `NEXT_PUBLIC_` | No (sin ella no hay push) |
 | `VAPID_SUBJECT` | Un `mailto:` tuyo de contacto | `.env` local **y** Vercel | No (por defecto vale) |
-| `BOB_MODO` | Lo eliges: `determinista` (sin coste) o `deepseek` | `.env` local **y** Vercel | No (`determinista` por defecto) |
-| `DEEPSEEK_API_KEY` | platform.deepseek.com → API keys. Solo si `BOB_MODO=deepseek` | `.env` local **y** Vercel | No |
+| `DEEPSEEK_API_KEY` | platform.deepseek.com → API keys. **Con clave, Bob usa el modelo; sin clave, el catálogo** | `.env` local **y** Vercel | No |
+| `BOB_SIN_MODELO` | La eliges tú. Con cualquier valor, Bob usa solo el catálogo aunque haya clave | `.env` local **y** Vercel | No (vacía) |
 | `DEEPSEEK_MODELO` | Déjala vacía salvo que quieras fijar una versión | `.env` local **y** Vercel | No |
 | `DEEPSEEK_URL` | Déjala vacía. Solo para apuntar a un simulador | `.env` local | No |
 | `PERMITIR_RESEMBRADO` | **Déjala vacía en producción.** Con valor, abre una ruta que borra la base entera | `.env` local, solo para pruebas | No |
@@ -103,10 +103,10 @@ cp .env.example .env
 Abre `.env` y rellena:
 
 ```bash
-# Las dos de Railway. La pública lleva `?connection_limit=1`
+# Las dos de Railway. La pública lleva `?connection_limit=5`
 # añadido al final: Vercel abre y cierra funciones sin parar, y sin eso la base
 # se queda sin conexiones.
-DATABASE_URL="<DATABASE_PUBLIC_URL de Railway>?connection_limit=1"
+DATABASE_URL="<DATABASE_PUBLIC_URL de Railway>?connection_limit=5"
 DIRECT_URL="<DATABASE_PUBLIC_URL de Railway>"
 
 # El PIN de cuatro dígitos del panel de administración. Elígelo tú.
@@ -116,7 +116,7 @@ ADMIN_PIN="0000"
 #   openssl rand -base64 32
 ADMIN_SECRETO="<lo que salga del comando de arriba>"
 
-BOB_MODO="determinista"
+BOB_SIN_MODELO=""
 DEEPSEEK_API_KEY=""
 
 # Notificaciones push (opcional). Genera las dos claves una sola vez con:
@@ -222,11 +222,10 @@ Si lo ves, bórralo del repositorio inmediatamente y cambia el PIN y el
 
    | Nombre | Valor |
    |---|---|
-   | `DATABASE_URL` | la de Railway, con `?connection_limit=1` |
+   | `DATABASE_URL` | la de Railway, con `?connection_limit=5` |
    | `DIRECT_URL` | la de Railway, sin nada añadido |
    | `ADMIN_PIN` | tu PIN de cuatro dígitos |
    | `ADMIN_SECRETO` | la cadena larga de `openssl rand -base64 32` |
-   | `BOB_MODO` | `determinista` |
    | `NEXT_PUBLIC_APP_URL` | déjalo vacío por ahora, se rellena en el paso 8 |
 
    **`PERMITIR_RESEMBRADO` no se pone.** Esa variable abre una ruta que borra la
@@ -317,6 +316,37 @@ del producto que no haya pantalla para eso** (`README` §7).
 
 ---
 
+## Que no se ponga lenta
+
+La app está en Vercel y la base en Railway, así que **cada consulta es un viaje
+por internet**. Si las dos están en el mismo continente, ese viaje son unos 30
+ms; si una está en Estados Unidos y la otra en Europa, son 150 ms o más, y se
+notan.
+
+Dos cosas que conviene comprobar una vez y olvidar:
+
+1. **Que estén cerca.** En Railway, servicio Postgres → *Settings* → *Region*.
+   En Vercel, proyecto → *Settings* → *Functions* → *Function Region*. Pon la
+   misma, o la más cercana que haya. Es el ajuste que más cambia y no cuesta
+   nada.
+
+2. **Que `DATABASE_URL` termine en `?connection_limit=5`.** Con `=1` las
+   consultas que la app lanza a la vez se ponen en fila una detrás de otra, y
+   una pantalla que pide ocho cosas a la vez paga ocho viajes seguidos en vez
+   de uno. Si algún día aparece «Too many connections», bájalo a 2.
+
+Del lado del código ya está hecho: la app lee **las siete tablas de una vez** y
+calcula los meses en memoria, y guarda esa foto en caché hasta que alguien
+escribe. Cuando alguien registra un pago o publica un mes, la caché se tira sola
+y la siguiente pantalla trae lo nuevo. Está explicado en `lib/datos/almanaque.ts`
+y medido en `docs/RENDIMIENTO.md`.
+
+**Cómo saber que va bien:** abre la app, entra a *Historial* y a *Mi
+departamento*. Deben pintarse en menos de dos segundos la primera vez y casi al
+instante las siguientes. Si tardan diez segundos o más, es el punto 1.
+
+---
+
 ## Si algo sale mal
 
 | Lo que ves | Qué es | Qué hacer |
@@ -324,7 +354,8 @@ del producto que no haya pantalla para eso** (`README` §7).
 | «Algo no está respondiendo» · log dice `Can't reach database server` | la URL es la **interna** de Railway, que Vercel no alcanza | usa `DATABASE_PUBLIC_URL` de Railway en las dos variables |
 | «Algo no está respondiendo» · log dice `does not exist` o `P2021` | **las tablas no están creadas** | el build de Vercel NO las crea: corre `npx prisma migrate deploy` y la semilla desde tu máquina apuntando a Railway (paso 4) |
 | El build falla en Vercel y en local no | falta una variable de entorno | compara las de Vercel con la tabla de claves de arriba |
-| «Too many connections» | falta el pooler | añade `?connection_limit=1` a `DATABASE_URL` |
+| «Too many connections» | el pool es grande para tantas instancias | baja `?connection_limit` a 2 en `DATABASE_URL` |
+| Las pantallas tardan segundos | Vercel y Railway en continentes distintos | mira §«Que no se ponga lenta» |
 | `migrate deploy` se queda colgado | `DIRECT_URL` lleva parámetros de pool | `DIRECT_URL` va limpia, sin `?connection_limit` |
 | El PIN correcto no entra | se agotaron los intentos de esa IP | son ocho cada quince minutos; espera |
 | En iPhone no sale «Añadir a pantalla de inicio» | estás en Chrome | ábrelo en Safari |
@@ -341,4 +372,4 @@ del producto que no haya pantalla para eso** (`README` §7).
   los avisos desde «Mi departamento» en tu teléfono y publica un mes de prueba
   para verlo llegar. Sin las claves VAPID la app funciona igual, sin avisos.
 - **Conectar a Bob con DeepSeek.** El camino está hecho; falta la clave. Con
-  `BOB_MODO=determinista` funciona sin coste y sin clave.
+  sin `DEEPSEEK_API_KEY`, Bob funciona sin coste y sin clave con el catálogo.

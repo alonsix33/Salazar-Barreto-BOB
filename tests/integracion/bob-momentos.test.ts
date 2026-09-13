@@ -40,6 +40,7 @@ beforeAll(async () => {
 afterEach(() => {
   globalThis.fetch = fetchDeVerdad
   delete process.env.BOB_MODO
+  delete process.env.BOB_SIN_MODELO
   delete process.env.DEEPSEEK_API_KEY
 })
 
@@ -73,9 +74,16 @@ describe('sin clave, la pantalla se queda con lo suyo', () => {
     expect(llamó, 'se llamó a DeepSeek sin clave').toBe(false)
   })
 
-  it('en modo determinista tampoco, aunque haya clave', async () => {
+  it('con BOB_SIN_MODELO tampoco, aunque haya clave · el freno de mano', async () => {
+    /**
+     * Antes este caso era `BOB_MODO=determinista` con clave puesta, y era
+     * justo el fallo de producción: la clave estaba, `BOB_MODO` sobraba de una
+     * época anterior, y Bob llevaba semanas contestando con el catálogo sin que
+     * nada lo dijera. Ahora manda la clave y el freno explícito es
+     * `BOB_SIN_MODELO`, que nadie tiene puesta por herencia.
+     */
     process.env.DEEPSEEK_API_KEY = 'de-mentira'
-    process.env.BOB_MODO = 'determinista'
+    process.env.BOB_SIN_MODELO = '1'
     let llamó = false
     globalThis.fetch = (() => {
       llamó = true

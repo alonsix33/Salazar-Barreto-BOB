@@ -30,9 +30,15 @@ const DEFECTOS = [
     '        ...(datos.version === undefined ? {} : { version: datos.version }),'],
   // Los m³ del lavado vuelven a leerse del valor global: cambiar el consumo
   // reescribe las cuotas de los meses ya publicados.
-  ['datos/mes.ts', 'que el lavado vuelva a reescribir el pasado',
+  /**
+   * El lavado, con su herencia y su valor congelado, vive en `datos/filas.ts` y
+   * **solo ahí**: lo usan igual la lectura dentro de una transacción y la foto
+   * del edificio. Cuando la foto tuvo su propia copia, esta inyección dejó de
+   * ponerse roja —las pantallas ya no pasaban por la otra— y así se descubrió.
+   */
+  ['datos/filas.ts', 'que el lavado vuelva a reescribir el pasado',
     '  if (marcaDelMes) return marcaDelMes.activa ? vigente(marcaDelMes.m3) : 0',
-    '  if (marcaDelMes) return marcaDelMes.activa ? aNumeroObligatorio(reasignacion.m3) : 0'],
+    '  if (marcaDelMes) return marcaDelMes.activa ? r.m3 : 0'],
   // Los gastos fijos vuelven a poder escribirse sobre un mes ya publicado.
   ['servicios/gastosFijos.ts', 'editar un gasto fijo de un mes publicado',
     '    await exigirNoPublicado(tx, datos.vigenteDesde)',
@@ -65,6 +71,40 @@ const DEFECTOS = [
   ['servicios/admin.ts', 'quitar el tope global, el que frena la IP rotada',
     'if (fallidos >= MAX_INTENTOS || fallidosGlobal >= MAX_GLOBAL) {',
     'if (fallidos >= MAX_INTENTOS) {'],
+  /**
+   * La foto del edificio (`datos/almanaque.ts`) es de dónde salen ahora los
+   * números de todas las pantallas de vecino. Cambió la **lectura**, no el
+   * motor, así que los cuatro defectos posibles son de lectura: la herencia del
+   * lavado, su valor congelado, la vigencia de los gastos fijos y la conversión
+   * desde `Decimal`. Los cuatro dan cuotas plausibles y equivocadas.
+   */
+  ['datos/filas.ts', 'que se pierda la herencia del lavado del mes anterior',
+    "  const anterior = r.activaEn.find((a) => a.mes === mesAnterior(mes))\n  if (anterior) return anterior.activa ? r.m3 : 0",
+    '  // defecto inyectado'],
+  ['datos/filas.ts', 'que se ignoren los m³ congelados al publicar',
+    '    congelado === null || congelado === undefined ? r.m3 : congelado',
+    '    r.m3'],
+  ['datos/filas.ts', 'cobrar gastos fijos que aún no estaban vigentes',
+    '  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
+    '  for (const f of fijos) porConcepto.set(f.concepto, f)'],
+  ['datos/almanaque.ts', 'que la foto guarde un Decimal donde va un número',
+    '      aguaMonto: aNumeroObligatorio(r.aguaMonto),',
+    '      aguaMonto: r.aguaMonto,'],
+  /**
+   * La invalidación de la caché. Si esto se cae, las pantallas enseñan números
+   * viejos y **nada se pone rojo**: la app va rápida, los números son
+   * plausibles, y son los de antes de la última corrección.
+   *
+   * Ojo con cómo se comprueba: el chequeo obvio —levantar la app, escribir y
+   * mirar si la pantalla cambia— pasa igual con la invalidación arrancada,
+   * porque en `next start` cualquier POST vacía la caché del proceso. Está
+   * contado en la cabecera de `tests/integracion/invalidar-cache.test.ts`.
+   */
+  ['datos/prisma.ts', 'que una escritura deje de invalidar la caché',
+    '          if (ESCRITURAS.has(operation)) seEscribio()',
+    '          void operation'],
+  ['datos/prisma.ts', 'que se caiga una operación de la lista de escrituras',
+    "  'upsert',\n", ''],
   ['servicios/pagos.ts', 'contar un aviso de pago como confirmado',
     "      update: { estado: 'aviso', operacion: datos.operacion ?? null, texto: datos.texto ?? null },",
     "      update: { estado: 'confirmado', operacion: datos.operacion ?? null, texto: datos.texto ?? null },"],

@@ -87,6 +87,60 @@ describe('los m³ del lavado se congelan al publicar', () => {
     expect(Number(marca!.m3)).toBe(1.5)
   })
 
+  /**
+   * La herencia, **con la base de por medio**.
+   *
+   * Un mes sin marca propia hereda el interruptor del mes anterior. La regla es
+   * pura y está probada suelta en `lib/datos/__tests__/filas.test.ts`; lo que se
+   * comprueba aquí es lo otro: que las filas del **mes anterior** lleguen desde
+   * la base hasta la regla. Un `include: { activaEn: { where: { mes } } }` que
+   * se colara dejaría la regla intacta y la herencia muerta, y ningún test de
+   * unidad lo vería.
+   *
+   * Se comprueban los dos caminos de lectura a propósito —la foto del edificio y
+   * la lectura dentro de una transacción—, porque son dos consultas distintas y
+   * cada una puede olvidarse por su lado. Cuando la regla estuvo duplicada, la
+   * prueba negativa cazó justo eso.
+   */
+  describe('un mes sin marca propia hereda la del anterior', () => {
+    /** Quita la marca de julio y deja la de junio como se le diga. */
+    async function soloJunio(activa: boolean): Promise<void> {
+      await prisma.reasignacionActivaEnMes.deleteMany({ where: { mes: EN_CURSO } })
+      await prisma.reasignacionActivaEnMes.updateMany({ where: { mes: PUBLICADO }, data: { activa } })
+    }
+
+    it('con junio desmarcado, julio no cobra lavado · por los dos caminos', async () => {
+      await cargarMesEnCurso(EN_CURSO)
+      await soloJunio(false)
+
+      const porLaFoto = await resultadoDeMes(EN_CURSO as never)
+      const porLaBase = await resultadoDeMes(EN_CURSO as never, {}, prisma)
+      expect(porLaFoto.valido && porLaBase.valido).toBe(true)
+      if (porLaFoto.valido && porLaBase.valido) {
+        expect(porLaFoto.lavado, 'la foto se saltó la herencia').toBe(0)
+        expect(porLaBase.lavado, 'la lectura por transacción se saltó la herencia').toBe(0)
+        expect(porLaFoto.cuotas['401'].total).toBe(porLaBase.cuotas['401'].total)
+      }
+    })
+
+    it('con junio marcado, julio sí lo cobra · y el valor es el de hoy, no el congelado', async () => {
+      await cargarMesEnCurso(EN_CURSO)
+      await soloJunio(true)
+      await cambiarLavado(3.0)
+
+      const porLaFoto = await resultadoDeMes(EN_CURSO as never)
+      const porLaBase = await resultadoDeMes(EN_CURSO as never, {}, prisma)
+      if (porLaFoto.valido && porLaBase.valido) {
+        // Se hereda el interruptor, no el valor: julio no está publicado, así
+        // que sigue el consumo de hoy. Junio, que sí lo está, no se mueve.
+        expect(porLaFoto.lavado).toBe(3)
+        expect(porLaBase.lavado).toBe(3)
+      }
+      const junio = await resultadoDeMes(PUBLICADO as never)
+      if (junio.valido) expect(junio.lavado).toBe(1.5)
+    })
+  })
+
   it('el borrador dice si el lavado se aplicó, no solo si está activado', async () => {
     /**
      * `01` §3.3: el lavado puede estar activado y aun así no aplicarse si no hay

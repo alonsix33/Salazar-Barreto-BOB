@@ -17,10 +17,11 @@
  * qué merece interrumpir a siete personas.
  */
 
-import type { Prisma, TipoAviso } from '@prisma/client'
+import type { TipoAviso } from '@prisma/client'
+import type { Tx } from '@/lib/datos/prisma'
 
 /** Una transacción de Prisma. Todas las funciones de servicio reciben una. */
-export type Tx = Prisma.TransactionClient
+export type { Tx }
 
 export interface ApunteAuditoria {
   usuario: string

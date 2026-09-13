@@ -8,8 +8,7 @@ import { DPTOS } from '@/lib/calculo/constantes'
 import { etiquetaMes, mesCorto } from '@/lib/calculo/mes'
 import { round2 } from '@/lib/calculo/redondeo'
 import type { DptoId, EstadoPago } from '@/lib/calculo/tipos'
-import { pagosDe, resultadoDeMes } from './mes'
-import { mesesPublicados } from './meses'
+import { almanaque } from './almanaque'
 
 export interface FilaHistorial {
   mes: string
@@ -43,7 +42,8 @@ export async function historialDeDpto(dpto: DptoId): Promise<HistorialDpto> {
   const info = DPTOS.find((d) => d.id === dpto)
   if (!info) throw new Error(`No existe el departamento ${dpto}`)
 
-  const meses = (await mesesPublicados()).slice(-MESES_A_MOSTRAR)
+  const foto = await almanaque()
+  const meses = foto.mesesPublicados.slice(-MESES_A_MOSTRAR)
   const filas: FilaHistorial[] = []
   let totalPagado = 0
   let alDia = 0
@@ -51,8 +51,8 @@ export async function historialDeDpto(dpto: DptoId): Promise<HistorialDpto> {
   let sumaM3 = 0
 
   for (const mes of meses) {
-    const [resultado, pagos] = await Promise.all([resultadoDeMes(mes), pagosDe(mes)])
-    const pago = pagos[dpto] ?? null
+    const resultado = foto.resultadoDe(mes)
+    const pago = foto.pagosDe(mes)[dpto] ?? null
     const cuota = resultado.valido ? resultado.cuotas[dpto].total : null
     const m3 = resultado.valido ? resultado.cuotas[dpto].m3 : 0
     sumaM3 += m3
