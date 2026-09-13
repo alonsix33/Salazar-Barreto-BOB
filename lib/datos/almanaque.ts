@@ -41,7 +41,6 @@ import type {
   DptoId,
   EntradasMes,
   Extra,
-  GastoFijo,
   Lecturas,
   MesId,
   PagosMes,
@@ -49,6 +48,7 @@ import type {
   ResultadoMes,
 } from '@/lib/calculo/tipos'
 import { aNumero, aNumeroObligatorio } from './decimal'
+import { extraDeLaFila, fijosDeLasFilas, lavadoDeLasFilas, pagoDeLaFila } from './filas'
 import { TAG_EDIFICIO } from './etiquetas'
 import { prisma } from './prisma'
 
@@ -248,29 +248,13 @@ export function construir(crudos: Crudos): Almanaque {
   for (const p of crudos.pagos) {
     let m = pagosPorMes.get(p.mes)
     if (!m) pagosPorMes.set(p.mes, (m = {}))
-    m[p.dptoId as DptoId] = {
-      estado: p.estado,
-      fecha: p.fecha,
-      monto: p.monto,
-      op: p.operacion,
-      texto: p.texto,
-    }
+    m[p.dptoId as DptoId] = pagoDeLaFila(p)
   }
 
   const extrasPorMes = new Map<string, Extra[]>()
   for (const e of crudos.extras) {
     const lista = extrasPorMes.get(e.mes) ?? []
-    lista.push(
-      e.tipo === 'credito'
-        ? { tipo: 'credito', concepto: e.concepto, monto: e.monto, dpto: e.dptoId as DptoId }
-        : {
-            tipo: 'gasto',
-            concepto: e.concepto,
-            monto: e.monto,
-            participantes: e.participantes as DptoId[],
-            reparto: e.reparto,
-          },
-    )
+    lista.push(extraDeLaFila(e))
     extrasPorMes.set(e.mes, lista)
   }
 
@@ -287,44 +271,20 @@ export function construir(crudos: Crudos): Almanaque {
   const cierresPorMes = new Map<string, Crudos['cierres'][number]>()
   for (const c of crudos.cierres) cierresPorMes.set(c.mes, c)
 
-  /** Igual que `fijosVigentesEn`, pero sobre las filas ya en memoria. */
-  function fijosEn(mes: MesId): GastoFijo[] {
-    const porConcepto = new Map<string, Crudos['fijos'][number]>()
-    // `crudos.fijos` ya viene ordenado por [orden, vigenteDesde]: la última que
-    // aplica a este mes es la más reciente, y es la que gana.
-    for (const f of crudos.fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)
-    return [...porConcepto.values()]
-      .sort((a, b) => a.orden - b.orden || a.concepto.localeCompare(b.concepto))
-      .map((f) => ({
-        concepto: f.concepto,
-        monto: f.monto,
-        ...(f.anual ? { anual: true } : {}),
-        ...(f.monto === null ? { porConfirmar: true } : {}),
-      }))
-  }
-
-  /** Igual que `lavadoM3En`, con la misma herencia y el mismo congelado. */
-  function lavadoEn(mes: MesId): number {
-    const r = crudos.reasignaciones.find((x) => x.desde <= mes)
-    if (!r) return 0
-    const vigente = (congelado: number | null | undefined) =>
-      congelado === null || congelado === undefined ? r.m3 : congelado
-    const marca = r.activaEn.find((a) => a.mes === mes)
-    if (marca) return marca.activa ? vigente(marca.m3) : 0
-    const anterior = r.activaEn.find((a) => a.mes === mesAnterior(mes))
-    if (anterior) return anterior.activa ? r.m3 : 0
-    return r.m3
-  }
-
   function entradasDe(mes: MesId): EntradasMes {
     return {
       mesId: mes,
       recibo: recibosPorMes.get(mes) ?? null,
       lecturas: lecturasPorMes.get(mes) ?? {},
       lecturasAnteriores: lecturasPorMes.get(mesAnterior(mes)) ?? {},
-      fijos: fijosEn(mes),
+      // Las dos reglas —qué gasto fijo está vigente y cuántos m³ de lavado
+      // aplican— salen de `filas.ts`, las mismas que usa la lectura dentro de
+      // una transacción. Aquí vivió un rato una segunda copia, y la prueba
+      // negativa lo cazó: el defecto inyectado en `mes.ts` dejó de ponerse
+      // rojo, porque las pantallas ya no pasaban por ahí.
+      fijos: fijosDeLasFilas(crudos.fijos, mes),
       extras: extrasPorMes.get(mes) ?? [],
-      lavadoM3: lavadoEn(mes),
+      lavadoM3: lavadoDeLasFilas(crudos.reasignaciones, mes),
     }
   }
 

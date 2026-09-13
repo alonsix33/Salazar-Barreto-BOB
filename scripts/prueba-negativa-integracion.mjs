@@ -30,9 +30,15 @@ const DEFECTOS = [
     '        ...(datos.version === undefined ? {} : { version: datos.version }),'],
   // Los m³ del lavado vuelven a leerse del valor global: cambiar el consumo
   // reescribe las cuotas de los meses ya publicados.
-  ['datos/mes.ts', 'que el lavado vuelva a reescribir el pasado',
+  /**
+   * El lavado, con su herencia y su valor congelado, vive en `datos/filas.ts` y
+   * **solo ahí**: lo usan igual la lectura dentro de una transacción y la foto
+   * del edificio. Cuando la foto tuvo su propia copia, esta inyección dejó de
+   * ponerse roja —las pantallas ya no pasaban por la otra— y así se descubrió.
+   */
+  ['datos/filas.ts', 'que el lavado vuelva a reescribir el pasado',
     '  if (marcaDelMes) return marcaDelMes.activa ? vigente(marcaDelMes.m3) : 0',
-    '  if (marcaDelMes) return marcaDelMes.activa ? aNumeroObligatorio(reasignacion.m3) : 0'],
+    '  if (marcaDelMes) return marcaDelMes.activa ? r.m3 : 0'],
   // Los gastos fijos vuelven a poder escribirse sobre un mes ya publicado.
   ['servicios/gastosFijos.ts', 'editar un gasto fijo de un mes publicado',
     '    await exigirNoPublicado(tx, datos.vigenteDesde)',
@@ -72,15 +78,15 @@ const DEFECTOS = [
    * lavado, su valor congelado, la vigencia de los gastos fijos y la conversión
    * desde `Decimal`. Los cuatro dan cuotas plausibles y equivocadas.
    */
-  ['datos/almanaque.ts', 'que la foto pierda la herencia del lavado',
-    "    const anterior = r.activaEn.find((a) => a.mes === mesAnterior(mes))\n    if (anterior) return anterior.activa ? r.m3 : 0",
-    '    // defecto inyectado'],
-  ['datos/almanaque.ts', 'que la foto ignore los m³ congelados al publicar',
-    '      congelado === null || congelado === undefined ? r.m3 : congelado',
-    '      r.m3'],
-  ['datos/almanaque.ts', 'que la foto cobre gastos fijos que aún no estaban vigentes',
-    '    for (const f of crudos.fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
-    '    for (const f of crudos.fijos) porConcepto.set(f.concepto, f)'],
+  ['datos/filas.ts', 'que se pierda la herencia del lavado del mes anterior',
+    "  const anterior = r.activaEn.find((a) => a.mes === mesAnterior(mes))\n  if (anterior) return anterior.activa ? r.m3 : 0",
+    '  // defecto inyectado'],
+  ['datos/filas.ts', 'que se ignoren los m³ congelados al publicar',
+    '    congelado === null || congelado === undefined ? r.m3 : congelado',
+    '    r.m3'],
+  ['datos/filas.ts', 'cobrar gastos fijos que aún no estaban vigentes',
+    '  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
+    '  for (const f of fijos) porConcepto.set(f.concepto, f)'],
   ['datos/almanaque.ts', 'que la foto guarde un Decimal donde va un número',
     '      aguaMonto: aNumeroObligatorio(r.aguaMonto),',
     '      aguaMonto: r.aguaMonto,'],
