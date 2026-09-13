@@ -54,6 +54,22 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
   // Distingue "cerré yo" de "el usuario dio atrás", para no desandar dos veces.
   const cerrandoPorHistoria = useRef(false)
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /**
+   * Espejo síncrono de `hoja`, para leerlo sin pasar por la forma funcional
+   * de `setState`.
+   *
+   * `abrir`/`cerrar` leían el valor "actual" con `setHoja((actual) => {...
+   * efecto secundario ...})`. En `next dev`, con `reactStrictMode: true`,
+   * React invoca esa función dos veces a propósito para cazar impurezas —y
+   * el `pushState`/`history.back()` de dentro se ejecutaba las dos veces de
+   * verdad. Abrir una hoja dejaba DOS entradas de historial con la misma
+   * marca; al cerrar, `history.back()` caía en la primera de esas dos
+   * —todavía con la marca puesta—, y `alVolver` la interpretaba como "el
+   * usuario pidió volver a abrirla": la hoja se cerraba y se reabría sola.
+   * Leyendo de una ref en vez de la forma funcional, el efecto secundario
+   * corre una sola vez pase lo que pase.
+   */
+  const hojaRef = useRef<ClaveHoja | null>(null)
 
   const cancelarTemporizador = useCallback(() => {
     if (temporizador.current !== null) {
@@ -64,20 +80,23 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
 
   useEffect(() => cancelarTemporizador, [cancelarTemporizador])
 
+  const fijarHoja = useCallback((clave: ClaveHoja | null) => {
+    hojaRef.current = clave
+    setHoja(clave)
+  }, [])
+
   const abrir = useCallback(
     (clave: ClaveHoja) => {
       cancelarTemporizador()
       setCerrando(false)
-      setHoja((actual) => {
-        if (actual === null) {
-          window.history.pushState({ [MARCA]: clave }, '')
-        } else {
-          window.history.replaceState({ [MARCA]: clave }, '')
-        }
-        return clave
-      })
+      if (hojaRef.current === null) {
+        window.history.pushState({ [MARCA]: clave }, '')
+      } else {
+        window.history.replaceState({ [MARCA]: clave }, '')
+      }
+      fijarHoja(clave)
     },
-    [cancelarTemporizador],
+    [cancelarTemporizador, fijarHoja],
   )
 
   /**
@@ -106,12 +125,12 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
       setCerrando(true)
       temporizador.current = setTimeout(() => {
         if (conRetroceso) window.history.back()
-        setHoja(null)
+        fijarHoja(null)
         setCerrando(false)
         temporizador.current = null
       }, DURACION_CIERRE_MS)
     },
-    [cancelarTemporizador],
+    [cancelarTemporizador, fijarHoja],
   )
 
   const cerrar = useCallback(() => {
@@ -122,13 +141,10 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
      * uno que ya estaba en curso.
      */
     if (cerrando) return
-    setHoja((actual) => {
-      if (actual === null) return null
-      // Si esto llegó por `alVolver` (el back del sistema), el historial ya
-      // se movió solo: pedir otro `back()` aquí duplicaría la navegación.
-      empezarCierre(!cerrandoPorHistoria.current)
-      return actual
-    })
+    if (hojaRef.current === null) return
+    // Si esto llegó por `alVolver` (el back del sistema), el historial ya
+    // se movió solo: pedir otro `back()` aquí duplicaría la navegación.
+    empezarCierre(!cerrandoPorHistoria.current)
   }, [cerrando, empezarCierre])
 
   useEffect(() => {
@@ -141,15 +157,11 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
       if (typeof clave === 'string') {
         cancelarTemporizador()
         setCerrando(false)
-        setHoja(clave as ClaveHoja)
-      } else {
-        setHoja((actual) => {
-          if (actual === null) return null
-          // El historial ya se movió —esto es la respuesta a ese cambio—,
-          // así que el cierre no vuelve a tocarlo.
-          empezarCierre(false)
-          return actual
-        })
+        fijarHoja(clave as ClaveHoja)
+      } else if (hojaRef.current !== null) {
+        // El historial ya se movió —esto es la respuesta a ese cambio—,
+        // así que el cierre no vuelve a tocarlo.
+        empezarCierre(false)
       }
       queueMicrotask(() => {
         cerrandoPorHistoria.current = false
@@ -157,7 +169,7 @@ export function ProveedorHojas({ children }: { children: ReactNode }) {
     }
     window.addEventListener('popstate', alVolver)
     return () => window.removeEventListener('popstate', alVolver)
-  }, [cancelarTemporizador, empezarCierre])
+  }, [cancelarTemporizador, empezarCierre, fijarHoja])
 
   /**
    * Escape cierra, como en cualquier modal.

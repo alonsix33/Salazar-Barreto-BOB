@@ -12,6 +12,17 @@
 /** `--color-crema` · el fondo de la app y el color de tema de la PWA. */
 export const COLOR_TEMA = '#F7F4EE'
 
+/**
+ * `--color-crema-velada` · el color de tema mientras hay una hoja abierta.
+ *
+ * La barra de estado del sistema la pinta el navegador con `theme-color`,
+ * por fuera del DOM: ningún velo ni `backdrop-filter` de la página la toca,
+ * así que sin esto se quedaba crema y sólida mientras el resto de la
+ * pantalla se oscurecía detrás de una hoja. `components/hojas/
+ * SincronizarBarraDeEstado.tsx` alterna entre este valor y `COLOR_TEMA`.
+ */
+export const COLOR_TEMA_HOJA = '#A8A6A2'
+
 /** `--color-noche` · el color de los iconos del manifiesto. */
 export const COLOR_NOCHE = '#17172B'
 
@@ -29,6 +40,7 @@ export const COLOR_GRIS = '#7A7570'
 /** El token de `globals.css` del que sale cada uno. Lo usa el test. */
 export const ORIGEN_TOKENS = {
   COLOR_TEMA: '--color-crema',
+  COLOR_TEMA_HOJA: '--color-crema-velada',
   COLOR_NOCHE: '--color-noche',
   COLOR_TINTA: '--color-tinta',
   COLOR_GRIS: '--color-gris',

@@ -556,6 +556,10 @@ export const COPYS = {
     confirmarPasados: 'Confirmar pagos de un mes anterior',
     confirmarPasadosIntro: (mes: string) =>
       `Los siete departamentos de ${mes}, con el mismo botón de confirmar del mes actual.`,
+    // Reemplaza el botón de confirmar cuando el pago ya está confirmado —
+    // `HojaPagosPasados` muestra los siete departamentos de un mes elegido,
+    // no solo a quienes les falta, así que hace falta decir "esto ya está".
+    confirmadoEl: (fecha: string) => `Confirmado el ${fecha}`,
   },
   push: {
     titulo: 'Avisos en este teléfono',

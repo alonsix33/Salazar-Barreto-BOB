@@ -196,6 +196,63 @@ test.describe('el panel de administración', () => {
 })
 
 /**
+ * Confirmar pagos de un mes anterior — la hoja que reutiliza `RegistrarPago`
+ * para los siete departamentos de un mes ya publicado, confirmados o no.
+ *
+ * `RegistrarPago` solo recibía pagos en `'aviso'` o sin nada antes de esta
+ * hoja: un pago ya `'confirmado'` es un camino nuevo, y dos defectos reales
+ * vivían justo ahí. Los dos cubiertos aquí:
+ *
+ * 1. Sin la rama de `pago.estado === 'confirmado'`, la fila seguía ofreciendo
+ *    el botón de confirmar sobre un pago que el servidor iba a rechazar —quien
+ *    administraba lo tocaba, y recién ahí se enteraba de que ya estaba hecho.
+ * 2. Con la rama puesta pero el subtítulo de dos vías sin actualizar, una fila
+ *    confirmada mostraba "toca para registrar el pago" justo encima del aviso
+ *    verde que dice lo contrario.
+ */
+test.describe('confirmar pagos de un mes anterior', () => {
+  test('un pago ya confirmado no ofrece confirmarlo otra vez, ni dice que falta', async ({ page }) => {
+    await page.goto('/admin')
+    await page.getByRole('button', { name: /Confirmar pagos de un mes anterior/ }).click()
+    const hoja = page.getByRole('dialog')
+    await expect(hoja).toBeVisible()
+
+    // 401 ya está confirmado en la semilla de 2026-06, el mes que abre por
+    // defecto (el más reciente publicado).
+    const fila401 = hoja.locator('.admin-pago', { hasText: '401' })
+    await expect(fila401.getByText(/^Confirmado el/)).toBeVisible()
+    await expect(fila401.getByText('toca para registrar el pago')).toHaveCount(0)
+    await expect(
+      fila401.getByRole('button', { name: /Confirmar contra el estado de cuenta/ }),
+    ).toHaveCount(0)
+  })
+
+  test('confirmar un pago actualiza la fila al toque, sin que haga falta un segundo toque', async ({
+    page,
+  }) => {
+    await page.goto('/admin')
+    await page.getByRole('button', { name: /Confirmar pagos de un mes anterior/ }).click()
+    const hoja = page.getByRole('dialog')
+    await expect(hoja).toBeVisible()
+
+    // 501 no tiene pago en junio de 2026 (`null` en la semilla): ni aviso, ni
+    // confirmación.
+    const fila501 = hoja.locator('.admin-pago', { hasText: '501' })
+    await expect(fila501.getByText('toca para registrar el pago')).toBeVisible()
+    await fila501.getByRole('button', { name: /Confirmar contra el estado de cuenta/ }).click()
+
+    // `router.refresh()` no invalida la caché de React Query con la que esta
+    // hoja trae sus datos: sin `invalidateQueries(['mes', mes])`, la fila se
+    // quedaba con el botón de confirmar hasta un segundo toque, que era
+    // cuando el servidor por fin decía "ese pago ya estaba confirmado".
+    await expect(fila501.getByText(/^Confirmado el/)).toBeVisible()
+    await expect(
+      fila501.getByRole('button', { name: /Confirmar contra el estado de cuenta/ }),
+    ).toHaveCount(0)
+  })
+})
+
+/**
  * El teclado del PIN, con dedos rápidos.
  *
  * Mismo defecto que el numpad del cierre y de la misma familia: la pulsación

@@ -56,6 +56,15 @@
   --color-verde-tira: rgb(45 122 79 / 0.18);
   --color-ambar-tira: rgb(192 122 26 / 0.25);
   --color-velo: rgb(14 14 14 / 0.34);
+  /*
+   * `--color-crema` de verdad debajo de `--color-velo`, ya mezclado y
+   * opaco: `theme-color` —el color que pinta el sistema operativo por
+   * fuera del DOM, en la barra de estado— no admite transparencia, así
+   * que no se puede pasar `--color-velo` tal cual.
+   * `components/hojas/SincronizarBarraDeEstado.tsx` usa este color
+   * mientras hay una hoja abierta, y `--color-crema` cuando no hay ninguna.
+   */
+  --color-crema-velada: #a8a6a2;
   --color-asa: rgb(14 14 14 / 0.14);
   --color-velo-numpad: rgb(14 14 14 / 0.42);
   --color-campana: rgb(255 255 255 / 0.7);
@@ -1598,7 +1607,19 @@
   margin-top: 18px;
 }
 .midpto-boton-pagar {
+  /*
+   * Sin `display:flex` para centrar, el texto quedaba pegado al borde
+   * izquierdo: un botón sin ancho fijo se ve bien porque se ajusta al
+   * texto, pero este mide `flex:1` —más ancho que su texto— y el
+   * `text-align` que hereda es el de la izquierda, no el centro que un
+   * botón parece tener por defecto. Es el mismo patrón que ya usa
+   * `components/ui/Boton.tsx` (`flex items-center justify-center`), que
+   * este botón no reusó.
+   */
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-boton-medio);
   border-radius: var(--radius-pildora);
   background: var(--color-terra);
@@ -1876,8 +1897,13 @@
   margin: 14px 0 0;
 }
 .pagar-boton {
+  /* Mismo botón sin centrar que `.midpto-boton-pagar`: el texto quedaba
+     pegado a la izquierda en un botón de `width:100%`. */
   margin-top: 18px;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-boton);
   border-radius: var(--radius-pildora);
   background: var(--color-terra);
@@ -1885,9 +1911,12 @@
   font: 500 15px/1.3 var(--font-cuerpo);
 }
 .pagar-cancelar {
+  /* Mismo problema que `.pagar-boton`: sin `text-align:center`, "Todavía no"
+     quedaba pegado a la izquierda debajo del botón centrado de arriba. */
   width: 100%;
   margin-top: 12px;
   height: var(--spacing-toque);
+  text-align: center;
 }
 
 /* Hojas `pagos` y `agua` */
@@ -1971,6 +2000,15 @@
   margin: 0 auto;
 }
 .pin-tecla {
+  /*
+   * Sin centrar, cada dígito caía arriba a la izquierda de su celda: es un
+   * ítem de grid, y un grid no centra el contenido de sus celdas por sí
+   * solo. `.pin-borrar` (el icono de borrar) sí lo tenía; los diez dígitos
+   * no. Mismo patrón que `.numpad-tecla`, que sí lo tiene.
+   */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 58px;
   border-radius: var(--radius-icono);
   background: var(--color-papel);
@@ -2057,9 +2095,25 @@
 .admin-pago-error {
   margin: 10px 0 0;
 }
+/* Reemplaza al botón de confirmar cuando el pago ya está confirmado. Mismo
+   verde que `.calculo-cuadre` para "esto ya está resuelto". */
+.admin-pago-confirmado {
+  margin-top: 14px;
+  padding: var(--spacing-fila) var(--spacing-tarjetas);
+  border-radius: var(--radius-pildora);
+  background: var(--color-verde-suave);
+  color: var(--color-verde-oscuro);
+  text-align: center;
+}
 .admin-pago-boton {
+  /* Mismo botón sin centrar que `.midpto-boton-pagar`: el texto quedaba
+     pegado a la izquierda en un botón de `width:100%`. Es justo este botón
+     el que llevaba al vecino a creer que la app estaba rota. */
   margin-top: 14px;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-toque);
   border-radius: var(--radius-pildora);
   background: var(--color-noche);
@@ -2075,7 +2129,11 @@
   text-decoration: underline;
 }
 .admin-boton {
+  /* Mismo botón sin centrar que `.midpto-boton-pagar`. */
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-boton);
   border-radius: var(--radius-pildora);
   background: var(--color-noche);
@@ -2263,8 +2321,13 @@
   margin: 14px 0 0;
 }
 .cierre-boton {
+  /* Mismo botón sin centrar que `.midpto-boton-pagar`. Este es el botón de
+     "Volver al panel"/"Reintentar" que aparece en varias hojas del cierre. */
   margin-top: 22px;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-boton);
   border-radius: var(--radius-pildora);
   background: var(--color-noche);

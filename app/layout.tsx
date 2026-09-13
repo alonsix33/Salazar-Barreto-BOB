@@ -4,6 +4,7 @@ import { COPYS } from '@/lib/copys'
 import { Marco } from '@/components/Marco'
 import { ProveedoresCliente } from './layout-cliente'
 import { Hojas } from '@/components/hojas'
+import { SincronizarBarraDeEstado } from '@/components/hojas/SincronizarBarraDeEstado'
 import { NavSiCorresponde } from '@/components/NavSiCorresponde'
 import { AvisoVersion } from '@/components/AvisoVersion'
 import { SinConexion } from '@/components/SinConexion'
@@ -59,7 +60,28 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: COPYS.app.nombreCorto,
-    statusBarStyle: 'default',
+    /**
+     * `'default'` hace que iOS reserve su propia franja opaca encima de la
+     * página —el contenido se pinta debajo de la barra de estado, no
+     * detrás—. El resto de la app ya asume lo contrario: `viewport-fit:
+     * cover` y el relleno de `--top` (`app/globals.css`) están pensados para
+     * que el fondo llegue hasta el borde real y solo el contenido se aparte
+     * del notch. Con `'default'` había, en un iPhone de verdad, DOS franjas
+     * sólidas antes de que empezara nada de la app: la que reserva iOS y la
+     * que reserva `--top` encima de esa —la "costura" entre la barra de
+     * estado y el degradado de Inicio salía de ahí, no de un hueco en el CSS.
+     *
+     * Probé a mantener `'default'` e inyectar `dark-content` (el reemplazo
+     * moderno, vigente desde iOS 14.5) como etiqueta suelta en `other`: Next
+     * sigue emitiendo su propio `<meta apple-mobile-web-app-status-bar-style
+     * content="default">` desde `appleWebApp.capable`, y quedan DOS meta
+     * tags compitiendo —el navegador se queda con el primero del HTML, que
+     * es el de Next—. `black-translucent` es el único valor con soporte
+     * real en el tipo de Next que deja el contenido detrás de la barra;
+     * Apple la marca deprecada pero sigue funcionando hoy, y evita la
+     * duplicidad porque usa el mismo camino de generación que `capable`.
+     */
+    statusBarStyle: 'black-translucent',
   },
   formatDetection: { telephone: false },
 }
@@ -94,6 +116,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
             <NavSiCorresponde hayDpto={dpto !== null} />
             <Hojas />
+            <SincronizarBarraDeEstado />
           </Marco>
         </ProveedoresCliente>
       </body>
