@@ -114,6 +114,13 @@ jobs:
         continue-on-error: true
         run: node scripts/verificar-secretos.mjs
 
+      # Un enlace roto en el README es peor que no tener README: manda a alguien
+      # a un sitio que no está y le quita la confianza en todo lo demás.
+      - name: 7 · Los documentos no mienten
+        id: documentos
+        continue-on-error: true
+        run: node scripts/verificar-docs.mjs
+
       # ── El resumen, que es lo que se lee ─────────────────────────────────
       - name: Resumen
         run: |
@@ -136,13 +143,14 @@ jobs:
           fila "4 · Pantalla"     "${{ steps.pantalla.outcome }}"
           fila "5 · Build"        "${{ steps.build.outcome }}"
           fila "6 · Secretos"     "${{ steps.secretos.outcome }}"
+          fila "7 · Documentos"  "${{ steps.documentos.outcome }}"
           if [ "$fallos" -gt 0 ]; then
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "**$fallos paso(s) en rojo.** No se despliega." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Los siete en verde." >> "$GITHUB_STEP_SUMMARY"
+          echo "Los ocho en verde." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Informe de las pruebas de pantalla
         if: always() && steps.pantalla.outcome != 'success'
@@ -194,7 +202,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prisma generate && npx prisma migrate deploy && npx tsx prisma/seed.ts
-      - name: Motor · 12 defectos inyectados
+      - name: Motor y reglas de lectura · defectos inyectados
         run: node scripts/prueba-negativa.mjs
-      - name: Servicios · 10 defectos inyectados
+      - name: Servicios y datos · defectos inyectados
         run: node scripts/prueba-negativa-integracion.mjs
