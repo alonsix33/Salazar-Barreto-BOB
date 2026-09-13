@@ -57,7 +57,7 @@ los del `mockup/`.
 | App | Vercel · <https://salazar-barreto-bob.vercel.app> |
 | Base de datos | Railway · PostgreSQL 16 |
 | Código | GitHub · `TheLabReset/Salazar-Barreto-BOB`, rama `main` |
-| Modelo de Bob | DeepSeek (`deepseek-chat`) |
+| Modelo de Bob | DeepSeek (`deepseek-flash`) |
 
 ### Qué hay cargado
 

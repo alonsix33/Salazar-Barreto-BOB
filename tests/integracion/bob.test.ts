@@ -65,13 +65,13 @@ function deepseekQueDice(texto: string, herramientas: { nombre: string; argument
 }
 
 describe('1 · con BOB_MODO=determinista y sin clave, Bob responde', () => {
-  it('contesta las cuatro preguntas sugeridas, todas con dato', async () => {
+  it('contesta las preguntas sugeridas, todas con dato', async () => {
     for (const pregunta of COPYS.bob.sugeridas) {
       const r = await preguntarABob(pregunta, YO)
       expect(r.modo, pregunta).toBe('determinista')
       expect(r.motivoCaida, pregunta).toBeNull()
       expect(r.texto.length, pregunta).toBeGreaterThan(20)
-      // `05` §3: siempre con el dato. Ninguna de las cuatro se contesta sin cifra.
+      // `05` §3: siempre con el dato. Ninguna se contesta sin cifra.
       expect(r.texto, pregunta).toMatch(/\d/)
       // Dos frases como mucho.
       expect(r.texto.split(/(?<=[.!?…])\s+/).length, pregunta).toBeLessThanOrEqual(2)

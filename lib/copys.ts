@@ -6,6 +6,10 @@
  * **contenido, no decoración**. Se escribieron y reescribieron para el tono
  * "vecino, no cobrador": no se mejoran, no se acortan, no se traducen.
  *
+ * Auditado entero contra un filtro de "esto suena a IA" antes de avisar a los
+ * siete: de ~234 textos, uno solo tenía algo que corregir (una raya larga
+ * usada como inciso, en `cierre.notaIntro`). El resto ya estaba así de claro.
+ *
  * Regla dura: **ningún valor interpolado se escribe fijo.** Los copys que
  * llevan un número son funciones que reciben el valor del cálculo. El caso
  * concreto es la línea del lavado: dice "Incluye 1.50 m³" y ese 1.50 viene del
@@ -339,12 +343,7 @@ export const COPYS = {
     nombre: 'Bob',
     subtitulo: 'lee todo el historial',
     campo: 'Escribe tu pregunta',
-    sugeridas: [
-      '¿Cuánto debo este mes?',
-      '¿Por qué subió el agua?',
-      '¿Quién falta por pagar?',
-      '¿Qué es el lavado del 401?',
-    ],
+    sugeridas: ['¿Cuánto debo este mes?', '¿Por qué subió el agua?', '¿Quién falta por pagar?'],
   },
 
   // ── El cierre del mes · 04-cierre-del-mes.md ───────────────────────────
@@ -513,7 +512,7 @@ export const COPYS = {
     completaLoQueFalta: 'Completa lo que falta para seguir',
     // Paso 7
     notaTitulo: 'La nota del mes',
-    notaIntro: 'Ya te la redacté con lo que ingresaste. Corrige lo que quieras — la leen los siete.',
+    notaIntro: 'Ya te la redacté con lo que ingresaste. Corrige lo que quieras: la leen los siete.',
     // Cuando el mes está vacío no hay nada que redactar; no se finge que sí.
     notaIntroVacia: 'Escribe la nota del mes. La leen los siete, así que cuéntales qué pasó, qué cambió y qué queda pendiente.',
     quePaso: 'Qué pasó',

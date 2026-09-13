@@ -30,11 +30,28 @@ const MAX_VUELTAS = 4
 const URL_BASE = process.env.DEEPSEEK_URL ?? 'https://api.deepseek.com'
 
 /**
- * El modelo. `deepseek-chat` apunta siempre al modelo de chat vigente, que es
- * lo que se quiere para no quedarse anclado a una versión; `DEEPSEEK_MODELO`
- * está para fijarlo cuando haga falta reproducir una respuesta.
+ * El modelo.
+ *
+ * `deepseek-chat` —el nombre de antes, pensado para no quedarse anclado a una
+ * versión— dejó de resolver el 24 de julio de 2026: DeepSeek lo retiró junto
+ * con `deepseek-reasoner` y desde entonces cualquier petición con ese nombre
+ * contesta con un error, no con el modelo vigente. Con eso, Bob nunca llegó a
+ * hablar con el modelo real en producción: cada pregunta fallaba y caía al
+ * catálogo determinista, en silencio, exactamente como está pensado que caiga
+ * cuando el modelo no contesta — así que nadie vio un error, solo un Bob que
+ * nunca usaba la clave que sí tenía puesta.
+ *
+ * `deepseek-v4-flash` fue el primer reemplazo que se probó, y es exactamente
+ * la misma trampa un paso más tarde: el modelo detrás de ese nombre **también**
+ * se retiró, y solo se acepta como alias temporal de compatibilidad. El nombre
+ * vigente, según la documentación oficial de DeepSeek, es `deepseek-flash`.
+ * Mismo esquema de petición y respuesta, mismo soporte de herramientas, sin
+ * cambios en el resto de este fichero —el problema nunca fue el código, fue
+ * quedarse con un nombre fijo en un API que renombra su modelo vigente cada
+ * pocos meses—. `DEEPSEEK_MODELO` sigue para fijar una versión cuando haga
+ * falta reproducir una respuesta.
  */
-const MODELO = process.env.DEEPSEEK_MODELO ?? 'deepseek-chat'
+const MODELO = process.env.DEEPSEEK_MODELO ?? 'deepseek-flash'
 
 interface MensajeChat {
   role: 'system' | 'user' | 'assistant' | 'tool'

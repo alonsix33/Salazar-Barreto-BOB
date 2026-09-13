@@ -1,23 +1,21 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from './basedatos'
+import { COPYS } from '@/lib/copys'
 
 /**
  * Bob en pantalla. Fase 8, punto 1 del verificador.
  *
  * Con `BOB_MODO=determinista` y **sin `DEEPSEEK_API_KEY`**: que la app arranque
- * y que Bob conteste las cuatro preguntas sugeridas, de verdad, en el navegador
- * y contra la base.
+ * y que Bob conteste las preguntas sugeridas, de verdad, en el navegador y
+ * contra la base.
  *
  * Y lo que `05` §6 prohíbe: se comprueba que **no está**. Un test que solo mira
  * que la conversación funciona deja pasar una chispa morada en la esquina.
  */
 
-const SUGERIDAS = [
-  '¿Cuánto debo este mes?',
-  '¿Por qué subió el agua?',
-  '¿Quién falta por pagar?',
-  '¿Qué es el lavado del 401?',
-]
+// De `COPYS.bob.sugeridas` (`lib/copys.ts`), no repetidas a mano: una sola
+// copia de la lista, para que este test no se desalinee si cambia allá.
+const SUGERIDAS = COPYS.bob.sugeridas
 
 test.describe('la hoja de Bob', () => {
   test('se abre desde la navegación con la conversación ahí mismo', async ({ page }) => {
@@ -34,7 +32,7 @@ test.describe('la hoja de Bob', () => {
     }
   })
 
-  test('contesta las cuatro preguntas sugeridas, cada una con su cifra', async ({ page }) => {
+  test('contesta las preguntas sugeridas, cada una con su cifra', async ({ page }) => {
     await page.goto('/')
     await page.getByRole('button', { name: 'Preguntar a Bob' }).click()
     const conversacion = page.getByRole('log', { name: 'Conversación con Bob' })
