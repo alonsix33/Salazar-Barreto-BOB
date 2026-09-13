@@ -257,3 +257,58 @@ test.describe('sin conexión', () => {
     expect(pagos.pagos['501'] ?? null, 'el aviso no puede haberse encolado').toBeNull()
   })
 })
+
+/**
+ * El service worker **nunca deja al vecino sin pantalla**.
+ *
+ * Esto salió en producción, en un iPhone con 4G: «Safari no puede abrir la
+ * página. El error es: FetchEvent.respondWith received an error: Error: plazo».
+ * Pantalla negra y la app inservible.
+ *
+ * La causa era un `throw` en el manejador de navegaciones cuando la red no
+ * llegaba y no había nada guardado. El comentario que lo justificaba decía que
+ * así «el navegador enseña su error, que es más honesto que una página nuestra
+ * fingiendo que la app va», y era **falso**: una promesa rechazada dentro de
+ * `respondWith` no enseña el error del navegador, enseña ese texto sobre una
+ * pantalla en negro. Encima el plazo de tres segundos convertía una red
+ * simplemente lenta —una función fría— en una red rota.
+ *
+ * El test apaga el servidor de verdad en vez de simular lentitud con
+ * `context.route`, y no es un detalle: Playwright no intercepta las peticiones
+ * que hace el propio service worker, así que la primera versión de esta prueba
+ * pasaba igual con el código roto. Un test que pasa en los dos casos no prueba
+ * nada.
+ */
+test.describe('sin red y sin nada guardado', () => {
+  test('sale una pantalla legible, no el error del service worker', async ({ page, context }) => {
+    await page.goto('/')
+    await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+      timeout: 20_000,
+    })
+
+    // Se borra todo lo guardado: es el caso del estreno, o el de quien limpió
+    // los datos del sitio. Sin esto, la caché responde y el fallo no aparece.
+    await page.evaluate(async () => {
+      for (const k of await caches.keys()) await caches.delete(k)
+    })
+
+    // Y se corta la red **por debajo del service worker**, que es donde vive el
+    // fallo. `context.route` no vale: no ve sus peticiones.
+    await context.setOffline(true)
+    try {
+      const r = await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 25_000 })
+      const texto = await page.locator('body').innerText()
+
+      expect(texto, 'se filtró el error interno del service worker').not.toMatch(
+        /respondWith|Error: plazo/,
+      )
+      // 503 y no 200: la app no está funcionando, y eso se dice con el estado.
+      expect(r?.status(), 'sin red no se puede fingir un 200').toBe(503)
+      expect(texto).toMatch(/conexión/i)
+      // Y con algo que hacer, no solo un mensaje.
+      await expect(page.getByRole('button', { name: /reintentar/i })).toBeVisible()
+    } finally {
+      await context.setOffline(false)
+    }
+  })
+})

@@ -53,8 +53,13 @@ const ICONOS = [
  * Y sin aviso, porque el teléfono seguía "conectado".
  *
  * Tres segundos: por encima de eso, para alguien de pie en el ascensor, la app
- * ya está rota. La red no se cancela — sigue en marcha y refresca la caché
- * cuando llegue.
+ * ya está rota.
+ *
+ * **La red no se cancela nunca.** Esta línea ya lo decía y no era verdad: al
+ * vencer el plazo sin nada en caché se relanzaba el error, y eso deja la app
+ * inservible aunque la red solo fuera lenta. Ahora el plazo únicamente decide
+ * si se prefiere lo guardado; sin nada guardado se espera a la red hasta el
+ * final. Ver `redConPlazo`.
  */
 const PLAZO_MS = 3000
 
@@ -86,7 +91,10 @@ self.addEventListener('install', (ev) => {
       const cache = await caches.open(SHELL)
       for (const ruta of ICONOS) {
         try {
-          const r = await redConPlazo(new Request(ruta, { cache: 'reload' }), PLAZO_INSTALL_MS)
+          // Aquí sí se abandona al vencer el plazo: se está llenando la caché
+          // en segundo plano y no hay nadie esperando una pantalla.
+          const { carrera } = redConPlazo(new Request(ruta, { cache: 'reload' }), PLAZO_INSTALL_MS)
+          const r = await carrera
           if (sirveParaGuardar(r, ruta)) await guardar(cache, ruta, r)
         } catch {
           // Sin red, o tardando demasiado. Se llenará en la primera visita.
@@ -274,12 +282,61 @@ function avisarALasPantallas(guardadoEn) {
     .catch(() => {})
 }
 
-/** La red, pero sin esperar para siempre. */
+/**
+ * La red, con un plazo que sirve para **preferir lo guardado**, no para
+ * cancelar.
+ *
+ * Se devuelve la petición en curso junto con la carrera, y eso es el arreglo de
+ * un fallo que tiró la app en producción. Antes esto solo devolvía la carrera, y
+ * quien la llamaba, al vencer el plazo sin nada en caché, relanzaba el error.
+ * Una promesa rechazada dentro de `respondWith` no enseña el error normal del
+ * navegador: enseña «FetchEvent.respondWith received an error: Error: plazo», y
+ * la pantalla se queda en negro. Visto en un iPhone con 4G: la red iba bien,
+ * solo tardaba más de tres segundos porque la función estaba fría.
+ *
+ * Tres segundos siguen siendo el plazo para tirar de caché. Lo que cambia es
+ * que **sin caché no se cancela nada**: se sigue esperando a `enCurso`, que es
+ * la misma petición de siempre, hasta que conteste o falle de verdad.
+ */
 function redConPlazo(peticion, plazoMs = PLAZO_MS) {
-  return Promise.race([
-    fetch(peticion),
+  const enCurso = fetch(peticion)
+  // Un manejador para que una caída tardía no cuente como rechazo sin atender.
+  // No la consume: quien haga `await enCurso` después la sigue recibiendo.
+  enCurso.catch(() => {})
+  const carrera = Promise.race([
+    enCurso,
     new Promise((_, rechazar) => setTimeout(() => rechazar(new Error('plazo')), plazoMs)),
   ])
+  return { carrera, enCurso }
+}
+
+/**
+ * Lo que se enseña cuando no hay red **ni** nada guardado.
+ *
+ * Existe porque la alternativa era relanzar el error, y eso deja al vecino
+ * mirando una pantalla negra con una frase que no le dice nada ni le da nada
+ * que hacer. Esto no finge que la app va: dice qué pasó y ofrece reintentar.
+ */
+function respuestaSinRed() {
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sin conexión</title><style>
+:root{color-scheme:light dark}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+padding:24px;background:#f7f4ee;color:#0e0e0e;
+font-family:system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center}
+@media(prefers-color-scheme:dark){body{background:#17172b;color:#f7f4ee}}
+p{margin:0 0 20px;font-size:16px;line-height:1.5;max-width:30ch}
+button{font:inherit;padding:12px 22px;border:0;border-radius:999px;
+background:#c9773a;color:#ffffff}
+</style></head><body><div>
+<p>No se pudo cargar la app. Revisa tu conexión y vuelve a intentar.</p>
+<button onclick="location.reload()">Reintentar</button>
+</div></body></html>`
+  return new Response(html, {
+    status: 503,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+  })
 }
 
 self.addEventListener('fetch', (ev) => {
@@ -323,36 +380,66 @@ self.addEventListener('fetch', (ev) => {
     }
     ev.respondWith(
       (async () => {
+        const { carrera, enCurso } = redConPlazo(peticion)
         try {
-          const r = await redConPlazo(peticion)
+          const r = await carrera
           if (sirveParaGuardar(r)) await guardar(await caches.open(DATOS), peticion, r.clone())
           return r
-        } catch (error) {
+        } catch {
           const guardado = await caches.match(peticion)
           if (guardado) return desdeCache(guardado, peticion)
-          throw error
+          /**
+           * Sin nada guardado, el plazo no sirve de nada: se espera a la red de
+           * verdad. Y si falla, se devuelve **una respuesta**, no un error: un
+           * `fetch` que recibe un 503 lo maneja la app y enseña su propio
+           * mensaje; un `respondWith` rechazado rompe la pantalla entera.
+           */
+          try {
+            const r = await enCurso
+            if (sirveParaGuardar(r)) await guardar(await caches.open(DATOS), peticion, r.clone())
+            return r
+          } catch {
+            return new Response(JSON.stringify({ error: 'Sin conexión.' }), {
+              status: 503,
+              headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+            })
+          }
         }
       })(),
     )
     return
   }
 
-  // Navegaciones: red primero con plazo, y si no llega, la pantalla guardada. Si
-  // tampoco hay pantalla guardada, se deja que falle: el navegador enseña su
-  // error, que es más honesto que una página nuestra fingiendo que la app va.
+  /**
+   * Navegaciones: red primero con plazo, y si tarda, la pantalla guardada.
+   *
+   * Si no hay pantalla guardada **se sigue esperando a la red**, que es lo que
+   * antes no pasaba. El código decía «se deja que falle: el navegador enseña su
+   * error, que es más honesto», y eso era falso: un `respondWith` rechazado no
+   * enseña el error del navegador, enseña «FetchEvent.respondWith received an
+   * error» sobre una pantalla negra. Con eso, una red que solo iba lenta
+   * dejaba la app inservible.
+   */
   if (peticion.mode === 'navigate') {
     ev.respondWith(
       (async () => {
-        try {
-          const r = await redConPlazo(peticion)
+        const { carrera, enCurso } = redConPlazo(peticion)
+        const guardarSiSirve = async (r) => {
           if (sirveParaGuardar(r, url.pathname, { esPantalla: true })) {
             await guardar(await caches.open(SHELL), peticion, r.clone())
           }
           return r
-        } catch (error) {
+        }
+        try {
+          return await guardarSiSirve(await carrera)
+        } catch {
           const guardado = (await caches.match(peticion)) ?? (await caches.match('/'))
           if (guardado) return desdeCache(guardado, peticion)
-          throw error
+          try {
+            return await guardarSiSirve(await enCurso)
+          } catch {
+            return respuestaSinRed()
+          }
         }
       })(),
     )

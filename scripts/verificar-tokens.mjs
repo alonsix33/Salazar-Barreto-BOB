@@ -71,6 +71,14 @@ const EXENTOS = [
       'lib/__tests__/bob-cara.test.ts comprueba que cada color es el token de globals.css',
   ],
   [
+    'public/sw.js',
+    ['hex', 'font-family-suelta'],
+    'la pantalla de «sin conexión» la sirve el service worker cuando la app no ha podido cargar, ' +
+      'así que no hay hoja de estilos que resolver una variable: los colores tienen que ir ' +
+      'literales dentro del HTML. Solo se le perdonan esas dos reglas; las demás se le siguen ' +
+      'exigiendo. lib/__tests__/sw-colores.test.ts comprueba que cada uno es el token de globals.css',
+  ],
+  [
     'scripts/verificar-tokens.mjs',
     null, // todas: contiene los patrones que busca, así que se encuentra a sí mismo
     'es este chequeo',
@@ -322,6 +330,10 @@ if (!ES_FIXTURE) {
   }
   if (!fs.existsSync(path.join(RAIZ, 'lib/__tests__/bob-cara.test.ts'))) {
     console.error('verificar-tokens: falta el test que ata lib/bob-cara.ts a los tokens.')
+    process.exit(2)
+  }
+  if (!fs.existsSync(path.join(RAIZ, 'lib/__tests__/sw-colores.test.ts'))) {
+    console.error('verificar-tokens: falta el test que ata los colores de public/sw.js a los tokens.')
     process.exit(2)
   }
 }
