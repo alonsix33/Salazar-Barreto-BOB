@@ -122,6 +122,10 @@ Proyectado a Railway, con 330 ms de ida y vuelta:
 | Mi departamento | ~30 s | ~3 s con `connection_limit=1`, ~0.7 s con 5 | ~0 |
 | Historial | ~22 s | igual | ~0 |
 
+Y las pruebas, después de todo esto: **502 de unidad y 197 de integración en
+verde**, 18 de 18 defectos inyectados detectados en el motor y las reglas de
+lectura. La cifra que importa no es la primera: es la segunda.
+
 ---
 
 ## 5. Lo que falta del lado de quien despliega
@@ -163,6 +167,36 @@ que sí se puede ver:
   lado va.
 
 Su prueba negativa está en `scripts/prueba-negativa-integracion.mjs`.
+
+---
+
+## 6 bis. Un defecto que metí al hacer esto, y cómo salió
+
+Al montar la foto del edificio **reimplementé dentro de `almanaque.ts` la
+herencia del lavado y la vigencia de los gastos fijos**. Eran copias de lo que ya
+estaba en `mes.ts`.
+
+Este proyecto ya había pagado ese error una vez: `corregirMes` tenía su propia
+copia de `entradasDeMes`, las dos se separaron, y la de allí no heredaba la marca
+del lavado del mes anterior, así que el aviso que recibían los siete —«el 401
+pasó de X a Y»— citaba una Y que la app no cobraba.
+
+Lo que lo destapó no fue ningún test en rojo: **las 699 pruebas seguían en
+verde**, y las dos copias decían lo mismo el día que se escribieron. Lo destapó
+la prueba negativa: la inyección «que el lavado vuelva a reescribir el pasado»,
+que llevaba meses poniéndose roja, dejó de detectarse. No porque faltara un test,
+sino porque las pantallas ya no pasaban por el código que se estaba rompiendo.
+
+Es exactamente el trabajo que hace un defecto inyectado y que no hace ninguna
+suite en verde: un chequeo que nunca se vio fallar no es un chequeo.
+
+**El arreglo no fue añadir un test**, fue quitar la copia: la regla vive en
+`lib/datos/filas.ts`, una vez, y recibe filas llanas. Quien las trae —Prisma
+dentro de una transacción, o la foto— es lo único que cambia. Y con ella, seis
+inyecciones nuevas en `scripts/prueba-negativa.mjs` y
+`lib/datos/__tests__/filas.test.ts`, que cubre la herencia del mes anterior: se
+heredaba el interruptor pero no el valor congelado, y no había un solo test que
+lo dijera.
 
 ---
 
