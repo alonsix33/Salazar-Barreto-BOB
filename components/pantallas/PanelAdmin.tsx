@@ -135,6 +135,17 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
             <path d="M9 6l6 6-6 6" />
           </svg>
         </button>
+        {/* El estado de Bob, a la vista.
+
+            No es decoración: el modo de Bob no se nota desde fuera —el catálogo
+            responde a todo y nunca falla—, así que un Bob apagado por una
+            variable de entorno se ve igual que uno encendido, solo que peor.
+            Pasó en producción. Aquí se lee de un vistazo, sin entrar a Vercel. */}
+        <p className="tipo-contexto-chico text-gris admin-estado-bob">
+          Bob responde{' '}
+          {datos.bob.modo === 'deepseek' ? 'con el modelo' : 'solo con el catálogo'}.{' '}
+          {datos.bob.porQue}
+        </p>
         <form action="/api/admin/pin" method="post" className="admin-salir-form">
           <button type="button" onClick={() => salir()} className="tipo-cuerpo-enlace text-gris admin-salir">
             Salir de administración

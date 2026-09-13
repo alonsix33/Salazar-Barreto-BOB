@@ -1,6 +1,6 @@
 import { dptoElegido } from '@/lib/sesion'
 import { listaDeMeses, serieDelSaldo } from '@/lib/datos/meses'
-import { resultadoDeMes } from '@/lib/datos/mes'
+import { almanaque } from '@/lib/datos/almanaque'
 import { cortosConAnio } from '@/lib/calculo/mes'
 import { Historial } from '@/components/pantallas/Historial'
 import { Onboarding } from '@/components/pantallas/Onboarding'
@@ -19,12 +19,11 @@ export default async function Pagina() {
   const cortos = cortosConAnio(publicados.map((m) => m.mes))
   const etiquetas = new Map(publicados.map((m, i) => [m.mes, cortos[i]!]))
 
-  const m3PorMes = await Promise.all(
-    publicados.map(async (m) => {
-      const r = await resultadoDeMes(m.mes)
-      return { mes: m.mes, corto: etiquetas.get(m.mes) ?? m.corto, m3: r.valido ? r.rec.aguaM3 : 0 }
-    }),
-  )
+  const foto = await almanaque()
+  const m3PorMes = publicados.map((m) => {
+    const r = foto.resultadoDe(m.mes)
+    return { mes: m.mes, corto: etiquetas.get(m.mes) ?? m.corto, m3: r.valido ? r.rec.aguaM3 : 0 }
+  })
 
   const serieConAnio = serie
     .filter((f) => publicados.some((m) => m.mes === f.mes))

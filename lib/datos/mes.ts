@@ -19,6 +19,7 @@ import type {
   Recibo,
   ResultadoMes,
 } from '@/lib/calculo/tipos'
+import { almanaque } from './almanaque'
 import { aNumero, aNumeroObligatorio } from './decimal'
 import { prisma } from './prisma'
 
@@ -136,8 +137,15 @@ export async function lavadoM3En(mes: MesId, db: Lector = prisma): Promise<numbe
   return aNumeroObligatorio(reasignacion.m3)
 }
 
-/** Los pagos de un mes, por departamento. */
-export async function pagosDe(mes: MesId, db: Lector = prisma): Promise<PagosMes> {
+/**
+ * Los pagos de un mes, por departamento.
+ *
+ * Sin `db`, sale de la foto del edificio: una tanda de consultas para todos los
+ * meses en vez de una por mes. Con `db` —dentro de una transacción— se lee de
+ * la base, que es lo que necesita quien acaba de escribir.
+ */
+export async function pagosDe(mes: MesId, db?: Lector): Promise<PagosMes> {
+  if (!db) return (await almanaque()).pagosDe(mes)
   const filas = await db.pago.findMany({ where: { mes } })
   const salida: PagosMes = {}
   for (const f of filas) {
@@ -165,11 +173,22 @@ export async function entradasDeMes(mes: MesId, db: Lector = prisma): Promise<En
   return { mesId: mes, recibo, lecturas, lecturasAnteriores, fijos, extras, lavadoM3 }
 }
 
-/** El mes ya calculado. Es lo que consumen las pantallas y la API. */
+/**
+ * El mes ya calculado. Es lo que consumen las pantallas y la API.
+ *
+ * El camino normal —sin `db` y sin overrides— sale de la foto del edificio, que
+ * ya trae todos los meses calculados con este mismo motor. Pintar Historial
+ * hacía 66 consultas para llegar a lo mismo.
+ *
+ * Con `db` se calcula contra la base: es el camino de las transacciones, donde
+ * hay que ver lo que se acaba de escribir y todavía no está confirmado. Con
+ * overrides, también: la foto se guarda sin ellos.
+ */
 export async function resultadoDeMes(
   mes: MesId,
   ov: Overrides = {},
-  db: Lector = prisma,
+  db?: Lector,
 ): Promise<ResultadoMes> {
-  return calcularMes(await entradasDeMes(mes, db), ov)
+  if (!db && Object.keys(ov).length === 0) return (await almanaque()).resultadoDe(mes)
+  return calcularMes(await entradasDeMes(mes, db ?? prisma), ov)
 }

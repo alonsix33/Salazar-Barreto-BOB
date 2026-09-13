@@ -2002,6 +2002,15 @@
   border-bottom: 1px solid var(--color-linea);
   text-align: left;
 }
+/* El estado de Bob, debajo de las acciones. Texto corriente, que se ajusta
+   solo: el motivo puede ser una frase larga y no puede desbordar en un móvil. */
+.admin-estado-bob {
+  margin-top: 22px;
+  padding-top: var(--spacing-fila-alta);
+  border-top: 1px solid var(--color-linea);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
 .admin-salir-form {
   margin: 0;
 }

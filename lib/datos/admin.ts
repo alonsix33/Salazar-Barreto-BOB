@@ -9,10 +9,8 @@
 import { DPTOS } from '@/lib/calculo/constantes'
 import { etiquetaMes, mesSiguiente, nombreMes, comoMes } from '@/lib/calculo/mes'
 import type { DptoId, MesId, PagosMes } from '@/lib/calculo/tipos'
-import { aNumeroObligatorio } from './decimal'
-import { pagosDe, resultadoDeMes } from './mes'
-import { mesesConDatos, mesesPublicados } from './meses'
-import { prisma } from './prisma'
+import { modoDeBob, porQueEseModo } from '@/lib/bob'
+import { almanaqueFresco } from './almanaque'
 
 export interface FilaPago {
   dpto: DptoId
@@ -56,6 +54,16 @@ export interface DatosAdmin {
    * mezclado con los publicados y sin ninguna marca.
    */
   anios: { anio: number; mesesPublicados: number; desde: string; hasta: string }[]
+  /**
+   * Con qué está respondiendo Bob ahora mismo, y por qué.
+   *
+   * Está aquí porque el modo de Bob no se nota desde fuera: el catálogo
+   * responde a todo y nunca falla, así que un Bob apagado por una variable de
+   * entorno mal puesta se ve igual que uno encendido, solo que peor. Pasó en
+   * producción y la única señal era que las respuestas eran siempre las mismas.
+   * El motivo **no cita la clave**, solo el nombre de la variable.
+   */
+  bob: { modo: 'determinista' | 'deepseek'; porQue: string }
 }
 
 /**
@@ -88,7 +96,14 @@ function aniosExportables(
 }
 
 export async function panelDeAdmin(): Promise<DatosAdmin> {
-  const [publicados, conDatos] = await Promise.all([mesesPublicados(), mesesConDatos()])
+  /**
+   * Sin la caché entre peticiones: es la pantalla de quien acaba de escribir, y
+   * ahí sí importa ver lo propio al instante. Con la foto entera ya montada,
+   * todo lo de abajo sale de memoria en vez de una consulta por pieza.
+   */
+  const foto = await almanaqueFresco()
+  const publicados = foto.mesesPublicados
+  const conDatos = foto.mesesConRecibo
   const mesPublicado: MesId | null = publicados[publicados.length - 1] ?? null
 
   // El mes a cerrar es el primero con datos **posterior** al último publicado.
@@ -101,25 +116,21 @@ export async function panelDeAdmin(): Promise<DatosAdmin> {
   const siguiente = mesPublicado ? mesSiguiente(mesPublicado) : (conDatos[0] ?? comoMes('2026-01'))
   const mesACerrar: MesId = conDatos.find((m) => m > (mesPublicado ?? '')) ?? siguiente
 
-  const [cierre, resultado, pagosMes, fijos, reasignacion] = await Promise.all([
-    prisma.cierre.findUnique({ where: { mes: mesACerrar } }),
-    mesPublicado ? resultadoDeMes(mesPublicado) : Promise.resolve(null),
-    mesPublicado ? pagosDe(mesPublicado) : Promise.resolve({} as PagosMes),
-    prisma.gastoFijo.findMany({
-      where: { vigenteDesde: { lte: mesACerrar } },
-      orderBy: [{ orden: 'asc' }, { vigenteDesde: 'asc' }],
-    }),
-    prisma.reasignacionAgua.findFirst(),
-  ])
+  const cierre = foto.cierreDe(mesACerrar)
+  const resultado = mesPublicado ? foto.resultadoDe(mesPublicado) : null
+  const pagosMes: PagosMes = mesPublicado ? foto.pagosDe(mesPublicado) : {}
+  const reasignacion = foto.crudos.reasignaciones[0] ?? null
 
-  const porConcepto = new Map<string, (typeof fijos)[number]>()
-  for (const f of fijos) porConcepto.set(f.concepto, f)
+  // Los fijos vigentes en el mes a cerrar: la última fila de cada concepto que
+  // ya aplica. `crudos.fijos` viene ordenado por [orden, vigenteDesde].
+  const porConcepto = new Map<string, (typeof foto.crudos.fijos)[number]>()
+  for (const f of foto.crudos.fijos) if (f.vigenteDesde <= mesACerrar) porConcepto.set(f.concepto, f)
 
   return {
     mesPublicado,
     publicados: [...publicados]
       .sort((a, b) => b.localeCompare(a))
-      .map((m) => ({ mes: comoMes(m), etiqueta: etiquetaMes(comoMes(m)) })),
+      .map((m: MesId) => ({ mes: comoMes(m), etiqueta: etiquetaMes(comoMes(m)) })),
     etiquetaPublicado: mesPublicado ? etiquetaMes(mesPublicado) : '',
     mesACerrar,
     etiquetaACerrar: etiquetaMes(mesACerrar),
@@ -141,17 +152,18 @@ export async function panelDeAdmin(): Promise<DatosAdmin> {
       .sort((a, b) => a.orden - b.orden)
       .map((f) => ({
         concepto: f.concepto,
-        monto: f.monto === null ? null : aNumeroObligatorio(f.monto),
+        monto: f.monto,
         anual: f.anual,
       })),
     lavado: reasignacion
       ? {
           dpto: reasignacion.dptoId,
           concepto: reasignacion.concepto,
-          m3: aNumeroObligatorio(reasignacion.m3),
+          m3: reasignacion.m3,
           desde: reasignacion.desde,
         }
       : null,
     anios: aniosExportables(publicados),
+    bob: { modo: modoDeBob(), porQue: porQueEseModo() },
   }
 }
