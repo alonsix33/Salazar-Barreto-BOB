@@ -213,6 +213,9 @@
   --top: calc(30px + env(safe-area-inset-top));
   --bot: calc(18px + env(safe-area-inset-bottom));
   --rad: 0px;
+  /* El alto real de `.sin-conexion` cuando está puesto, o `0px` si no —lo
+     fija `components/SinConexion.tsx`, ver `.pantalla` más abajo. */
+  --alto-sin-conexion: 0px;
   color-scheme: light;
 }
 
@@ -596,16 +599,23 @@
   }
 }
 
-/* El área de scroll de una pantalla. */
+/*
+ * El área de scroll de una pantalla.
+ *
+ * `--alto-sin-conexion` la fija `components/SinConexion.tsx` en el alto real
+ * del aviso ámbar cuando está puesto, y en `0px` cuando no —el aviso es
+ * `position: absolute` sobre todo el marco, así que sin esto tapaba lo
+ * primero de cada pantalla en vez de empujarlo hacia abajo—.
+ */
 .pantalla {
   position: absolute;
-  inset: var(--top) 0 0;
+  inset: calc(var(--top) + var(--alto-sin-conexion)) 0 0;
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
 
 .pantalla-desde-arriba {
-  inset: 0;
+  inset: var(--alto-sin-conexion) 0 0 0;
 }
 
 .con-nav {

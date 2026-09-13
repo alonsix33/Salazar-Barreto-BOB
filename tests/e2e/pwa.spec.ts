@@ -197,6 +197,47 @@ test.describe('sin conexión', () => {
     await context.setOffline(false)
   })
 
+  /**
+   * El aviso respeta el área segura: no se pinta pegado al borde real de
+   * arriba (el notch, la isla dinámica), sino a `--top` — el mismo margen
+   * que usa el resto de la app.
+   *
+   * Se compara contra una sonda puesta a `top: var(--top)` en vez de contra
+   * un número fijo: en Chromium `env(safe-area-inset-top)` vale `0`, así que
+   * el número absoluto no dice nada del iPhone real; lo que hay que probar
+   * es que el aviso usa la misma fórmula que todo lo demás, sea cual sea el
+   * valor de la variable en cada entorno.
+   */
+  test('el aviso de sin conexión no invade el área segura de arriba', async ({ page }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => navigator.serviceWorker.ready)
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+
+    await page.evaluate(() => {
+      navigator.serviceWorker.dispatchEvent(
+        new MessageEvent('message', { data: { tipo: 'desde-cache', guardadoEn: null } }),
+      )
+    })
+    const aviso = page.getByRole('status').filter({ hasText: /No se pudo conectar/ })
+    await expect(aviso).toBeVisible()
+
+    const { avisoTop, esperado } = await page.evaluate(() => {
+      const el = document.querySelector('.sin-conexion')
+      if (!el) throw new Error('no se encontró .sin-conexion')
+      const avisoTop = el.getBoundingClientRect().top
+      const sonda = document.createElement('div')
+      sonda.style.position = 'absolute'
+      sonda.style.top = 'var(--top)'
+      document.body.appendChild(sonda)
+      const esperado = sonda.getBoundingClientRect().top
+      sonda.remove()
+      return { avisoTop, esperado }
+    })
+    expect(avisoTop).toBeCloseTo(esperado, 0)
+  })
+
   test('en administración avisa que no se puede guardar', async ({ page, context }) => {
     const r = await page.request.post('/api/admin/pin', { data: { pin: process.env.ADMIN_PIN ?? '2026' } })
     expect(r.ok()).toBeTruthy()
@@ -222,6 +263,41 @@ test.describe('sin conexión', () => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
     await expect(page.getByText(/Sin conexión/)).toHaveCount(0)
+  })
+
+  /**
+   * El aviso de "servido de la caché" se quita solo con la siguiente
+   * respuesta de la red, sin que haga falta que la interfaz de red parpadee.
+   *
+   * El caso real no es el wifi cayéndose: es una sola petición lenta —una
+   * función en frío en el servidor, por ejemplo— con el wifi conectado todo
+   * el tiempo. `navigator.onLine` nunca pasa por `false`, así que el evento
+   * `online` del navegador nunca llega para limpiar el aviso, y se quedaba
+   * puesto para siempre aunque cada petición siguiente contestara bien.
+   */
+  test('un aviso de "servido de la caché" se quita con la siguiente respuesta viva, sin tocar el wifi', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => navigator.serviceWorker.ready)
+
+    // Simula lo que manda el service worker cuando tuvo que servir de la
+    // caché, sin tocar `navigator.onLine` para nada: el escenario que este
+    // test cubre es justo el que no pasa por ahí.
+    await page.evaluate(() => {
+      navigator.serviceWorker.dispatchEvent(
+        new MessageEvent('message', { data: { tipo: 'desde-cache', guardadoEn: null } }),
+      )
+    })
+    await expect(page.getByRole('status').filter({ hasText: /No se pudo conectar/ })).toBeVisible()
+
+    // Una petición normal, en línea de verdad, sin recargar la página —si se
+    // recargara, el estado se resetea solo y el test no probaría nada—. El
+    // service worker la sirve de la red y avisa; el aviso se quita sin que
+    // `navigator.onLine` haya cambiado ni una vez.
+    await page.evaluate(() => fetch('/api/meses/2026-01').then((r) => r.status))
+    await expect(page.getByRole('status').filter({ hasText: /No se pudo conectar/ })).toHaveCount(0)
   })
 
   /**

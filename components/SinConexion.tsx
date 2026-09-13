@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { COPYS } from '@/lib/copys'
 import { VERSION_APP } from '@/lib/version'
 import { haceCuanto } from '@/lib/formato'
+
+/** El nombre tiene que coincidir con el que leen `.pantalla`/`.pantalla-desde-arriba` en `app/globals.css`. */
+const VAR_ALTURA = '--alto-sin-conexion'
 
 /**
  * El aviso de que lo que se ve no viene del servidor, y el registro del service
@@ -53,6 +56,15 @@ export function SinConexion() {
     const alRecibir = (ev: MessageEvent) => {
       const dato = ev.data as { tipo?: string; guardadoEn?: string | null } | null
       if (dato?.tipo === 'desde-cache') setDeCache({ guardadoEn: dato.guardadoEn ?? null })
+      /**
+       * Sin esto, el aviso solo se quitaba con el evento `online` del
+       * navegador —una interfaz de red que pasa de apagada a encendida—. Con
+       * wifi que nunca se cae, una sola petición lenta (una función en frío,
+       * por ejemplo) dejaba el aviso puesto para siempre, aunque cada
+       * petición siguiente contestara al instante: `navigator.onLine` nunca
+       * dejó de ser `true`, así que ese evento nunca llegaba a limpiarlo.
+       */
+      if (dato?.tipo === 'desde-red') setDeCache(null)
     }
     navigator.serviceWorker.addEventListener('message', alRecibir)
 
@@ -85,10 +97,36 @@ export function SinConexion() {
           : COPYS.desconectado.noLlega
         : null
 
+  const caja = useRef<HTMLDivElement>(null)
+
+  /**
+   * Reserva, en `--alto-sin-conexion`, exactamente el alto del aviso.
+   *
+   * El aviso es `position: absolute` —tiene que verse en cualquier pantalla,
+   * y ninguna lo espera en su propio layout— así que sin esto tapaba lo que
+   * hay justo debajo en vez de empujarlo: en Inicio, el mes y el saludo
+   * («AGOSTO 2026», «Hola, 401») quedaban debajo del aviso ámbar, no encima.
+   * `.pantalla`/`.pantalla-desde-arriba` suman esta variable a su margen
+   * superior; en `0px` —el valor por defecto, sin aviso— no cambia nada.
+   */
+  useEffect(() => {
+    if (texto === null) {
+      document.documentElement.style.removeProperty(VAR_ALTURA)
+      return
+    }
+    const el = caja.current
+    if (!el) return
+    const medir = () => document.documentElement.style.setProperty(VAR_ALTURA, `${el.offsetHeight}px`)
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(el)
+    return () => observador.disconnect()
+  }, [texto])
+
   if (texto === null) return null
 
   return (
-    <div className="sin-conexion" role="status" aria-live="polite">
+    <div ref={caja} className="sin-conexion" role="status" aria-live="polite">
       <svg
         width="14"
         height="14"

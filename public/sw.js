@@ -283,6 +283,29 @@ function avisarALasPantallas(guardadoEn) {
 }
 
 /**
+ * Le dice a la app que la respuesta que acaba de recibir **es de la red, de
+ * verdad**, para quitar el aviso de "no se pudo conectar" si estaba puesto.
+ *
+ * Sin esto, ese aviso solo se quitaba con el evento `online` del navegador
+ * —una interfaz de red que pasa de apagada a encendida—, que es exactamente
+ * lo que su propio comentario de arriba dice que no basta para *ponerlo*.
+ * No basta para *quitarlo* tampoco: con wifi que nunca se cae, una sola
+ * petición lenta —una función en frío, un `POST /api/pruebas/resembrar` que
+ * tardó, lo que sea— dejaba el aviso encendido para siempre, aunque cada
+ * petición siguiente contestara al instante. Se vio en un teléfono real: la
+ * cuota de agosto cargaba bien, con el aviso de "no se pudo conectar"
+ * puesto encima, sin que nada lo fuera a quitar.
+ */
+function avisarQueHayRed() {
+  self.clients
+    .matchAll({ type: 'window' })
+    .then((clientes) => {
+      for (const c of clientes) c.postMessage({ tipo: 'desde-red' })
+    })
+    .catch(() => {})
+}
+
+/**
  * La red, con un plazo que sirve para **preferir lo guardado**, no para
  * cancelar.
  *
@@ -384,6 +407,7 @@ self.addEventListener('fetch', (ev) => {
         try {
           const r = await carrera
           if (sirveParaGuardar(r)) await guardar(await caches.open(DATOS), peticion, r.clone())
+          avisarQueHayRed()
           return r
         } catch {
           const guardado = await caches.match(peticion)
@@ -397,6 +421,7 @@ self.addEventListener('fetch', (ev) => {
           try {
             const r = await enCurso
             if (sirveParaGuardar(r)) await guardar(await caches.open(DATOS), peticion, r.clone())
+            avisarQueHayRed()
             return r
           } catch {
             return new Response(JSON.stringify({ error: 'Sin conexión.' }), {
@@ -428,6 +453,7 @@ self.addEventListener('fetch', (ev) => {
           if (sirveParaGuardar(r, url.pathname, { esPantalla: true })) {
             await guardar(await caches.open(SHELL), peticion, r.clone())
           }
+          avisarQueHayRed()
           return r
         }
         try {
