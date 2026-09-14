@@ -17,6 +17,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { preguntarABob } from '@/lib/bob'
 import { numerosInventados } from '@/lib/bob/guardas'
+import { herramienta } from '@/lib/bob/herramientas'
 import { intencionDe } from '@/lib/bob/determinista'
 import { CASOS, PROCEDIMIENTOS, procedimientoPara } from '@/lib/bob/procedimientos'
 import { DPTO_IDS } from '@/lib/calculo/constantes'
@@ -117,6 +118,56 @@ describe('Bob sabe quién vive en cada departamento', () => {
     const r = await preguntarABob('quiénes son los vecinos', ADMIN)
     expect(r.llamadas.map((l) => l.herramienta)).not.toContain('estadoPagos')
     expect(r.texto.toLowerCase()).not.toMatch(/debe|pendiente|sin registrar|moroso/)
+  })
+})
+
+/**
+ * `estadoPagos` es la única herramienta que da un vistazo a los siete
+ * departamentos a la vez —hace falta para «cuántos días sin registrarse»— y
+ * por eso es la única que no pasaba por `dptoDe`. Probado contra producción,
+ * eso dejaba que un vecino sin sesión de administración le preguntara a Bob
+ * cuánto pagó otro departamento y se lo contestara, con la cifra exacta:
+ * justo lo que `dptoDe` existe para no soltar.
+ *
+ * `monto` es `null` en la fila cuando el departamento pagó justo su cuota
+ * —lo normal, y lo que trae la semilla para todos—, así que para probar de
+ * verdad la restricción hace falta un pago que **sí** tenga un monto propio.
+ * Se confirma el del 501, que en la semilla de junio está sin registrar.
+ */
+describe('estadoPagos no suelta el monto de otro departamento', () => {
+  const est = () => herramienta('estadoPagos')!
+
+  beforeAll(async () => {
+    const { confirmarPago } = await import('@/lib/servicios/pagos')
+    await confirmarPago({ mes: '2026-06', dpto: '501', monto: 111.11 })
+  })
+
+  it('quien pagó ese monto lo ve en su propia fila', async () => {
+    const r = (await est().ejecutar({}, { dpto: '501', mes: '2026-06', esAdmin: false })) as {
+      fechas: { dpto: string; monto: number | null }[]
+    }
+    expect(r.fechas.find((f) => f.dpto === '501')?.monto).toBe(111.11)
+  })
+
+  it('otro vecino sin sesión de administración no lo ve', async () => {
+    const r = (await est().ejecutar({}, { dpto: '401', mes: '2026-06', esAdmin: false })) as {
+      fechas: { dpto: string; monto: number | null }[]
+    }
+    expect(r.fechas.find((f) => f.dpto === '501')?.monto).toBeNull()
+  })
+
+  it('con sesión de administración sí se ve', async () => {
+    const r = (await est().ejecutar({}, ADMIN)) as { fechas: { dpto: string; monto: number | null }[] }
+    expect(r.fechas.find((f) => f.dpto === '501')?.monto).toBe(111.11)
+  })
+
+  it('la fecha y el estado de los demás sí se quedan: de ahí sale "hace cuántos días"', async () => {
+    const r = (await est().ejecutar({}, { dpto: '401', mes: '2026-06', esAdmin: false })) as {
+      fechas: { dpto: string; fecha: string | null; estado: string }[]
+    }
+    const otros = r.fechas.filter((f) => f.dpto !== '401')
+    expect(otros.length).toBeGreaterThan(0)
+    for (const f of otros) expect(f.fecha).toBeTruthy()
   })
 })
 

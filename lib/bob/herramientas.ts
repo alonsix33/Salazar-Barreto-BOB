@@ -204,13 +204,24 @@ export const HERRAMIENTAS: Herramienta[] = [
          * Sin esto, «¿hace cuántos días que no paga el 501?» no tenía respuesta
          * posible: la cuenta es una resta entre dos fechas y ninguna de las dos
          * estaba en ningún resultado. Bob no las inventa, las resta.
+         *
+         * El **monto** es otra cosa: probado contra producción, un vecino sin
+         * sesión de administración preguntó «¿el 202 pagó más que yo?» y Bob
+         * contestó con la cifra exacta del 202, sacada de aquí. Esta
+         * herramienta es la única que devolvía el monto de cada departamento
+         * sin pasar por `dptoDe`, porque nació para «cuántos días sin
+         * registrarse» y nadie reparó en que el monto viaja al lado. Es
+         * justo el dato que `dptoDe` existe para no soltar: «un vecino no le
+         * pregunta a Bob cuánto debe el 501». La fecha y el estado se quedan
+         * para todos —de ahí sale «hace cuántos días»—; el monto, solo del
+         * propio departamento o con sesión de administración.
          */
         hoy: new Date().toISOString().slice(0, 10),
         fechas: DPTO_IDS.filter((d) => pagos[d]).map((d) => ({
           dpto: d,
           fecha: pagos[d]!.fecha,
           estado: pagos[d]!.estado,
-          monto: pagos[d]!.monto,
+          monto: contexto.esAdmin || d === contexto.dpto ? pagos[d]!.monto : null,
         })),
       }
     },
