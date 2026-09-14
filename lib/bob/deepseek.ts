@@ -85,6 +85,19 @@ interface MensajeChat {
 export class SinClave extends Error {}
 export class PlazoAgotado extends Error {}
 
+/**
+ * `max_tokens: 300` cortó al modelo a mitad de la frase.
+ *
+ * Encontrado probando contra producción, no inventado: «qué hay en mi
+ * departamento» devolvió `"Junio en el 401 sale S/ 364"`, cortado antes de
+ * los centavos, con un 200 y un JSON válido —el vecino habría visto justo
+ * eso—. `pedir` nunca miraba `finish_reason`, así que una respuesta cortada
+ * por el límite de tokens se publicaba igual que una completa. No se corrige
+ * el texto a medias: se trata como cualquier otra caída del modelo, y
+ * `index.ts` cae al determinista, que sí termina sus frases.
+ */
+export class RespuestaCortada extends Error {}
+
 /** `true` si hay clave. Sin clave no se intenta siquiera. */
 export function hayClave(): boolean {
   return !!process.env.DEEPSEEK_API_KEY
@@ -250,9 +263,17 @@ async function pedir(
       }),
     })
     if (!r.ok) throw new Error(`DeepSeek respondió ${r.status}.`)
-    const cuerpo = (await r.json()) as { choices?: { message?: MensajeChat }[] }
-    const mensaje = cuerpo.choices?.[0]?.message
+    const cuerpo = (await r.json()) as {
+      choices?: { message?: MensajeChat; finish_reason?: string }[]
+    }
+    const elegida = cuerpo.choices?.[0]
+    const mensaje = elegida?.message
     if (!mensaje) throw new Error('DeepSeek devolvió una respuesta sin mensaje.')
+    // Cortada por `max_tokens`: ni el texto ni los argumentos de una
+    // herramienta a medias son publicables. Ver `RespuestaCortada`.
+    if (elegida.finish_reason === 'length') {
+      throw new RespuestaCortada('DeepSeek cortó la respuesta por max_tokens.')
+    }
     return mensaje
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {

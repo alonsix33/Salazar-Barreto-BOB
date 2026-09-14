@@ -27,7 +27,7 @@
  */
 
 import { prisma } from '@/lib/datos/prisma'
-import { hayClave, PlazoAgotado, redactarConDeepseek } from './deepseek'
+import { hayClave, PlazoAgotado, RespuestaCortada, redactarConDeepseek } from './deepseek'
 import { aDosFrases, numerosInventados } from './guardas'
 import { modoDeBob } from './index'
 import { MOMENTOS, type DatosMomento, type MomentoId } from './momentos'
@@ -109,7 +109,8 @@ export async function mejorarMomento(
       }
     }
   } catch (e) {
-    motivo = e instanceof PlazoAgotado ? 'tiempo-agotado' : 'error-del-modelo'
+    motivo =
+      e instanceof PlazoAgotado ? 'tiempo-agotado' : e instanceof RespuestaCortada ? 'respuesta-cortada' : 'error-del-modelo'
     console.warn(`[bob] momento ${id} se queda con el determinista:`, motivo)
   }
 

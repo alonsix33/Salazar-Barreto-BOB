@@ -85,6 +85,7 @@ export type MotivoCaida =
   | 'error-del-modelo'
   | 'numero-inventado'
   | 'respuesta-vacia'
+  | 'respuesta-cortada'
 
 /** Una herramienta: lo que Bob puede llamar. Nunca escribe. */
 export interface Herramienta<A = Record<string, unknown>, R = unknown> {

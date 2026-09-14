@@ -22,7 +22,7 @@
 
 import { prisma } from '@/lib/datos/prisma'
 import { responderDeterminista } from './determinista'
-import { hayClave, PlazoAgotado, preguntarADeepseek } from './deepseek'
+import { hayClave, PlazoAgotado, RespuestaCortada, preguntarADeepseek } from './deepseek'
 import { aDosFrases, numerosInventados } from './guardas'
 import type { Contexto, Llamada, MotivoCaida, Respuesta, Turno } from './tipos'
 
@@ -128,7 +128,8 @@ async function resolver(
       llamadas,
     }
   } catch (e) {
-    const motivo: MotivoCaida = e instanceof PlazoAgotado ? 'tiempo-agotado' : 'error-del-modelo'
+    const motivo: MotivoCaida =
+      e instanceof PlazoAgotado ? 'tiempo-agotado' : e instanceof RespuestaCortada ? 'respuesta-cortada' : 'error-del-modelo'
     console.warn('[bob] se cayó al determinista:', motivo, e instanceof Error ? e.message : e)
     return await conElCatalogo(texto, contexto, motivo, llamadas)
   }
