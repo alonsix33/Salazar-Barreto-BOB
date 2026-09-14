@@ -32,6 +32,13 @@
  * se agregó una nueva para «¿quién eres?», que antes no tenía dónde caer y
  * se respondía con el estado del pago —una respuesta correcta a una
  * pregunta que no era esa—.
+ *
+ * La última es de un cuarto pedido, y de un caso real: preguntando por el
+ * estado de los pagos, Bob contestó con algo como «no hay nada que
+ * reclamar». La regla vieja de «moroso/deudor/vencido» prohíbe palabras; la
+ * nueva prohíbe la idea de que reclamar, exigir o pedir cuentas sea lo
+ * normal cuando algo está pendiente, aunque ninguna palabra de la lista
+ * vieja aparezca.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -95,5 +102,16 @@ describe('promptDelSistema · instrucciones que se agregaron a propósito', () =
     const prompt = promptDelSistema(VECINO)
     expect(prompt).toContain('ESTO ES UNA CONVERSACIÓN')
     expect(prompt.toLowerCase()).toContain('no te vuelvas a presentar')
+  })
+
+  /**
+   * Encontrado en producción: preguntando por el estado de los pagos, Bob
+   * dijo algo con «no hay nada que reclamar». La palabra ya mete la idea de
+   * que reclamar sería lo normal si alguien no hubiera pagado, y esa idea
+   * es la que el producto no tiene, no solo la palabra exacta.
+   */
+  it('prohíbe la idea de reclamar o exigirle cuentas a alguien, no solo las palabras de cobranza', () => {
+    const prompt = promptDelSistema(VECINO)
+    expect(prompt.toLowerCase()).toContain('reclamarle, exigirle o pedirle cuentas')
   })
 })

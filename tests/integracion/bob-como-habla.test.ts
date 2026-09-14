@@ -72,6 +72,23 @@ const HUELLAS: [RegExp, string][] = [
   [/\b(como asistente|como IA|soy un asistente|no puedo ayudarte)\b/i, 'habla de sí mismo · `05` §3'],
   [/(espero que esto|avísame si|aquí te dejo|por supuesto|claro que sí|¿quieres que)/i, 'muletilla de chatbot'],
   [/\b(moroso|morosa|deudor|deudora|vencido|vencida|impago)\b/i, 'lenguaje de cobranza · el producto no lo tiene'],
+  /**
+   * Encontrado en producción, no inventado: preguntando por el estado de
+   * los pagos, Bob dijo algo con «no hay nada que reclamar». Técnicamente
+   * correcto, pero mete la idea de que reclamar sería lo normal si alguien
+   * no hubiera pagado —justo la idea que este producto no tiene—, aunque
+   * la palabra no esté en la lista de arriba.
+   *
+   * Por raíz, no por palabra exacta: la primera versión usaba
+   * `\breclamar\b` y no atrapaba «reclamarles» —el español pega el
+   * pronombre al verbo, y ese `\b` final exige que la palabra termine justo
+   * ahí—. Se probó de verdad: la prueba negativa metió «hay que
+   * reclamarles» en la respuesta real de `case 'pagos'` y esta huella no lo
+   * vio, con la versión de palabra exacta. `\breclam` sin cierre atrapa
+   * reclamar, reclamarle, reclamarles, reclamo, reclamación, todo.
+   */
+  [/\b(reclam\w*|exig\w*|cobrarse\w*|acus\w*|culp\w*|denunci\w*|sancion\w*|amonest\w*)/i,
+    'lenguaje de reclamo o acusación · lo pendiente se informa, no se persigue'],
   [/\b(crucial|fundamental|robusto|sólido|potenciar|fomentar|abordar|ámbito|panorama|ecosistema|hito|sinergia)\b/i,
     'vocabulario de folleto'],
   [/\b(en definitiva|cabe destacar|es importante señalar|no obstante|asimismo|adicionalmente)\b/i,
