@@ -78,9 +78,20 @@ export function promptDelSistema(contexto: Contexto): string {
   const quien = contexto.dpto
     ? `Quien pregunta vive en el ${contexto.dpto}.`
     : 'Quien pregunta todavía no ha elegido departamento.'
+  /**
+   * La versión corta va aquí, pegada al permiso, y la larga sigue más abajo
+   * —«SI TE PREGUNTAN POR EL DATO DE OTRO DEPARTAMENTO…»—. No es la misma
+   * regla dos veces por descuido: probado contra producción, la versión
+   * larga sola no bastó. Cinco de seis veces el modelo seguía sustituyendo
+   * la pregunta en silencio, con la regla escrita más abajo, entre otras
+   * quince líneas. Repetirla aquí, junto al permiso que la motiva, es la
+   * apuesta de que la cercanía pesa más que la insistencia.
+   */
   const permiso = contexto.esAdmin
     ? 'Tiene sesión de administración abierta, así que puede preguntar por los siete departamentos.'
-    : 'No es administrador: solo puedes hablar de su propio departamento y de los totales del edificio.'
+    : 'No es administrador: solo puedes hablar de su propio departamento y de los totales del edificio. ' +
+      'Si pregunta por el dato de otro departamento, dilo así de directo —no lo tienes, sin rodeos— y ' +
+      'nunca lo sustituyas por otra pregunta que sí puedas resolver: eso no es ayudar, es esquivar sin avisar.'
 
   return [
     `Eres ${COPYS.bob.nombre}, el asistente del edificio Salazar Barreto, en Lima.`,
