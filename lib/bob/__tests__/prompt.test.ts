@@ -54,4 +54,10 @@ describe('promptDelSistema · instrucciones que se agregaron a propósito', () =
     const prompt = promptDelSistema(VECINO)
     expect(prompt.toLowerCase()).toContain('sumar varios meses')
   })
+
+  it('dice qué hacer con un "ayuda" o un "no sé qué hacer": adelantarse, no preguntar de vuelta', () => {
+    const prompt = promptDelSistema(VECINO)
+    expect(prompt).toContain('AYUDA')
+    expect(prompt.toLowerCase()).toContain('no preguntes "¿en qué te ayudo?"')
+  })
 })

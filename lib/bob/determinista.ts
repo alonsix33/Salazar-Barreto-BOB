@@ -53,6 +53,38 @@ function normalizar(texto: string): string {
     .trim()
 }
 
+/**
+ * Lo que se escribe cuando no se sabe ni por dónde empezar, no cuando se
+ * pregunta algo puntual. Va por **igualdad exacta**, no por «contiene»: con
+ * un `includes` normal, «no sé cuánto pagué» —una pregunta de verdad, sobre
+ * la cuota— habría caído aquí por el «no se» suelto, en vez de en `cuota`. La
+ * igualdad exacta cuesta cobertura —solo atrapa el mensaje corto y vacío,
+ * palabra por palabra— pero es la única forma de no robarle la pregunta a
+ * otra intención más específica.
+ */
+const FRASES_AYUDA = [
+  'ayuda',
+  'ayudame',
+  'necesito ayuda',
+  'no se',
+  'no se que hacer',
+  'no se por donde empezar',
+  'no entiendo',
+  'no entiendo nada',
+  'estoy perdido',
+  'estoy perdida',
+  'que hago',
+  'no entiendo la app',
+  'no entiendo como funciona esto',
+  'como funciona esto',
+]
+
+/** Sin tildes, en minúscula y sin la puntuación que cambia una frase exacta en otra distinta. */
+function esAyudaGenerica(t: string): boolean {
+  const limpio = t.replace(/[¿?¡!.,]/g, '').trim()
+  return FRASES_AYUDA.includes(limpio)
+}
+
 const INTENCIONES = [
   { id: 'cuota', palabras: ['cuanto debo', 'cuanto pago', 'mi cuota', 'cuanto es', 'cuanto me toca'] },
   { id: 'agua', palabras: ['agua', 'consumo', 'm3', 'metros cubicos', 'subio el agua', 'sedapal'] },
@@ -66,7 +98,7 @@ const INTENCIONES = [
   { id: 'quienes', palabras: ['quien vive', 'quienes viven', 'quien es el', 'duenos', 'propietarios', 'vecinos', 'los nombres'] },
 ] as const
 
-type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "nada"
+type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "ayuda" | "nada"
 
 /** Qué está preguntando. La primera que encaja gana. */
 export function intencionDe(texto: string): Intencion {
@@ -88,6 +120,17 @@ export function intencionDe(texto: string): Intencion {
    * que caía en `escribir` por la palabra «publicar».
    */
   if (suenaAComo(t) && procedimientoPara(t)) return 'como'
+
+  /**
+   * Un «ayuda» o un «no sé qué hacer» no es una pregunta sin respuesta: es
+   * una pregunta sin hacer todavía. Antes de esto cualquiera de estos
+   * mensajes caía en el `default` del catálogo —«de eso no tengo dato»—, que
+   * es literalmente falso: Bob sí tiene datos, lo que no tiene es una
+   * pregunta concreta. Va antes que todo lo demás porque una igualdad exacta
+   * no compite con nada: si el mensaje ya matchea aquí, no matchea ninguna
+   * otra intención por accidente.
+   */
+  if (esAyudaGenerica(t)) return 'ayuda'
 
   // Después, las dos prohibiciones: si alguien pide que confirme un pago
   // hablando del banco, la respuesta correcta es la del banco.
@@ -430,6 +473,63 @@ async function redactar(
           `${mesB} costó S/ ${fmt(Math.abs(dif))} ${dif > 0 ? 'más' : 'menos'} que ${mesA}, ` +
           `S/ ${fmt(c.totalB as number)} contra S/ ${fmt(c.totalA as number)}. ${porQue}`,
         lleva: { hoja: 'calculo', etiqueta: 'Ver de dónde sale cada monto' },
+      }
+    }
+
+    /**
+     * «Ayuda», «no sé qué hacer», y parecidos.
+     *
+     * La respuesta útil no es preguntar «¿en qué te ayudo?» —eso es lo que
+     * hace un chatbot de soporte, que `05` §2 prohíbe ser— ni tampoco un
+     * menú plano de opciones. Es **adelantarse con lo más probable**: el
+     * estado de su propio pago de este mes, que es la razón número uno por
+     * la que alguien se queda sin saber qué hacer. Si acierta, resuelve la
+     * duda entera sin que la persona tenga que formularla; si no acierta, la
+     * segunda frase igual deja la puerta abierta a lo demás.
+     */
+    case 'ayuda': {
+      if (!contexto.dpto) {
+        return {
+          texto:
+            'Todavía no sé en qué departamento vives. Elígelo arriba y desde ahí te oriento con tu cuota, ' +
+            'tus pagos o el consumo de agua.',
+          lleva: null,
+        }
+      }
+      const c = await llamar('cuotaDe', {}, contexto, llamadas)
+      if (c.valido === false) {
+        return {
+          texto:
+            `${capitalizar(String(c.nombreMes ?? 'ese mes'))} todavía no está cerrado, así que no hay cuota calculada. ` +
+            'Mientras tanto te puedo contar tu consumo de agua o cómo va el fondo de la cuenta.',
+          lleva: { hoja: 'agua', etiqueta: 'Ver mi consumo mes a mes' },
+        }
+      }
+      const pagos = await llamar('estadoPagos', {}, contexto, llamadas)
+      const mio = contexto.dpto
+      const total = fmt(c.total as number)
+      const mes = String(c.nombreMes)
+      if ((pagos.sinRegistrar as string[]).includes(mio)) {
+        return {
+          texto:
+            `Tu cuota de ${mes} es S/ ${total} y todavía no hay pago tuyo registrado. Avisa desde Cómo pagar en ` +
+            'cuanto transfieras, o pregúntame por tu consumo de agua, en qué se fue la plata o el fondo común.',
+          lleva: { hoja: 'pagar', etiqueta: 'Ver cómo pagar' },
+        }
+      }
+      if ((pagos.enVerificacion as string[]).includes(mio)) {
+        return {
+          texto:
+            `Ya avisaste tu pago de ${mes}, S/ ${total}, y queda por confirmar. Si es otra cosa, pregúntame por tu ` +
+            'consumo de agua, en qué se fue la plata o el fondo común.',
+          lleva: { hoja: 'pagos', etiqueta: 'Ver mis pagos' },
+        }
+      }
+      return {
+        texto:
+          `Tu cuota de ${mes}, S/ ${total}, ya está pagada y confirmada. Pregúntame por tu consumo de agua, en ` +
+          'qué se fue la plata, el fondo común o cómo van los pagos de los demás.',
+        lleva: { hoja: 'pagos', etiqueta: 'Ver mis pagos' },
       }
     }
 

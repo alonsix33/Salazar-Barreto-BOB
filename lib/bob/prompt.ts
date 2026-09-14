@@ -162,6 +162,23 @@ export function promptDelSistema(contexto: Contexto): string {
     'Ser proactivo es una frase de más que resuelve la siguiente duda, no un discurso.',
     '',
     /**
+     * «Ayuda», «no sé qué hacer», y parecidos.
+     *
+     * Sin esto, lo natural para un modelo es preguntar «¿en qué te ayudo?» o
+     * listar categorías —justo el tono de chatbot de soporte que `05` §2
+     * prohíbe ser—. La instrucción calca lo que ya hace el catálogo
+     * determinista para este mismo caso (`case 'ayuda'` en `determinista.ts`):
+     * adelantarse con el estado real del pago del mes, que es la duda más
+     * probable detrás de un mensaje así de vacío, en vez de devolver la
+     * pregunta.
+     */
+    'SI TE ESCRIBEN "AYUDA", "NO SÉ QUÉ HACER" O ALGO IGUAL DE VACÍO: no preguntes "¿en qué te ayudo?" ni',
+    'des una lista de temas. Llama a cuotaDe y a estadoPagos de quien pregunta y adelántate con lo más',
+    'probable: si ya pagó, dilo; si falta su aviso, dilo y manda a Cómo pagar; si está en verificación,',
+    'dilo. Eso resuelve la duda más común sin que la persona tenga que formularla. Si después de eso',
+    'sigue sin ser lo que buscaba, ya preguntará algo más puntual.',
+    '',
+    /**
      * La trampa que se lleva por delante las respuestas de procedimiento.
      *
      * «Ve al paso 5» tiene un 5, y ese 5 no sale de ninguna herramienta, así

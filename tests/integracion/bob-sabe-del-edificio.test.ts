@@ -122,6 +122,44 @@ describe('Bob sabe quién vive en cada departamento', () => {
 })
 
 /**
+ * «Ayuda», «no sé qué hacer», y lo que antes caía en «de eso no tengo
+ * dato» —falso, porque Bob sí tenía datos; lo que no tenía era una
+ * pregunta concreta—. La respuesta ahora se adelanta con el estado real
+ * del pago de quien pregunta, que es la duda más probable detrás de un
+ * mensaje así de vacío. Junio en la semilla: 101/202/301/401/502 pagados,
+ * 201 en verificación, 501 sin registrar.
+ *
+ * Va **antes** que «estadoPagos no suelta el monto…»: ese bloque confirma
+ * el pago del 501, y después de eso ya no queda ningún departamento sin
+ * registrar en junio para probar esa rama.
+ */
+describe('un "ayuda" se adelanta con el estado del pago, no con un menú', () => {
+  it('a quien ya pagó, se lo dice primero', async () => {
+    const r = await preguntarABob('ayuda', { dpto: '401', mes: '2026-06', esAdmin: false })
+    expect(r.texto).toMatch(/pagada y confirmada/)
+    expect(numerosInventados(r.texto, r.llamadas), r.texto).toEqual([])
+  })
+
+  it('a quien todavía no registró nada, se lo dice y ofrece Cómo pagar', async () => {
+    const r = await preguntarABob('no se que hacer', { dpto: '501', mes: '2026-06', esAdmin: false })
+    expect(r.texto).toMatch(/todavía no hay pago tuyo registrado/)
+    expect(r.lleva).toEqual({ hoja: 'pagar', etiqueta: 'Ver cómo pagar' })
+    expect(numerosInventados(r.texto, r.llamadas), r.texto).toEqual([])
+  })
+
+  it('a quien avisó y está en verificación, se lo dice', async () => {
+    const r = await preguntarABob('estoy perdido', { dpto: '201', mes: '2026-06', esAdmin: false })
+    expect(r.texto).toMatch(/queda por confirmar/)
+    expect(numerosInventados(r.texto, r.llamadas), r.texto).toEqual([])
+  })
+
+  it('sin departamento elegido, orienta a elegirlo primero', async () => {
+    const r = await preguntarABob('ayuda', { dpto: null, mes: '2026-06', esAdmin: false })
+    expect(r.texto).toMatch(/Elígelo arriba/)
+  })
+})
+
+/**
  * `estadoPagos` es la única herramienta que da un vistazo a los siete
  * departamentos a la vez —hace falta para «cuántos días sin registrarse»— y
  * por eso es la única que no pasaba por `dptoDe`. Probado contra producción,

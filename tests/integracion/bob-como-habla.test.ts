@@ -44,6 +44,8 @@ const PREGUNTAS = [
   'Corrige la lectura del 401',
   '¿Cuál es la capital de Francia?',
   'hola',
+  'ayuda',
+  'no sé qué hacer',
 ]
 
 /** Los tres contextos que cambian de rama: con dpto, sin dpto, y mes sin cerrar. */
