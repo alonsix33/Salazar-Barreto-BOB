@@ -111,6 +111,30 @@ export function piezasPermitidas(llamadas: Llamada[]): {
     numeros.add(String(Math.abs(Math.round(n * 100) / 100)))
   }
 
+  /**
+   * La suma de una columna, no de todo junto: `serieSaldo` devuelve un mes por
+   * fila, cada una con `recibido`, `gastado` y `saldo`. «¿Cuánto ha recibido el
+   * edificio este año?» es la suma de la columna `recibido` de esas ocho filas,
+   * y esa suma **no** es la de sumar las 24 cifras de las tres columnas
+   * juntas —eso da otro número, que no contesta lo que se preguntó—.
+   *
+   * Solo se arma si la clave aparece, numérica, en **todas** las filas: eso es
+   * lo que distingue una columna real de un campo que solo algunos meses
+   * traen, que no se debe poder sumar como si fuera lo mismo.
+   */
+  const sumarColumnas = (fila: unknown[]) => {
+    if (fila.length < 2) return
+    if (!fila.every((f) => f !== null && typeof f === 'object' && !Array.isArray(f))) return
+    const claves = new Set<string>()
+    for (const f of fila) for (const k of Object.keys(f as object)) claves.add(k)
+    for (const clave of claves) {
+      const columna = fila.map((f) => (f as Record<string, unknown>)[clave])
+      if (columna.every((v) => typeof v === 'number')) {
+        permitirNumero((columna as number[]).reduce((total, n) => total + n, 0))
+      }
+    }
+  }
+
   const recorrer = (valor: unknown) => {
     if (valor === null || valor === undefined) return
     if (typeof valor === 'number') return permitirNumero(valor)
@@ -125,7 +149,11 @@ export function piezasPermitidas(llamadas: Llamada[]): {
       }
       return
     }
-    if (Array.isArray(valor)) return valor.forEach(recorrer)
+    if (Array.isArray(valor)) {
+      valor.forEach(recorrer)
+      sumarColumnas(valor)
+      return
+    }
     if (typeof valor === 'object') return Object.values(valor as object).forEach(recorrer)
   }
 
@@ -181,12 +209,15 @@ function diasEntre(a: string, b: string): number | null {
  *  - el porcentaje de una sobre otra, y el múltiplo de una sobre otra;
  *  - los días entre dos fechas que aparecieron, y entre cualquiera de ellas y
  *    hoy;
- *  - **la suma de todas juntas**, no solo de dos. «¿Cuánto llevamos pagado
- *    este año?» es la suma de ocho meses de `serieSaldo`, y una suma de dos
- *    en dos no llega ahí: hace falta el total de la lista entera. Es una sola
- *    cifra más por respuesta —no crece con el cuadrado de las cifras, como
- *    las combinaciones de a pares— así que el riesgo que se mide en el
- *    barrido de más abajo no cambia de orden de magnitud.
+ *  - **la suma de todas las cifras sueltas juntas**, no solo de dos —para el
+ *    caso raro en que de verdad hace falta el total de todo lo que se vio—;
+ *  - **la suma de una columna**, que es el caso que de verdad importa:
+ *    `serieSaldo` da un mes por fila, cada una con `recibido`, `gastado` y
+ *    `saldo`, y «¿cuánto ha recibido el edificio este año?» es la suma de la
+ *    columna `recibido` de esas filas, no la de las tres columnas juntas —eso
+ *    da otro número, que probado contra producción la guarda rechazaba porque
+ *    no coincidía con nada permitido—. Se arma en `piezasPermitidas`, no aquí:
+ *    hace falta ver la forma de fila antes de aplanar a números sueltos.
  *
  * ## Qué sigue prohibido, que es lo que importa
  *

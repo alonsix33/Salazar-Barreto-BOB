@@ -59,6 +59,26 @@ describe('lo que Bob ahora sí puede decir', () => {
     expect(numerosInventados('Entre las cuatro suman S/ 5,898.63.', varias)).toEqual([])
   })
 
+  it('la suma de UNA columna de serieSaldo, no de las tres columnas juntas', () => {
+    // Forma real de serieSaldo: un mes por fila, con recibido, gastado y saldo.
+    // Sumar las tres columnas juntas da 3512.58+364.05+397.00 + ... (otro
+    // número, que no contesta "cuánto ha recibido"); la columna recibido sola
+    // suma 1200 + 1300 + 1250.50 = 3750.50, y ese es el número que hace falta
+    // permitir para que "cuánto ha recibido el edificio este año" no se caiga.
+    const serie = llamada({
+      meses: [
+        { mes: '2026-04', recibido: 1200, gastado: 1100, saldo: 100 },
+        { mes: '2026-05', recibido: 1300, gastado: 1250, saldo: 150 },
+        { mes: '2026-06', recibido: 1250.5, gastado: 1180, saldo: 220.5 },
+      ],
+    })
+    expect(numerosInventados('El edificio ha recibido S/ 3,750.50 este año.', serie)).toEqual([])
+    // Y sigue sin poder decir un total que mezcle columnas: 1200+1100+100 no
+    // es una cifra de esta fila, así que sumar recibido de un mes con gastado
+    // de otro no debe colarse por casualidad con ese resultado exacto.
+    expect(numerosInventados('El edificio gastó S/ 999,999.99 este año.', serie)).toContain('999999.99')
+  })
+
   it('los días desde una fecha del sistema hasta hoy', () => {
     const hoy = new Date()
     const dias = Math.round(
