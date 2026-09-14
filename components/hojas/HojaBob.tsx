@@ -19,16 +19,22 @@ import { mensajeDeError } from '@/lib/errores-ui'
  *
  * Lo que `05` §6 prohíbe y aquí **no** está, a propósito:
  *
- *  - Texto que aparece letra por letra fingiendo que piensa. Mientras se espera
- *    hay una línea de estado quieta, no una animación de puntos en bucle.
+ *  - Texto que aparece letra por letra fingiendo que piensa: eso sí falsea lo
+ *    que está pasando —la respuesta ya está completa antes de mostrarse, por
+ *    la guarda de `lib/bob/guardas.ts` que no deja publicar un número sin
+ *    verificar—, y por eso sigue sin existir.
  *  - Chispas, gradientes morados, iconografía de «IA». El avatar es la forma
  *    ámbar de `02` §5 y no hay nada más.
  *
  *    El avatar **sí** late: respira y parpadea en bucle, porque es un blobatar
- *    y esa es su cara. No es una excepción a la regla de arriba: lo que se
- *    prohíbe es fingir que se piensa —un indicador que dice algo falso sobre lo
- *    que está pasando—, y un gesto de vida no afirma nada. `bob.spec.ts` lo
- *    tiene acotado: cualquier bucle fuera del avatar pone el test en rojo.
+ *    y esa es su cara. Y, a pedido explícito después de probarlo, **los tres
+ *    puntos de espera también laten** —el gesto de "alguien te está
+ *    respondiendo" de cualquier app de mensajería, no un indicador que finja
+ *    contenido—: la línea que antes se quedaba fija ahora varía
+ *    (`COPYS.bob.esperando`) y los puntos laten mientras se espera, sin decir
+ *    nada que no sea cierto sobre lo que está pasando. `bob.spec.ts` tiene
+ *    acotada la excepción a estos dos sitios; cualquier bucle en cualquier
+ *    otro punto de la hoja sigue poniendo el test en rojo.
  *  - Burbuja flotante en la esquina: Bob se abre desde la navegación.
  *  - Disculpas y meta-comentarios sobre lo que Bob es o deja de ser.
  *
@@ -42,10 +48,20 @@ interface Turno {
   lleva?: { hoja: ClaveHoja; etiqueta: string } | null
 }
 
+/** Una frase al azar de `COPYS.bob.esperando`, distinta a la de antes si hay más de una. */
+function elegirFrase(anterior?: string): string {
+  const lista = COPYS.bob.esperando
+  if (lista.length <= 1) return lista[0] ?? ''
+  let frase = anterior
+  while (frase === anterior) frase = lista[Math.floor(Math.random() * lista.length)]
+  return frase!
+}
+
 export function HojaBob({ mes, dpto }: { mes: MesId; dpto: DptoId | null }) {
   const { abrir } = useHoja()
   const [turnos, setTurnos] = useState<Turno[]>([])
   const [borrador, setBorrador] = useState('')
+  const [fraseEspera, setFraseEspera] = useState(() => elegirFrase())
   const conversacion = useRef<HTMLDivElement>(null)
 
   const preguntar = useMutation({
@@ -81,6 +97,8 @@ export function HojaBob({ mes, dpto }: { mes: MesId; dpto: DptoId | null }) {
     if (!limpio || preguntar.isPending) return
     setBorrador('')
     setTurnos((t) => [...t, { de: 'yo', texto: limpio }])
+    // Distinta a la última: la misma frase dos veces seguidas se lee como fija.
+    setFraseEspera((antes) => elegirFrase(antes))
     preguntar.mutate(limpio)
   }
 
@@ -120,7 +138,21 @@ export function HojaBob({ mes, dpto }: { mes: MesId; dpto: DptoId | null }) {
           <Burbuja key={i} turno={t} alAbrir={abrir} />
         ))}
         {preguntar.isPending && (
-          <p className="tipo-cuerpo-menor text-gris bob-esperando">Mirando los números…</p>
+          <>
+            <div className="bob-suya">
+              <span className="bob-suya-avatar">
+                <Avatar tamano="aviso" />
+              </span>
+              <div className="bob-puntos-burbuja">
+                <span className="bob-puntos" aria-hidden="true">
+                  <span className="bob-punto" />
+                  <span className="bob-punto" />
+                  <span className="bob-punto" />
+                </span>
+              </div>
+            </div>
+            <p className="tipo-cuerpo-menor text-gris bob-esperando">{fraseEspera}</p>
+          </>
         )}
         {preguntar.isError && <Fallo>{mensajeDeError(preguntar.error)}</Fallo>}
       </div>

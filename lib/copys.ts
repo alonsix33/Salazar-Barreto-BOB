@@ -344,6 +344,18 @@ export const COPYS = {
     subtitulo: 'lee todo el historial',
     campo: 'Escribe tu pregunta',
     sugeridas: ['¿Cuánto debo este mes?', '¿Por qué subió el agua?', '¿Quién falta por pagar?'],
+    /**
+     * Lo que se ve mientras se espera la respuesta. Una sola frase fija, por
+     * más cierta que sea la primera vez, se vuelve ruido a la centésima
+     * pregunta —deja de decir nada—; una al azar en cada pregunta sigue
+     * pareciendo que algo está pasando de verdad.
+     */
+    esperando: [
+      'Mirando los números…',
+      'Revisando los pagos…',
+      'Buscando en el edificio…',
+      'Comparando con el mes anterior…',
+    ],
   },
 
   // ── El cierre del mes · 04-cierre-del-mes.md ───────────────────────────

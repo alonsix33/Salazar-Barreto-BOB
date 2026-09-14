@@ -149,3 +149,16 @@ El modelo **no ve los números directamente**: llama a funciones (`calcularMes`,
 - Burbuja flotante en la esquina
 - Disculpas o meta-comentarios sobre sus capacidades
 - "Insights" sin acción posible (*"tu consumo es interesante"*)
+
+**Revisado tras el lanzamiento:** "puntos pulsando" salió de esta lista a
+pedido explícito, después de probar la app de verdad. La regla seguía siendo
+correcta contra su propio riesgo —fingir contenido que no existe—, pero un
+silencio quieto mientras se espera la respuesta se sentía roto, no discreto.
+Los tres puntos que laten mientras se espera son el gesto de "alguien te está
+respondiendo" de cualquier app de mensajería —no afirman nada sobre lo que
+Bob está pensando—, y la línea de estado que los acompaña ahora varía en vez
+de repetir siempre la misma frase. Lo que sigue prohibido, sin excepción, es
+el texto de la respuesta apareciendo letra por letra: la guarda que impide que
+Bob invente una cifra (`lib/bob/guardas.ts`) exige ver la respuesta completa
+antes de decidir si se publica, así que nunca hay nada verificado que mostrar
+de a poco.

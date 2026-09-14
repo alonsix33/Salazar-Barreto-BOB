@@ -3032,6 +3032,61 @@
   padding: var(--spacing-burbuja-y) var(--spacing-burbuja-x);
 }
 
+/*
+ * La burbuja de "Bob está respondiendo": mismo sitio donde va a aparecer la
+ * respuesta, el gesto de "alguien te está escribiendo" de cualquier app de
+ * mensajería. `prefers-reduced-motion` ya la apaga de raíz —regla global de
+ * arriba—, así que no hace falta repetirlo aquí.
+ *
+ * Mismo aspecto que `.bob-suya-texto` pero **sin compartir la clase**: un
+ * selector que busca `.bob-suya-texto` para saber si "ya llegó la
+ * respuesta" —hay más de uno así, en los tests y fuera de ellos— no puede
+ * confundir esta burbuja, que siempre está vacía, con la de verdad.
+ */
+.bob-puntos-burbuja {
+  display: flex;
+  align-items: center;
+  background: var(--color-papel);
+  border: 1px solid var(--color-neutro-pista);
+  border-radius: var(--radius-bloque) var(--radius-bloque) var(--radius-bloque) var(--radius-tira);
+  padding: var(--spacing-burbuja-y) var(--spacing-burbuja-x);
+}
+
+.bob-puntos {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bob-punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-gris);
+  animation: bob-punto-salta 1.2s ease-in-out infinite;
+}
+
+.bob-punto:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.bob-punto:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bob-punto-salta {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
 /* "Con dónde verificarlo" (05 §3): el enlace a la pantalla que lo demuestra. */
 .bob-lleva {
   display: block;

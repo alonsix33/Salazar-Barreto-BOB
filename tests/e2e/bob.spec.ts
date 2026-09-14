@@ -90,25 +90,31 @@ test.describe('la hoja de Bob', () => {
     expect(html.toLowerCase(), 'no se habla de "IA"').not.toMatch(/\b(inteligencia artificial|powered by)\b/)
 
     /**
-     * Ninguna animación en bucle dentro de la hoja, **salvo el avatar**.
+     * Ninguna animación en bucle dentro de la hoja, **salvo el avatar y los
+     * tres puntos de espera**.
      *
-     * Lo que `05` §6 prohíbe es fingir que se piensa: puntos pulsando, texto
-     * que aparece letra por letra, una barra que no mide nada. El avatar de Bob
-     * respira y parpadea en bucle a propósito —es su cara, no un indicador de
-     * proceso— y eso no dice nada falso sobre lo que está pasando.
+     * Lo que `05` §6 prohíbe de verdad es fingir contenido: texto de la
+     * respuesta que aparece letra por letra, una barra que no mide nada. El
+     * avatar de Bob respira y parpadea en bucle a propósito —es su cara, no un
+     * indicador de proceso—, y los tres puntos de `.bob-puntos` laten
+     * mientras se espera —el gesto de "alguien te está respondiendo" de
+     * cualquier app de mensajería—; ninguno de los dos afirma nada falso
+     * sobre lo que está pasando, así que se exceptúan a propósito, revisado
+     * con el dueño del producto después de probar la app de verdad.
      *
-     * La exención es del avatar y de nada más: un bucle en cualquier otro sitio
-     * de la hoja sigue poniendo esto en rojo, que es lo que la regla protege.
+     * La exención es de esos dos sitios y de nada más: un bucle en cualquier
+     * otro punto de la hoja sigue poniendo esto en rojo, que es lo que la
+     * regla protege.
      */
     const enBucleFuera = await hoja.evaluate((raiz) =>
       [raiz, ...raiz.querySelectorAll('*')].filter((el) => {
         const e = getComputedStyle(el as Element)
         const gira = e.animationIterationCount.split(',').some((v) => v.trim() === 'infinite')
         if (!gira) return false
-        return !(el as Element).closest('.avatar, .avatar-invertido')
+        return !(el as Element).closest('.avatar, .avatar-invertido, .bob-puntos')
       }).length,
     )
-    expect(enBucleFuera, 'algo se anima en bucle en la hoja, fuera del avatar').toBe(0)
+    expect(enBucleFuera, 'algo se anima en bucle en la hoja, fuera del avatar y los puntos de espera').toBe(0)
 
     // Y el avatar sí late: si dejara de hacerlo, la exención de arriba estaría
     // tapando un avatar roto en vez de permitiendo uno vivo.
@@ -131,6 +137,50 @@ test.describe('la hoja de Bob', () => {
       }).length,
     )
     expect(conDegradado, 'un degradado dentro de la hoja de Bob').toBe(0)
+  })
+
+  /**
+   * La burbuja de espera y la frase que la acompaña.
+   *
+   * Dos cosas a la vez: que los puntos se vean mientras se espera y
+   * desaparezcan al llegar la respuesta —si se quedaran, dirían que Bob sigue
+   * pensando cuando ya contestó—, y que la frase de `COPYS.bob.esperando` no
+   * sea siempre la misma. `elegirFrase` en `HojaBob.tsx` garantiza que nunca
+   * se repite la anterior, así que dos preguntas seguidas tienen que traer dos
+   * frases distintas —no es una propiedad probabilística, es una que el
+   * código promete.
+   */
+  test('la burbuja de espera se ve y se va, y la frase no se repite entre preguntas', async ({
+    page,
+  }) => {
+    // El catálogo determinista contesta tan rápido en local que, sin esto, la
+    // respuesta ya está puesta antes de que Playwright alcance a mirar el
+    // estado pendiente. El respiro es del test, no de la app: en producción,
+    // contra la red de verdad, la espera nunca es instantánea.
+    await page.route('**/api/bob', async (route) => {
+      await new Promise((r) => setTimeout(r, 600))
+      await route.continue()
+    })
+
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Preguntar a Bob' }).click()
+    const hoja = page.getByRole('dialog')
+
+    await page.getByRole('button', { name: SUGERIDAS[0]!, exact: true }).click()
+    await expect(hoja.locator('.bob-puntos')).toBeVisible()
+    const frase1 = await hoja.locator('.bob-esperando').textContent()
+    await expect(page.locator('.bob-suya-texto').first()).toBeVisible({ timeout: 15_000 })
+    await expect(hoja.locator('.bob-puntos')).toHaveCount(0)
+
+    await page.getByRole('button', { name: SUGERIDAS[1]!, exact: true }).click()
+    await expect(hoja.locator('.bob-puntos')).toBeVisible()
+    const frase2 = await hoja.locator('.bob-esperando').textContent()
+    await expect(page.locator('.bob-suya-texto').nth(1)).toBeVisible({ timeout: 15_000 })
+    await expect(hoja.locator('.bob-puntos')).toHaveCount(0)
+
+    expect(frase1).toBeTruthy()
+    expect(frase2).toBeTruthy()
+    expect(frase2).not.toBe(frase1)
   })
 
   test('sin violaciones de accesibilidad críticas ni serias', async ({ page }) => {
