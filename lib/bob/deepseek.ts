@@ -27,7 +27,23 @@ export const PLAZO_MS = 8_000
 /** Cuántas veces se le deja pedir herramientas antes de exigirle que redacte. */
 const MAX_VUELTAS = 4
 
-const URL_BASE = process.env.DEEPSEEK_URL ?? 'https://api.deepseek.com'
+/**
+ * `??` no basta aquí: solo cae al valor por defecto con `null`/`undefined`, y
+ * una variable de entorno **puesta pero vacía** (`DEEPSEEK_URL=""` en Vercel,
+ * copiado tal cual de `.env.example`) es una cadena vacía, no `undefined`.
+ * Con `??` esto quedaba en `''` y cada petición intentaba pedir
+ * `fetch('/chat/completions')` —una URL relativa, que en el servidor no
+ * tiene página desde la que resolverse—. El error real, visto en los logs de
+ * Vercel: `Failed to parse URL from /chat/completions`. Nunca era la clave,
+ * ni el modelo: la petición ni siquiera salía.
+ *
+ * Es una función, no una constante fijada al cargar el módulo, por lo mismo
+ * que `modoDeBob()` en `index.ts` lee `process.env` en cada llamada: así se
+ * puede probar con `DEEPSEEK_URL` puesta a mano, sin recargar el módulo.
+ */
+function urlBase(): string {
+  return process.env.DEEPSEEK_URL || 'https://api.deepseek.com'
+}
 
 /**
  * El modelo.
@@ -50,8 +66,14 @@ const URL_BASE = process.env.DEEPSEEK_URL ?? 'https://api.deepseek.com'
  * quedarse con un nombre fijo en un API que renombra su modelo vigente cada
  * pocos meses—. `DEEPSEEK_MODELO` sigue para fijar una versión cuando haga
  * falta reproducir una respuesta.
+ *
+ * Y el mismo `||` que en `urlBase()`, por la misma razón: una
+ * `DEEPSEEK_MODELO=""` puesta y vacía en Vercel no debe ganarle al nombre
+ * vigente de arriba.
  */
-const MODELO = process.env.DEEPSEEK_MODELO ?? 'deepseek-flash'
+function modelo(): string {
+  return process.env.DEEPSEEK_MODELO || 'deepseek-flash'
+}
 
 interface MensajeChat {
   role: 'system' | 'user' | 'assistant' | 'tool'
@@ -213,12 +235,12 @@ async function pedir(
   const corte = new AbortController()
   const alarma = setTimeout(() => corte.abort(), queda)
   try {
-    const r = await fetch(`${URL_BASE}/chat/completions`, {
+    const r = await fetch(`${urlBase()}/chat/completions`, {
       method: 'POST',
       signal: corte.signal,
       headers: { 'content-type': 'application/json', authorization: `Bearer ${clave}` },
       body: JSON.stringify({
-        model: MODELO,
+        model: modelo(),
         messages: mensajes,
         // En la última vuelta se le quitan las herramientas: o redacta con lo
         // que ya tiene, o no hay respuesta.
