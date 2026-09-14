@@ -19,10 +19,19 @@
  * no puede hacer— por si la cercanía pesa más que la insistencia. Sigue sin
  * poder probarse aquí si eso alcanza: eso se ve preguntándole de verdad.
  *
- * Las últimas tres instrucciones —«ayuda» genérica, `explicaPantalla`, y que
- * el hilo es una conversación y no preguntas sueltas— salen de un pedido
+ * Las siguientes tres instrucciones —«ayuda» genérica, `explicaPantalla`, y
+ * que el hilo es una conversación y no preguntas sueltas— salen de un pedido
  * distinto del usuario: que Bob sepa de la app en sí, no solo de cifras, y
  * que no se sienta como si cada mensaje empezara de cero.
+ *
+ * Y las dos últimas de un tercer pedido: que Bob entienda una pregunta real,
+ * mal escrita, tal como la gente escribe de verdad —«no entiendo esta app»,
+ * «que me puedes ayudar»—, y no solo la lista de frases prolijas que se
+ * había probado antes. La instrucción de «ayuda» pasó de una lista cerrada
+ * de ejemplos a una idea general («mensaje vago, confuso o mal escrito»), y
+ * se agregó una nueva para «¿quién eres?», que antes no tenía dónde caer y
+ * se respondía con el estado del pago —una respuesta correcta a una
+ * pregunta que no era esa—.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -60,10 +69,18 @@ describe('promptDelSistema · instrucciones que se agregaron a propósito', () =
     expect(prompt.toLowerCase()).toContain('sumar varios meses')
   })
 
-  it('dice qué hacer con un "ayuda" o un "no sé qué hacer": adelantarse, no preguntar de vuelta', () => {
+  it('dice qué hacer con un mensaje vago: adelantarse, no preguntar de vuelta', () => {
     const prompt = promptDelSistema(VECINO)
-    expect(prompt).toContain('AYUDA')
+    // No basta con `toContain('AYUDA')`: esa palabra ya aparecía antes en
+    // «QUÉ CLASE DE AYUDA SE ESPERA DE TI», así que ese `toContain` pasaba
+    // igual con o sin esta instrucción y no probaba nada.
+    expect(prompt.toLowerCase()).toContain('el mensaje es vago, confuso o está mal escrito')
     expect(prompt.toLowerCase()).toContain('no preguntes "¿en qué te ayudo?"')
+  })
+
+  it('dice qué hacer si preguntan quién es Bob, sin confundirlo con una pregunta de cuota', () => {
+    const prompt = promptDelSistema(VECINO)
+    expect(prompt).toContain('SI PREGUNTAN QUIÉN ERES')
   })
 
   it('dice que puede explicar una pantalla de la app, no solo cifras', () => {

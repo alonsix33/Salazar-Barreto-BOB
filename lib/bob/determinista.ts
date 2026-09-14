@@ -55,35 +55,14 @@ function normalizar(texto: string): string {
 }
 
 /**
- * Lo que se escribe cuando no se sabe ni por dónde empezar, no cuando se
- * pregunta algo puntual. Va por **igualdad exacta**, no por «contiene»: con
- * un `includes` normal, «no sé cuánto pagué» —una pregunta de verdad, sobre
- * la cuota— habría caído aquí por el «no se» suelto, en vez de en `cuota`. La
- * igualdad exacta cuesta cobertura —solo atrapa el mensaje corto y vacío,
- * palabra por palabra— pero es la única forma de no robarle la pregunta a
- * otra intención más específica.
+ * «¿Quién eres?», «¿con quién hablo?». Necesita su propia respuesta y no la
+ * genérica de más abajo: contestarle a «quién eres» con el estado del pago
+ * de junio es el tipo de respuesta que no tiene sentido aunque tenga cifra.
  */
-const FRASES_AYUDA = [
-  'ayuda',
-  'ayudame',
-  'necesito ayuda',
-  'no se',
-  'no se que hacer',
-  'no se por donde empezar',
-  'no entiendo',
-  'no entiendo nada',
-  'estoy perdido',
-  'estoy perdida',
-  'que hago',
-  'no entiendo la app',
-  'no entiendo como funciona esto',
-  'como funciona esto',
-]
-
-/** Sin tildes, en minúscula y sin la puntuación que cambia una frase exacta en otra distinta. */
-function esAyudaGenerica(t: string): boolean {
-  const limpio = t.replace(/[¿?¡!.,]/g, '').trim()
-  return FRASES_AYUDA.includes(limpio)
+function esPreguntaDeIdentidad(t: string): boolean {
+  return /\b(quien eres|quien eres tu|quien es bob|que es bob|con quien hablo|eres (un bot|una ia|un robot|humano|una persona|real)|eres de verdad)\b/.test(
+    t,
+  )
 }
 
 const INTENCIONES = [
@@ -99,7 +78,7 @@ const INTENCIONES = [
   { id: 'quienes', palabras: ['quien vive', 'quienes viven', 'quien es el', 'duenos', 'propietarios', 'vecinos', 'los nombres'] },
 ] as const
 
-type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "pantalla" | "ayuda" | "nada"
+type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "pantalla" | "identidad" | "nada"
 
 /** Qué está preguntando. La primera que encaja gana. */
 export function intencionDe(texto: string): Intencion {
@@ -130,16 +109,7 @@ export function intencionDe(texto: string): Intencion {
    */
   if (suenaAPreguntaDePantalla(t) && pantallaPara(t)) return 'pantalla'
 
-  /**
-   * Un «ayuda» o un «no sé qué hacer» no es una pregunta sin respuesta: es
-   * una pregunta sin hacer todavía. Antes de esto cualquiera de estos
-   * mensajes caía en el `default` del catálogo —«de eso no tengo dato»—, que
-   * es literalmente falso: Bob sí tiene datos, lo que no tiene es una
-   * pregunta concreta. Va antes que todo lo demás porque una igualdad exacta
-   * no compite con nada: si el mensaje ya matchea aquí, no matchea ninguna
-   * otra intención por accidente.
-   */
-  if (esAyudaGenerica(t)) return 'ayuda'
+  if (esPreguntaDeIdentidad(t)) return 'identidad'
 
   // Después, las dos prohibiciones: si alguien pide que confirme un pago
   // hablando del banco, la respuesta correcta es la del banco.
@@ -504,17 +474,44 @@ async function redactar(
     }
 
     /**
-     * «Ayuda», «no sé qué hacer», y parecidos.
-     *
-     * La respuesta útil no es preguntar «¿en qué te ayudo?» —eso es lo que
-     * hace un chatbot de soporte, que `05` §2 prohíbe ser— ni tampoco un
-     * menú plano de opciones. Es **adelantarse con lo más probable**: el
-     * estado de su propio pago de este mes, que es la razón número uno por
-     * la que alguien se queda sin saber qué hacer. Si acierta, resuelve la
-     * duda entera sin que la persona tenga que formularla; si no acierta, la
-     * segunda frase igual deja la puerta abierta a lo demás.
+     * «¿Quién eres?». Corta, sin hablar de «como asistente» ni disculparse:
+     * dice qué es Bob y qué no, y ya. No lleva a ningún lado porque no hay
+     * pantalla que demuestre esto.
      */
-    case 'ayuda': {
+    case 'identidad':
+      return {
+        texto:
+          'Soy Bob: leo todo el historial del edificio y te explico lo que dice, en lenguaje normal. ' +
+          'No confirmo pagos ni veo el banco; eso lo hace quien administra.',
+        lleva: null,
+      }
+
+    /**
+     * Todo lo que no encajó en nada más específico. `05` §2: **si no tiene
+     * el dato, lo dice**, pero eso no significa quedarse en un menú plano.
+     *
+     * Pedido del usuario: la gente no escribe preguntas bien formadas —«no
+     * entiendo esta app», «ayuda», «que me puedes ayudar», o directamente
+     * algo que no tiene nada que ver, como «hola» o una pregunta de cultura
+     * general—. Antes, cualquiera de esos mensajes daba «de eso no tengo
+     * dato», que es literalmente falso: Bob sí tiene datos, lo que no tuvo
+     * fue una pregunta lo bastante puntual para encontrarlos con una
+     * palabra clave. La respuesta útil no es preguntar «¿en qué te ayudo?»
+     * —eso es el chatbot de soporte que `05` §2 prohíbe ser— ni un menú
+     * plano de opciones: es **adelantarse con lo más probable**, el estado
+     * del propio pago de este mes, que es la razón número uno por la que
+     * alguien se queda sin saber qué preguntar. Si acierta, resuelve la
+     * duda entera sin que haga falta formularla mejor; si no acierta, la
+     * segunda frase igual deja la puerta abierta a lo demás.
+     *
+     * Antes esto solo se activaba con una lista cerrada de frases exactas
+     * («ayuda», «no sé qué hacer»…), y una persona real escribe de mil
+     * formas que esa lista nunca iba a cubrir. Como `default` ya es el
+     * último recurso —todo lo demás ya se probó y falló—, no hace falta
+     * una lista: cualquier cosa que llegue hasta aquí merece esta
+     * respuesta, no la vieja.
+     */
+    default: {
       if (!contexto.dpto) {
         return {
           texto:
@@ -559,19 +556,5 @@ async function redactar(
         lleva: { hoja: 'pagos', etiqueta: 'Ver mis pagos' },
       }
     }
-
-    default:
-      /**
-       * Lo que no sabe. `05` §2: **si no tiene el dato, lo dice**.
-       *
-       * Y ofrece la lista de lo que sí hay, en vez de disculparse. Sin «lo
-       * siento», sin «como asistente» y sin «¿quieres que profundice?».
-       */
-      return {
-        texto:
-          'De eso no tengo dato. Te puedo contar tu cuota del mes, tu consumo de agua, en qué se fue la plata, ' +
-          'cómo va el fondo de la cuenta o cómo van los pagos.',
-        lleva: null,
-      }
   }
 }

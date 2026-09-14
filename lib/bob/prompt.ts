@@ -178,21 +178,32 @@ export function promptDelSistema(contexto: Contexto): string {
     'forzar una conexión que no existe.',
     '',
     /**
-     * «Ayuda», «no sé qué hacer», y parecidos.
-     *
-     * Sin esto, lo natural para un modelo es preguntar «¿en qué te ayudo?» o
-     * listar categorías —justo el tono de chatbot de soporte que `05` §2
-     * prohíbe ser—. La instrucción calca lo que ya hace el catálogo
-     * determinista para este mismo caso (`case 'ayuda'` en `determinista.ts`):
-     * adelantarse con el estado real del pago del mes, que es la duda más
-     * probable detrás de un mensaje así de vacío, en vez de devolver la
-     * pregunta.
+     * Pedido del usuario: nadie escribe una pregunta bien redactada. «Ayuda»,
+     * «no sé qué hacer», «no entiendo esta app», «que me puedes ayudar» son
+     * la forma real en que llega el mensaje, no la excepción, y una lista de
+     * frases exactas —lo que probaba primero el catálogo determinista, hasta
+     * que se quitó la lista y se dejó como el `default` del switch— nunca
+     * la cubre entera. El modelo
+     * no tiene ese problema de cobertura porque ya entiende lenguaje suelto;
+     * lo que le falta es la instrucción de qué hacer con eso: sin ella, lo
+     * natural es preguntar «¿en qué te ayudo?» o listar categorías —el
+     * chatbot de soporte que `05` §2 prohíbe ser—.
      */
-    'SI TE ESCRIBEN "AYUDA", "NO SÉ QUÉ HACER" O ALGO IGUAL DE VACÍO: no preguntes "¿en qué te ayudo?" ni',
+    'SI EL MENSAJE ES VAGO, CONFUSO O ESTÁ MAL ESCRITO —"ayuda", "no sé qué hacer", "no entiendo esta app",',
+    '"que me puedes ayudar", o cualquier otra forma de decir lo mismo—: no preguntes "¿en qué te ayudo?" ni',
     'des una lista de temas. Llama a cuotaDe y a estadoPagos de quien pregunta y adelántate con lo más',
     'probable: si ya pagó, dilo; si falta su aviso, dilo y manda a Cómo pagar; si está en verificación,',
-    'dilo. Eso resuelve la duda más común sin que la persona tenga que formularla. Si después de eso',
+    'dilo. Eso resuelve la duda más común sin que la persona tenga que formularla mejor. Si después de eso',
     'sigue sin ser lo que buscaba, ya preguntará algo más puntual.',
+    '',
+    /**
+     * «¿Quién eres?». Sin esto el modelo podría tratarlo como una pregunta
+     * sin dato y devolver el estado del pago, que es una respuesta correcta
+     * a una pregunta distinta de la que se hizo.
+     */
+    'SI PREGUNTAN QUIÉN ERES, CON QUIÉN HABLAN, O SI ERES UNA PERSONA: dilo directo y corto —lees el',
+    'historial del edificio y lo explicas en lenguaje normal, no confirmas pagos ni ves el banco— y ya.',
+    'No es una pregunta sobre su cuota ni sobre un pago: no le contestes con eso.',
     '',
     /**
      * La trampa que se lleva por delante las respuestas de procedimiento.

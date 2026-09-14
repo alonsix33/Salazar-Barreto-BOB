@@ -57,7 +57,15 @@ export const PANTALLAS: readonly Pantalla[] = [
   },
   {
     clave: 'como-se-calculo',
-    seDiceAsi: ['de donde sale cada monto', 'como se calculo', 'el desglose de mi cuota', 'como se calcula mi cuota'],
+    seDiceAsi: [
+      'de donde sale cada monto',
+      'de donde sale mi cuota',
+      'como se calculo',
+      'como se calcula',
+      'el desglose de mi cuota',
+      'como se calcula mi cuota',
+      'como sale mi cuota',
+    ],
     queEs: 'El desglose completo de una cuota: cuánto es mantenimiento, cuánto agua, y si hay algún crédito a favor.',
   },
   {
@@ -72,7 +80,15 @@ export const PANTALLAS: readonly Pantalla[] = [
   },
   {
     clave: 'como-pagar',
-    seDiceAsi: ['como pagar', 'los datos para pagar', 'la cuenta para depositar', 'donde deposito'],
+    seDiceAsi: [
+      'como pagar',
+      'como pago',
+      'como se paga',
+      'donde pago',
+      'donde deposito',
+      'los datos para pagar',
+      'la cuenta para depositar',
+    ],
     queEs: 'Los datos para depositar, y el botón para avisar que ya pagaste en cuanto transfieras.',
   },
 ]
@@ -109,10 +125,19 @@ export function pantallaPara(texto: string): Pantalla | null {
  * departamento debe más que el mes pasado» dispararía la explicación de la
  * pantalla «Mi departamento» por la sola mención del nombre, en vez de la
  * pregunta de comparación que es de verdad.
+ *
+ * Amplia a propósito, no una lista corta de frases bien escritas: nadie
+ * pregunta con la redacción prolija de un formulario. «Cómo pago», «de
+ * dónde sale mi cuota», «no entiendo esta app» son la forma real en que
+ * llega la pregunta, y cada una tiene que sonar a pregunta de pantalla
+ * aquí. Lo que de verdad evita el falso positivo no es esta lista —cuanto
+ * más amplia, mejor— sino que además haga falta `pantallaPara(t)` con un
+ * resultado real: sin una pantalla reconocida, no pasa nada por más que
+ * esto dé verdadero.
  */
 export function suenaAPreguntaDePantalla(texto: string): boolean {
   const t = normalizar(texto)
-  return /(que hay en\b|que es\b|que muestra\b|para que sirve\b|no entiendo (la|el)\b|que puedo ver en\b|que veo en\b)/.test(
+  return /(que hay en\b|que es\b|que muestra\b|para que sirve\b|no entiendo\b|que puedo ver en\b|que veo en\b|como pago\b|como se paga\b|donde pago\b|como se calcula\b|como funciona\b|de donde sale\b)/.test(
     t,
   )
 }

@@ -157,6 +157,30 @@ describe('un "ayuda" se adelanta con el estado del pago, no con un menú', () =>
     const r = await preguntarABob('ayuda', { dpto: null, mes: '2026-06', esAdmin: false })
     expect(r.texto).toMatch(/Elígelo arriba/)
   })
+
+  /**
+   * Pedido del usuario: nadie escribe «ayuda» tal cual. La gente escribe
+   * como escribe de verdad —sin tildes, con muletillas, mal armado—, y la
+   * respuesta tiene que ser la misma de todos modos, porque `default` ya no
+   * depende de una lista de frases exactas.
+   */
+  it.each(['no entiendo esta app', 'que me puedes ayudar', 'no se ni por donde empezar', 'ayudaaa porfa'])(
+    '«%s» también se adelanta con el estado del pago, no con "de eso no tengo dato"',
+    async (frase) => {
+      const r = await preguntarABob(frase, { dpto: '401', mes: '2026-06', esAdmin: false })
+      expect(r.texto).toMatch(/pagada y confirmada/)
+      expect(r.texto.toLowerCase()).not.toContain('de eso no tengo dato')
+    },
+  )
+})
+
+/** «¿Quién eres?». No es una pregunta de cuota, y no se le contesta con una. */
+describe('Bob dice quién es cuando se lo preguntan', () => {
+  it.each(['quién eres', 'con quién hablo', 'eres un bot'])('«%s»', async (frase) => {
+    const r = await preguntarABob(frase, { dpto: '401', mes: '2026-06', esAdmin: false })
+    expect(r.texto).toMatch(/Soy Bob/)
+    expect(r.texto).not.toMatch(/pagada y confirmada|S\/ \d/)
+  })
 })
 
 /**
@@ -174,6 +198,21 @@ describe('Bob explica una pantalla cuando se la preguntan', () => {
   it('«para qué sirve avisos»', async () => {
     const r = await preguntarABob('para qué sirve avisos', { dpto: '401', mes: '2026-06', esAdmin: false })
     expect(r.texto.toLowerCase()).toContain('los siete ven lo mismo')
+  })
+
+  /**
+   * Los ejemplos concretos del usuario: nadie pregunta con la redacción
+   * prolija de «¿qué hay en Cómo pagar?». Pregunta «cómo pago», sin más.
+   */
+  it('«cómo pago» explica dónde pagar, no da un dato suelto', async () => {
+    const r = await preguntarABob('cómo pago', { dpto: '401', mes: '2026-06', esAdmin: false })
+    expect(r.texto.toLowerCase()).toContain('los datos para depositar')
+  })
+
+  it('«de dónde sale mi cuota» explica el desglose, no solo la cifra', async () => {
+    const r = await preguntarABob('de dónde sale mi cuota', { dpto: '401', mes: '2026-06', esAdmin: false })
+    expect(r.texto.toLowerCase()).toContain('mantenimiento')
+    expect(r.texto.toLowerCase()).toContain('crédito')
   })
 
   it('«mi departamento debe más que el mes pasado» no se confunde con la pregunta de pantalla', async () => {
@@ -265,8 +304,22 @@ describe('estadoPagos no suelta el monto de otro departamento', () => {
 
 describe('lo que Bob no tiene, no se lo inventa', () => {
   it('un trámite que no existe se dice, y se ofrece la lista de los que sí', async () => {
+    // Antes esto pasaba por `preguntarABob`, pero `procedimientoPara` ya
+    // devuelve null para "piscina" —no suena a ninguno de los doce casos—,
+    // así que `intencionDe` ni siquiera entra a `case 'como'`: cae directo a
+    // `default`, que ahora responde con el estado del pago, no con "no
+    // tengo dato". La rama que de verdad prueba esto es la herramienta
+    // misma, con un caso que no existe.
+    const resultado = (await herramienta('comoSeHace')!.ejecutar({ caso: 'que el edificio tenga piscina' }, ADMIN)) as {
+      encontrado: boolean
+      casos: { caso: string; queEs: string }[]
+    }
+    expect(resultado.encontrado).toBe(false)
+    expect(resultado.casos.length).toBeGreaterThan(0)
+  })
+
+  it('esa misma pregunta, para un vecino real, cae al estado del pago y no a un "no tengo dato" falso', async () => {
     const r = await preguntarABob('cómo hago para que el edificio tenga piscina', ADMIN)
-    expect(r.texto.toLowerCase()).toMatch(/no tengo/)
     expect(numerosInventados(r.texto, r.llamadas), r.texto).toEqual([])
   })
 
