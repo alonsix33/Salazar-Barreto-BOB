@@ -180,7 +180,13 @@ function diasEntre(a: string, b: string): number | null {
  *  - sumas y restas de dos de ellas, y el valor absoluto de la resta;
  *  - el porcentaje de una sobre otra, y el múltiplo de una sobre otra;
  *  - los días entre dos fechas que aparecieron, y entre cualquiera de ellas y
- *    hoy.
+ *    hoy;
+ *  - **la suma de todas juntas**, no solo de dos. «¿Cuánto llevamos pagado
+ *    este año?» es la suma de ocho meses de `serieSaldo`, y una suma de dos
+ *    en dos no llega ahí: hace falta el total de la lista entera. Es una sola
+ *    cifra más por respuesta —no crece con el cuadrado de las cifras, como
+ *    las combinaciones de a pares— así que el riesgo que se mide en el
+ *    barrido de más abajo no cambia de orden de magnitud.
  *
  * ## Qué sigue prohibido, que es lo que importa
  *
@@ -242,6 +248,10 @@ export function conCuentasSimples(
       }
     }
   }
+
+  // La suma de la lista entera, no solo de pares: «llevamos S/ 28,406.55
+  // entre los ocho meses». Una sola cifra, no cuadrática como el resto.
+  if (cifras.length >= 2) meter(cifras.reduce((total, n) => total + n, 0))
 
   // Los días entre fechas, y entre cada fecha y hoy. Es lo que hace falta para
   // «hace once días» sin que once salga de ningún sitio.

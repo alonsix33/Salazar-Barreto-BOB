@@ -52,6 +52,13 @@ describe('lo que Bob ahora sí puede decir', () => {
     puede('La guardianía sola es 4.46 veces tu cuota.')
   })
 
+  it('la suma de más de dos cifras, no solo de a pares', () => {
+    // 3512.58 + 364.05 + 397.00 + 1625.00 = 5898.63, y ninguna suma de dos
+    // de estas cuatro da ese total: hace falta sumarlas todas.
+    const varias = llamada({ a: 3512.58, b: 364.05, c: 397.0, d: 1625.0 })
+    expect(numerosInventados('Entre las cuatro suman S/ 5,898.63.', varias)).toEqual([])
+  })
+
   it('los días desde una fecha del sistema hasta hoy', () => {
     const hoy = new Date()
     const dias = Math.round(
