@@ -4,8 +4,13 @@
  * Encontrado probando contra producción, no inventado: «qué hay en mi
  * departamento» devolvió `"Junio en el 401 sale S/ 364"`, sin los centavos,
  * con un 200 y un JSON válido. `pedir` nunca miraba `finish_reason`, así que
- * `max_tokens: 300` podía cortar al modelo a mitad de una cifra o de una
+ * el tope de tokens podía cortar al modelo a mitad de una cifra o de una
  * frase y esa respuesta se publicaba igual que una completa.
+ *
+ * Esto sigue siendo necesario aunque el tope haya subido de 300 a 1000
+ * (pedido del usuario, para que una vuelta con herramienta o una respuesta
+ * más rica no choque contra el límite): un tope más alto corta menos
+ * seguido, no deja de existir.
  */
 
 import { afterEach, describe, expect, it } from 'vitest'
@@ -50,5 +55,28 @@ describe('una respuesta cortada por max_tokens no se publica', () => {
 
     const r = await preguntarADeepseek('qué hay en mi departamento', YO)
     expect(r.texto).toBe('Junio en el 401 es S/ 364.05.')
+  })
+})
+
+/**
+ * Pedido del usuario: 300 alcanzaba para una frase corta, pero no para una
+ * vuelta que además razona qué herramienta llamar, ni para las respuestas
+ * más ricas que ganó Bob esta sesión. Subirlo no es una invitación a
+ * escribir más largo —«dos frases» sigue en el prompt y `aDosFrases` sigue
+ * recortando— es margen para que esas vueltas no choquen contra el tope
+ * por las puras.
+ */
+describe('el tope de tokens le da margen a una vuelta con herramienta', () => {
+  it('la petición a DeepSeek pide 1000 tokens, no 300', async () => {
+    process.env.DEEPSEEK_API_KEY = 'sk-de-prueba'
+    let maxTokensPedido = 0
+    globalThis.fetch = (async (_url: string | URL, opciones?: RequestInit) => {
+      maxTokensPedido = (JSON.parse(String(opciones?.body)) as { max_tokens: number }).max_tokens
+      return respuestaCompleta('Todo al día.')
+    }) as typeof fetch
+
+    await preguntarADeepseek('¿cuánto debo?', YO)
+
+    expect(maxTokensPedido).toBe(1000)
   })
 })

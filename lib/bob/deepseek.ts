@@ -86,17 +86,43 @@ export class SinClave extends Error {}
 export class PlazoAgotado extends Error {}
 
 /**
- * `max_tokens: 300` cortó al modelo a mitad de la frase.
+ * `max_tokens` cortó al modelo a mitad de la frase.
  *
- * Encontrado probando contra producción, no inventado: «qué hay en mi
- * departamento» devolvió `"Junio en el 401 sale S/ 364"`, cortado antes de
- * los centavos, con un 200 y un JSON válido —el vecino habría visto justo
- * eso—. `pedir` nunca miraba `finish_reason`, así que una respuesta cortada
- * por el límite de tokens se publicaba igual que una completa. No se corrige
- * el texto a medias: se trata como cualquier otra caída del modelo, y
- * `index.ts` cae al determinista, que sí termina sus frases.
+ * Encontrado probando contra producción, no inventado: con el tope en 300,
+ * «qué hay en mi departamento» devolvió `"Junio en el 401 sale S/ 364"`,
+ * cortado antes de los centavos, con un 200 y un JSON válido —el vecino
+ * habría visto justo eso—. `pedir` nunca miraba `finish_reason`, así que una
+ * respuesta cortada por el límite de tokens se publicaba igual que una
+ * completa. No se corrige el texto a medias: se trata como cualquier otra
+ * caída del modelo, y `index.ts` cae al determinista, que sí termina sus
+ * frases.
+ *
+ * Esto sigue siendo la red de seguridad aunque {@link MAX_TOKENS_RESPUESTA}
+ * haya crecido: un tope más alto baja cuánto se corta, pero no lo elimina —
+ * el modelo puede seguir yéndose más largo de lo esperado, sobre todo en una
+ * vuelta que además está razonando qué herramienta llamar—.
  */
 export class RespuestaCortada extends Error {}
+
+/**
+ * Cuánto se le deja escribir al modelo por vuelta.
+ *
+ * Antes eran 300, puestos para una respuesta de dos frases y nada más. El
+ * problema es que **el mismo tope se aplica a toda vuelta**, incluidas las
+ * que solo piden una herramienta —una llamada de función más su
+ * razonamiento puede ya andar cerca de 300— y las respuestas más ricas que
+ * ganó Bob esta sesión (la proactiva de `default`, las explicaciones de
+ * pantalla): esas de verdad necesitaban más de 300 y el tope las cortaba,
+ * tirando una respuesta buena a la basura para caer al catálogo más simple.
+ *
+ * 1000 no es una invitación a escribir más largo —«Dos frases como mucho»
+ * sigue en el prompt, y `aDosFrases` sigue recortando después—: es margen
+ * para que una vuelta con herramienta o una respuesta genuinamente más
+ * completa no choque contra el tope por las puras. El costo de dejar
+ * margen de sobra es mínimo: `max_tokens` es un tope, no una cuota fija, y
+ * el modelo solo gasta lo que escribe.
+ */
+const MAX_TOKENS_RESPUESTA = 1000
 
 /** `true` si hay clave. Sin clave no se intenta siquiera. */
 export function hayClave(): boolean {
@@ -259,7 +285,7 @@ async function pedir(
         // que ya tiene, o no hay respuesta.
         tools: ultima ? undefined : HERRAMIENTAS.map(comoFuncion),
         temperature: 0.2,
-        max_tokens: 300,
+        max_tokens: MAX_TOKENS_RESPUESTA,
       }),
     })
     if (!r.ok) throw new Error(`DeepSeek respondió ${r.status}.`)
