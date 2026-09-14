@@ -160,6 +160,60 @@ describe('un "ayuda" se adelanta con el estado del pago, no con un menú', () =>
 })
 
 /**
+ * «¿Qué hay en Mi departamento?». Pedido del usuario: Bob debería saber
+ * explicar la app en sí, no solo cifras, para cualquier pantalla que un
+ * vecino sin PIN pueda ver.
+ */
+describe('Bob explica una pantalla cuando se la preguntan', () => {
+  it('«qué hay en mi departamento»', async () => {
+    const r = await preguntarABob('qué hay en mi departamento', { dpto: '401', mes: '2026-06', esAdmin: false })
+    expect(r.texto.toLowerCase()).toContain('tu historial de pagos')
+    expect(numerosInventados(r.texto, r.llamadas), r.texto).toEqual([])
+  })
+
+  it('«para qué sirve avisos»', async () => {
+    const r = await preguntarABob('para qué sirve avisos', { dpto: '401', mes: '2026-06', esAdmin: false })
+    expect(r.texto.toLowerCase()).toContain('los siete ven lo mismo')
+  })
+
+  it('«mi departamento debe más que el mes pasado» no se confunde con la pregunta de pantalla', async () => {
+    // No hay procedimiento de comparación en el determinista con ese texto
+    // exacto, así que cae al catálogo; lo que importa es que NO sea la
+    // descripción de la pantalla "Mi departamento".
+    const r = await preguntarABob('mi departamento debe más que el mes pasado', {
+      dpto: '401',
+      mes: '2026-06',
+      esAdmin: false,
+    })
+    expect(r.texto).not.toContain('tu historial de pagos')
+  })
+
+  it('la herramienta también reconoce la clave exacta, no solo el texto libre', async () => {
+    // Así es como el modelo podría llamarla, con la clave y no la frase
+    // completa: pantallaPara('mi-departamento') no matchea por texto (el
+    // guion no es un espacio), así que hace falta el fallback por clave.
+    const r = (await herramienta('explicaPantalla')!.ejecutar({ pantalla: 'mi-departamento' }, ADMIN)) as {
+      encontrada: boolean
+      clave: string
+    }
+    expect(r.encontrada).toBe(true)
+    expect(r.clave).toBe('mi-departamento')
+  })
+
+  it('la herramienta, sin una pantalla reconocida, ofrece la lista de las que sí', async () => {
+    // El determinista solo entra a este caso cuando `pantallaPara` ya
+    // encontró algo, así que la rama "no encontrada" solo la ejercita el
+    // modelo llamando la herramienta con una clave que no existe.
+    const r = (await herramienta('explicaPantalla')!.ejecutar({ pantalla: 'el gimnasio' }, ADMIN)) as {
+      encontrada: boolean
+      pantallas: { clave: string; queEs: string }[]
+    }
+    expect(r.encontrada).toBe(false)
+    expect(r.pantallas.length).toBeGreaterThan(0)
+  })
+})
+
+/**
  * `estadoPagos` es la única herramienta que da un vistazo a los siete
  * departamentos a la vez —hace falta para «cuántos días sin registrarse»— y
  * por eso es la única que no pasaba por `dptoDe`. Probado contra producción,

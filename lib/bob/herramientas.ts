@@ -20,6 +20,7 @@ import { pagosDe, resultadoDeMes } from '@/lib/datos/mes'
 import { historialDeDpto } from '@/lib/datos/historial'
 import { prisma } from '@/lib/datos/prisma'
 import { CASOS, PROCEDIMIENTOS, procedimientoPara } from './procedimientos'
+import { PANTALLAS, pantallaPara } from './pantallas'
 import type { DptoId, MesId } from '@/lib/calculo/tipos'
 import { estadoCuota, type EstadoCuota } from '@/lib/estados'
 import type { Contexto, Herramienta } from './tipos'
@@ -484,6 +485,31 @@ export const HERRAMIENTAS: Herramienta[] = [
         pasos: p.pasos,
         ...(p.ojoCon ? { ojoCon: p.ojoCon } : {}),
       }
+    },
+  },
+  {
+    nombre: 'explicaPantalla',
+    descripcion:
+      'Qué hay en una pantalla o pestaña de la app, para quien pregunta por la app en sí y no por una cifra: ' +
+      'Inicio, El mes, Mi departamento, Historial, Avisos, o una de las hojas que se abren desde ahí ' +
+      '(de dónde sale cada monto, mi consumo de agua, mis pagos, cómo pagar). Llámala cuando pregunten ' +
+      'qué es o qué hay en una pantalla, no cuando pregunten un dato concreto de ella.',
+    parametros: {
+      type: 'object',
+      properties: {
+        pantalla: {
+          type: 'string',
+          description: `Uno de: ${PANTALLAS.map((p) => p.clave).join(', ')}. También vale la pregunta tal cual la escribieron.`,
+        },
+      },
+      required: ['pantalla'],
+    },
+    async ejecutar(argumentos: { pantalla?: string }) {
+      const pedido = typeof argumentos.pantalla === 'string' ? argumentos.pantalla : ''
+      const p = pantallaPara(pedido) ?? PANTALLAS.find((x) => x.clave === pedido)
+      // Sin pantalla reconocida, la lista de las que hay: no se inventa una descripción.
+      if (!p) return { encontrada: false, pantallas: PANTALLAS.map((x) => ({ clave: x.clave, queEs: x.queEs })) }
+      return { encontrada: true, clave: p.clave, queEs: p.queEs }
     },
   },
   {

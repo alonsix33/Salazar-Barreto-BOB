@@ -25,6 +25,7 @@ import { fmt } from '@/lib/calculo/redondeo'
 import { capitalizar, enumerar } from '@/lib/formato'
 import { herramienta } from './herramientas'
 import { procedimientoPara, suenaAComo } from './procedimientos'
+import { pantallaPara, suenaAPreguntaDePantalla } from './pantallas'
 import type { Contexto, Llamada, Respuesta } from './tipos'
 
 /** Ejecuta una herramienta y deja constancia, que es de donde sale la guarda. */
@@ -98,7 +99,7 @@ const INTENCIONES = [
   { id: 'quienes', palabras: ['quien vive', 'quienes viven', 'quien es el', 'duenos', 'propietarios', 'vecinos', 'los nombres'] },
 ] as const
 
-type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "ayuda" | "nada"
+type Intencion = (typeof INTENCIONES)[number]["id"] | "como" | "pantalla" | "ayuda" | "nada"
 
 /** Qué está preguntando. La primera que encaja gana. */
 export function intencionDe(texto: string): Intencion {
@@ -120,6 +121,14 @@ export function intencionDe(texto: string): Intencion {
    * que caía en `escribir` por la palabra «publicar».
    */
   if (suenaAComo(t) && procedimientoPara(t)) return 'como'
+
+  /**
+   * «¿Qué hay en Mi departamento?». La misma lógica de dos señales que
+   * `como`: sin el gate de `suenaAPreguntaDePantalla`, «mi departamento
+   * debe más que el mes pasado» dispararía la explicación de la pantalla
+   * por la sola mención del nombre, robándole la pregunta a `comparar`.
+   */
+  if (suenaAPreguntaDePantalla(t) && pantallaPara(t)) return 'pantalla'
 
   /**
    * Un «ayuda» o un «no sé qué hacer» no es una pregunta sin respuesta: es
@@ -474,6 +483,24 @@ async function redactar(
           `S/ ${fmt(c.totalB as number)} contra S/ ${fmt(c.totalA as number)}. ${porQue}`,
         lleva: { hoja: 'calculo', etiqueta: 'Ver de dónde sale cada monto' },
       }
+    }
+
+    /**
+     * «¿Qué hay en Mi departamento?». Sobre la app en sí, no sobre una cifra.
+     *
+     * Igual que `como`, la descripción no se escribe aquí sino en
+     * `explicaPantalla`: así queda respaldada por una llamada y auditada en
+     * `consulta_bob`, y una respuesta que mencione «los siete» o «el mes»
+     * dentro de la descripción no choca con la guarda de números.
+     */
+    case 'pantalla': {
+      const p = await llamar('explicaPantalla', { pantalla: texto }, contexto, llamadas)
+      if (p.encontrada === false) {
+        const pantallas = p.pantallas as { clave: string; queEs: string }[]
+        const nombres = pantallas.map((x) => x.clave.replace(/-/g, ' '))
+        return { texto: `De esa pantalla no tengo. Lo que sí: ${enumerar(nombres)}.`, lleva: null }
+      }
+      return { texto: String(p.queEs), lleva: null }
     }
 
     /**

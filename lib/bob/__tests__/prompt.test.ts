@@ -18,6 +18,11 @@
  * al párrafo de permiso —lo primero que el modelo lee sobre lo que puede y
  * no puede hacer— por si la cercanía pesa más que la insistencia. Sigue sin
  * poder probarse aquí si eso alcanza: eso se ve preguntándole de verdad.
+ *
+ * Las últimas tres instrucciones —«ayuda» genérica, `explicaPantalla`, y que
+ * el hilo es una conversación y no preguntas sueltas— salen de un pedido
+ * distinto del usuario: que Bob sepa de la app en sí, no solo de cifras, y
+ * que no se sienta como si cada mensaje empezara de cero.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -59,5 +64,19 @@ describe('promptDelSistema · instrucciones que se agregaron a propósito', () =
     const prompt = promptDelSistema(VECINO)
     expect(prompt).toContain('AYUDA')
     expect(prompt.toLowerCase()).toContain('no preguntes "¿en qué te ayudo?"')
+  })
+
+  it('dice que puede explicar una pantalla de la app, no solo cifras', () => {
+    const prompt = promptDelSistema(VECINO)
+    // `explicaPantalla` solo, por sí mismo, no basta: la lista de herramientas
+    // ya lo menciona igual. Lo que hace falta es la instrucción específica de
+    // cuándo llamarla.
+    expect(prompt.toLowerCase()).toContain('y no una cifra concreta, llama a explicapantalla')
+  })
+
+  it('dice que es una conversación, no preguntas sueltas', () => {
+    const prompt = promptDelSistema(VECINO)
+    expect(prompt).toContain('ESTO ES UNA CONVERSACIÓN')
+    expect(prompt.toLowerCase()).toContain('no te vuelvas a presentar')
   })
 })

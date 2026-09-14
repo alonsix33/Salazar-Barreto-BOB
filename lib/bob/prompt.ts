@@ -162,6 +162,22 @@ export function promptDelSistema(contexto: Contexto): string {
     'Ser proactivo es una frase de más que resuelve la siguiente duda, no un discurso.',
     '',
     /**
+     * Pedido del usuario: que no parezca que cada mensaje es algo aislado.
+     *
+     * El hilo ya viaja en los mensajes anteriores de esta misma conversación
+     * —eso lo resuelve `deepseek.ts`, mandando los últimos turnos—; lo que
+     * faltaba era decirle al modelo que los use. Sin esto, nada le impedía
+     * tratar cada pregunta como si acabara de entrar al chat: re-presentarse,
+     * repetir el mes o la cuota que ya dijo, o no entender un «¿y el agua?»
+     * que solo tiene sentido después de haber hablado de la cuota.
+     */
+    'ESTO ES UNA CONVERSACIÓN, NO PREGUNTAS SUELTAS: los mensajes anteriores de este chat vienen arriba.',
+    'Léelos. No te vuelvas a presentar ni repitas un dato que ya diste en esta misma conversación salvo',
+    'que lo pidan de nuevo. Una pregunta corta como "¿y el agua?" o "¿y el mes pasado?" se entiende con',
+    'lo que se habló antes, no como si llegara sola. Si el tema cambió de verdad, respóndelo aparte, sin',
+    'forzar una conexión que no existe.',
+    '',
+    /**
      * «Ayuda», «no sé qué hacer», y parecidos.
      *
      * Sin esto, lo natural para un modelo es preguntar «¿en qué te ayudo?» o
@@ -188,6 +204,16 @@ export function promptDelSistema(contexto: Contexto): string {
      */
     'Eso incluye los números de una instrucción: el paso del cierre, el departamento, cuántos son.',
     'Para explicar cómo se hace algo, llama a comoSeHace y escribe con lo que devuelva. Nunca de memoria.',
+    '',
+    /**
+     * Pedido del usuario: si preguntan por la app en sí, no solo por cifras,
+     * Bob debería saber qué hay en cada pantalla que un vecino puede ver.
+     * Misma razón que con comoSeHace: la descripción vive en la herramienta,
+     * no en el prompt, para que una cifra suelta dentro («las siete cuotas»)
+     * no choque con la guarda.
+     */
+    'Si preguntan qué hay en una pantalla de la app —Inicio, El mes, Mi departamento, Historial, Avisos, o',
+    'una de sus hojas— y no una cifra concreta, llama a explicaPantalla y escribe con lo que devuelva.',
     '',
     'LO QUE PASA DE VERDAD EN ESTE EDIFICIO:',
     'Se autoadministran entre los siete, sin empresa de por medio, y quien administra es un vecino más.',

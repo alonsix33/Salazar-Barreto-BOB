@@ -48,6 +48,15 @@ const PREGUNTAS = [
   'no sé qué hacer',
 ]
 
+/**
+ * Aparte de `PREGUNTAS`: una descripción de pantalla no es una cifra del
+ * edificio, así que exigirle un número o un «no tengo dato» —lo que hace
+ * `SIN_DATO` más abajo, para las preguntas de arriba— no tiene sentido aquí.
+ * Lo que sí se le exige es lo mismo de siempre: que no suene a máquina y que
+ * quepa en dos frases.
+ */
+const PREGUNTAS_SOBRE_LA_APP = ['qué hay en mi departamento', 'para qué sirve avisos', 'qué es el historial']
+
 /** Los tres contextos que cambian de rama: con dpto, sin dpto, y mes sin cerrar. */
 const CONTEXTOS: { como: string; contexto: Contexto }[] = [
   { como: 'un vecino del 401 en un mes publicado', contexto: { dpto: '401', mes: '2026-06', esAdmin: false } },
@@ -99,6 +108,25 @@ describe('ninguna respuesta de Bob suena a máquina', () => {
         }
       }
       expect(fallos.join('\n  ')).toBe('')
+    })
+  }
+})
+
+describe('las preguntas sobre la app tampoco suenan a máquina, ni se van de dos frases', () => {
+  for (const { como, contexto } of CONTEXTOS) {
+    it(`para ${como}`, async () => {
+      const fallos: string[] = []
+      const largas: string[] = []
+      for (const pregunta of PREGUNTAS_SOBRE_LA_APP) {
+        const r = await preguntarABob(pregunta, contexto)
+        for (const [patron, porQue] of HUELLAS) {
+          const m = r.texto.match(patron)
+          if (m) fallos.push(`«${pregunta}» → ${porQue} · "${m[0]}"\n     ${r.texto}`)
+        }
+        if (r.texto.split(/(?<=[.!?…])\s+/).length > 2) largas.push(`«${pregunta}» → ${r.texto}`)
+      }
+      expect(fallos.join('\n  ')).toBe('')
+      expect(largas.join('\n  '), 'pasan de dos frases').toBe('')
     })
   }
 })
