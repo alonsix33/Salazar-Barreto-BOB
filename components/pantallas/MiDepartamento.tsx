@@ -69,7 +69,11 @@ export function MiDepartamento({
           <Etiqueta className="block midpto-etiqueta">
             {COPYS.miDpto.cabecera(historial.nombre, historial.flat)}
           </Etiqueta>
-          <h1 className="tipo-titulo-grande whitespace-nowrap">{COPYS.miDpto.titulo(dpto)}</h1>
+          {/* Sin `whitespace-nowrap`: con letra grande de accesibilidad "Depa
+              401" no cabía junto al botón "Cambiar" y perdía el último
+              dígito del departamento, sin puntos suspensivos. Envuelve a dos
+              líneas en vez de cortarse — el número nunca desaparece. */}
+          <h1 className="tipo-titulo-grande">{COPYS.miDpto.titulo(dpto)}</h1>
         </div>
         <CambiarDpto />
       </div>

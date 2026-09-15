@@ -68,9 +68,19 @@ export function Cifra({
   const atenuado = sobreNoche ? 'text-sobre-noche-terciario' : 'text-gris'
   const claseSimbolo = SIMBOLO[tamano] ?? 'tipo-simbolo-mini'
   return (
-    <span className={`flex items-baseline gap-cifra ${className}`}>
+    /*
+     * Con letra grande de accesibilidad, un monto de "protagonista"/"secundaria"
+     * (42-46px de base, más de 75px a 1.8x) no cabía en el ancho del marco: la
+     * cifra se recortaba contra el `overflow:hidden` de `.marco-app` y el
+     * último dígito desaparecía sin ningún indicio —en "Costó mantener el
+     * edificio" y en "La cuenta" del historial—. `flex-wrap` deja que el
+     * símbolo caiga a su propia línea si hace falta, y `overflow-wrap:anywhere`
+     * en la cifra permite partir el número mismo antes que perderlo: se ve
+     * raro partido en dos líneas, pero se sigue pudiendo leer entero.
+     */
+    <span className={`flex flex-wrap items-baseline gap-cifra min-w-0 ${className}`}>
       {simbolo && <span className={`${claseSimbolo} ${atenuado}`}>S/</span>}
-      <span className={TIPO[tamano]}>{texto}</span>
+      <span className={`${TIPO[tamano]} min-w-0 break-normal [overflow-wrap:anywhere]`}>{texto}</span>
       {sufijo && <span className={`${claseSimbolo} ${atenuado}`}>{sufijo}</span>}
     </span>
   )

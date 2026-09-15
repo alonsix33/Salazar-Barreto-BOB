@@ -233,17 +233,29 @@
    Cada rol con su tamaño, peso, interlineado y letter-spacing exactos.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/*
+ * `overflow-wrap: break-word` en las cuatro: con letra grande de
+ * accesibilidad, una sola palabra larga sin espacio donde partir
+ * ("Administración", "departamento", "Administra") se cortaba contra el
+ * borde del marco sin puntos suspensivos, en tres pantallas distintas y de
+ * forma independiente —la señal de que el defecto era de la escala
+ * tipográfica compartida, no de cada pantalla—. Sin efecto en el caso
+ * normal: solo actúa cuando una palabra de verdad no cabe.
+ */
 @utility tipo-titulo-pantalla {
   font: 800 27px/1 var(--font-titulo);
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
 }
 @utility tipo-titulo-grande {
   font: 800 30px/1.14 var(--font-titulo);
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
 }
 @utility tipo-titulo-hoja {
   font: 800 26px/1.15 var(--font-titulo);
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
 }
 @utility tipo-titulo-bob {
   font: 700 17px/1.2 var(--font-titulo);
@@ -2153,7 +2165,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--spacing-toque);
+  /*
+   * `min-height`, no `height`: con letra grande de accesibilidad
+   * "Confirmar contra el estado de cuenta" pasa a dos líneas, y una altura
+   * fija recortaba la píldora dejando la segunda línea en texto blanco
+   * sobre el fondo crema de la tarjeta —el botón "se rompía" justo en la
+   * acción principal del panel de administración.
+   */
+  min-height: var(--spacing-toque);
+  padding: 8px 14px;
   border-radius: var(--radius-pildora);
   background: var(--color-noche);
   color: var(--color-sobre-noche);

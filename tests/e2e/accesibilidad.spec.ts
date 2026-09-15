@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Result } from 'axe-core'
 import { expect, test, type Page } from './basedatos'
+import { culpablesDeDesborde } from './desborde'
 
 /**
  * Accesibilidad. Fase 6, punto 5 del enunciado y puntos 3 y 5 del verificador.
@@ -329,74 +330,159 @@ test.describe('lo que se anuncia a un lector de pantalla', () => {
 })
 
 /**
- * Escalado de texto del sistema al 200 %. `02` §8, lo último de la lista.
+ * Escalado de texto del sistema al doble. `02` §8, lo último de la lista.
  *
- * Alguien con la vista cansada pone la letra al doble en los ajustes del
- * teléfono. Si la app está construida con `px` fijos y alturas fijas, el texto
- * se sale de los botones o se corta. Se simula subiendo la fuente base del
- * documento, que es lo que hace el ajuste del sistema en la web.
+ * Alguien con la vista cansada —o la mamá de la usuaria, que fue quien
+ * reportó esto de verdad— pone la letra más grande en los ajustes de
+ * accesibilidad del teléfono. Toda la tipografía de este proyecto es `px`
+ * fijo (`02` §2), a propósito, así que el mecanismo real que hay que imitar
+ * no es `html { font-size: 200% }` —eso solo mueve texto sin clase propia,
+ * que hereda del `html`; toda la tipografía con clase (`tipo-titulo-*`,
+ * `tipo-cifra-*`, `tipo-pildora`…) se queda exactamente igual, medido: un
+ * `<h1 class="tipo-titulo-pantalla">` se quedó en 27px con el truco puesto—.
+ * Es el ajuste real de accesibilidad el que reescala CADA nodo de texto por
+ * un factor fijo sin que importe la unidad con la que se declaró: así
+ * funciona iOS Safari ignorando `px` (nunca lo toca) y así funciona el
+ * "tamaño de letra" de Android (si escala `px`, lo hace nodo por nodo, no
+ * heredando desde la raíz). `escalarTexto` imita ESE mecanismo.
+ *
+ * `escalarTexto` mide TODO antes de escribir NADA (dos pasadas): medir y
+ * escribir en la misma pasada, en orden de documento, hace que un elemento
+ * sin tipografía propia lea el tamaño YA escalado de su padre como si fuera
+ * el original y componga el factor otra vez —de 14px a 236px en cinco
+ * niveles de anidamiento, medido—, un falso desborde que no existe en la
+ * pantalla real.
  */
+async function escalarTexto(page: Page, factor: number) {
+  await page.evaluate((f) => {
+    const marca = '__escalaOriginal'
+    const nodos = [...document.querySelectorAll('body, body *')].filter(
+      (el): el is HTMLElement => el instanceof HTMLElement,
+    )
+    const pares = nodos.map((el) => {
+      const guardado = (el as unknown as Record<string, number>)[marca]
+      if (guardado !== undefined) return [el, guardado] as const
+      const base = parseFloat(getComputedStyle(el).fontSize) || 0
+      ;(el as unknown as Record<string, number>)[marca] = base
+      return [el, base] as const
+    })
+    for (const [el, base] of pares) {
+      if (base > 0) el.style.setProperty('font-size', `${base * f}px`, 'important')
+    }
+  }, factor)
+  await page.waitForTimeout(200)
+}
+/**
+ * Una sola copia de la regla (`06` §2.7): la usan tanto el bucle de
+ * pantallas de vecino como Onboarding, que necesita su propio test porque
+ * arranca sin la cookie `sb_dpto` que el resto de la suite trae por
+ * defecto.
+ */
+async function noSeDesbordaNiSeRecorta(page: Page, nombre: string) {
+  /**
+   * `culpablesDeDesborde`, la misma de `responsive.spec.ts` (`06` §2.7: una
+   * sola copia). Mide cada elemento contra `.marco-app` en vez del
+   * `scrollWidth` de `.pantalla`: esta última versión se coló con el
+   * carrusel de meses (`.selector-meses`) marcado como desborde en "El mes"
+   * —un hijo `flex` sin `min-width:0` puede propagar su ancho mínimo al
+   * padre aunque el propio hijo scrollee bien—, y `culpablesDeDesborde` ya
+   * perdona explícitamente lo que lleva `data-scroll-x`.
+   */
+  const { culpables, examinados } = await culpablesDeDesborde(page)
+  expect(
+    examinados,
+    `el barrido no miró ni un elemento en ${nombre} con el texto al doble: no probó nada`,
+  ).toBeGreaterThan(20)
+  expect(culpables, `${nombre} se desborda a lo ancho con el texto al doble`).toEqual([])
+
+  /**
+   * Y texto recortado dentro de su caja.
+   *
+   * El filtro de `h1, h2, p, span, li` solo cuenta si de verdad **esconde**
+   * algo (`overflow-y: hidden`/`auto`): con `overflow: visible` el texto se
+   * sale pero se lee, y para esos elementos —casi todos `inline`, donde
+   * `scrollHeight`/`clientHeight` no es una medida fiable (se probó: sin
+   * este filtro, `span.tipo-numero-dpto` marcaba recorte en las cuatro
+   * pantallas sin que hubiera ningún defecto real)— esa distinción hace
+   * falta.
+   *
+   * `button` va aparte, sin ese filtro. Un botón sí es una caja con `height`
+   * o `min-height` real, y ahí `overflow-y: hidden/auto` no basta:
+   * `.admin-pago-boton` con `height` fijo (en vez de `min-height`) pasaba en
+   * verde con `overflow` en su valor por defecto (`visible`) aunque
+   * "Confirmar contra el estado de cuenta" se desbordara hacia abajo, fuera
+   * del fondo oscuro del botón —comprobado reintroduciendo el `height`
+   * fijo—, porque `culpablesDeDesborde` solo mira el borde izquierdo/derecho
+   * contra `.marco-app`, nunca arriba/abajo. Una caja de altura `auto`
+   * SIEMPRE mide `scrollHeight === clientHeight`: que sea mayor ya implica
+   * una altura fijada por CSS, la tenga o no `overflow:hidden`.
+   */
+  const recortados = await page.evaluate(() => {
+    const malos: string[] = []
+    let examinados = 0
+    for (const el of document.querySelectorAll<HTMLElement>('button, h1, h2, p, span, li')) {
+      if (el.classList.contains('sr-only')) continue
+      const estilo = getComputedStyle(el)
+      if (estilo.textOverflow === 'ellipsis') continue
+      if (el.getAttribute('aria-hidden') === 'true') continue
+      examinados++
+      const esBoton = el.tagName === 'BUTTON'
+      const escondeVertical = estilo.overflowY === 'hidden' || estilo.overflowY === 'auto'
+      if ((esBoton || escondeVertical) && el.scrollHeight > el.clientHeight + 2) {
+        malos.push(`${el.tagName.toLowerCase()}.${el.className.split(' ')[0]}`)
+      }
+    }
+    // Si no se examinó nada, el chequeo no ha comprobado nada: se dice.
+    if (examinados === 0) malos.push('EL CHEQUEO NO EXAMINÓ NI UN ELEMENTO')
+    return malos
+  })
+  expect(recortados, `${nombre}: texto recortado con la letra al doble`).toEqual([])
+}
+
 test.describe('con el texto del sistema al doble', () => {
   for (const { ruta, nombre } of [
     { ruta: '/', nombre: 'Inicio' },
     { ruta: '/mes', nombre: 'El mes' },
     { ruta: '/mi-departamento', nombre: 'Mi departamento' },
+    { ruta: '/historial', nombre: 'Historial' },
   ]) {
     test(`${nombre} no se desborda ni se recorta`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 })
       await page.goto(ruta)
-      await page.addStyleTag({ content: 'html { font-size: 200% }' })
-      await page.waitForTimeout(200)
-
-      /**
-       * Se mide `.pantalla`, **no** `.marco-app`.
-       *
-       * `.marco-app` lleva `overflow: hidden`, así que su `scrollWidth` no crece
-       * nunca por mucho que el contenido se salga: el que absorbe el desborde es
-       * `.pantalla`. Con el contenedor equivocado, el aserto no podía fallar —se
-       * comprobó metiendo a mano un párrafo de 2668 px con la letra al doble: el
-       * marco seguía diciendo 390—.
-       */
-      const pantalla = page.locator('.pantalla').first()
-      const medidas = await pantalla.evaluate((el) => ({
-        scroll: el.scrollWidth,
-        cliente: el.clientWidth,
-      }))
-      expect(
-        medidas.scroll,
-        `${nombre} se desborda a lo ancho con el texto al doble`,
-      ).toBeLessThanOrEqual(medidas.cliente + 1)
-
-      /**
-       * Y texto recortado dentro de su caja.
-       *
-       * El filtro anterior descartaba todo lo que tuviera `overflow: visible`,
-       * que es **el valor por defecto de casi todo el DOM**: de 93 elementos, se
-       * examinaban 0. Ahora se mira la altura de todos y se excluye por lista lo
-       * que está recortado a propósito — los `sr-only` y lo que trunca con
-       * puntos suspensivos, que es una decisión de diseño.
-       */
-      const recortados = await page.evaluate(() => {
-        const malos: string[] = []
-        let examinados = 0
-        for (const el of document.querySelectorAll<HTMLElement>('button, h1, h2, p, span, li')) {
-          if (el.classList.contains('sr-only')) continue
-          const estilo = getComputedStyle(el)
-          if (estilo.textOverflow === 'ellipsis') continue
-          if (el.getAttribute('aria-hidden') === 'true') continue
-          examinados++
-          // Solo cuenta si de verdad **esconde** algo: con `overflow: visible` el
-          // texto se sale pero se lee, y eso ya lo caza la medida de arriba.
-          const escondeVertical = estilo.overflowY === 'hidden' || estilo.overflowY === 'auto'
-          if (escondeVertical && el.scrollHeight > el.clientHeight + 2) {
-            malos.push(`${el.tagName.toLowerCase()}.${el.className.split(' ')[0]}`)
-          }
-        }
-        // Si no se examinó nada, el chequeo no ha comprobado nada: se dice.
-        if (examinados === 0) malos.push('EL CHEQUEO NO EXAMINÓ NI UN ELEMENTO')
-        return malos
-      })
-      expect(recortados, `${nombre}: texto recortado con la letra al doble`).toEqual([])
+      await page.waitForLoadState('networkidle')
+      await escalarTexto(page, 2)
+      await noSeDesbordaNiSeRecorta(page, nombre)
     })
   }
+
+  /**
+   * Administración: la única pantalla con una palabra suelta lo bastante
+   * larga para desbordar sin dónde partir ("Administración"), y donde el
+   * botón "Confirmar contra el estado de cuenta" perdía el fondo al pasar a
+   * dos líneas.
+   */
+  test('Administración no se desborda ni se recorta', async ({ page }) => {
+    const r = await page.request.post('/api/admin/pin', { data: { pin: PIN } })
+    expect(r.ok()).toBeTruthy()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/admin')
+    await page.waitForLoadState('networkidle')
+    await escalarTexto(page, 2)
+    await noSeDesbordaNiSeRecorta(page, 'Administración')
+  })
+
+  /**
+   * Onboarding: la primera pantalla que alguien ve. Necesita `clearCookies`:
+   * el resto de la suite trae `sb_dpto` puesto por defecto, y con la cookie
+   * puesta esta ruta pinta Inicio, no Onboarding.
+   */
+  test('Onboarding no se desborda ni se recorta', async ({ page }) => {
+    await page.context().clearCookies()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByText(/¿Cuál es tu departamento\?/)).toBeVisible()
+    await escalarTexto(page, 2)
+    await noSeDesbordaNiSeRecorta(page, 'Onboarding')
+  })
 })
