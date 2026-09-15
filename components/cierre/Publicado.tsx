@@ -4,6 +4,7 @@ import { COPYS } from '@/lib/copys'
 import { fmt } from '@/lib/calculo/redondeo'
 import { Hoja } from '@/components/hojas/Hoja'
 import { TarjetaNoche } from '@/components/ui/TarjetaNoche'
+import { Cifra } from '@/components/ui/Cifra'
 import { AvisarWhatsapp, urlApp } from './AvisarWhatsapp'
 
 /** La pantalla de confirmación del paso 7. `04-cierre-del-mes.md`. */
@@ -35,10 +36,18 @@ export function Publicado({
           <p className="tipo-etiqueta-seccion text-sobre-noche-etiqueta publicado-noche-mes">
             {mes.toUpperCase()}
           </p>
-          <p className="publicado-total">
-            <span className="tipo-simbolo text-sobre-noche-terciario">S/</span>
-            <span className="tipo-cifra-secundaria-menor">{fmt(total)}</span>
-          </p>
+          {/* `<Cifra>`, no un `<span>` a mano: es la misma regla de "una sola
+              copia" del `06` §7 aplicada a la interfaz. Este monto duplicaba
+              el marcado de `Cifra` sin su protección contra desborde, y con
+              letra grande de accesibilidad el total se cortaba contra el
+              borde del marco sin ningún indicio del dígito que faltaba. */}
+          <Cifra
+            valor={total}
+            tamano="secundaria-menor"
+            simbolo
+            sobreNoche
+            className="publicado-total"
+          />
           <p className="tipo-cuerpo-chico text-sobre-noche-contexto publicado-noche-nota">
             repartido entre los siete{cuadra ? ' · el agua cuadró exacto' : ''}
           </p>

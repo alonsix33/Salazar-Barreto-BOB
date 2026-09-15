@@ -233,17 +233,29 @@
    Cada rol con su tamaño, peso, interlineado y letter-spacing exactos.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/*
+ * `overflow-wrap: break-word` en las cuatro: con letra grande de
+ * accesibilidad, una sola palabra larga sin espacio donde partir
+ * ("Administración", "departamento", "Administra") se cortaba contra el
+ * borde del marco sin puntos suspensivos, en tres pantallas distintas y de
+ * forma independiente —la señal de que el defecto era de la escala
+ * tipográfica compartida, no de cada pantalla—. Sin efecto en el caso
+ * normal: solo actúa cuando una palabra de verdad no cabe.
+ */
 @utility tipo-titulo-pantalla {
   font: 800 27px/1 var(--font-titulo);
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
 }
 @utility tipo-titulo-grande {
   font: 800 30px/1.14 var(--font-titulo);
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
 }
 @utility tipo-titulo-hoja {
   font: 800 26px/1.15 var(--font-titulo);
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
 }
 @utility tipo-titulo-bob {
   font: 700 17px/1.2 var(--font-titulo);
@@ -927,6 +939,13 @@
   color: var(--color-apagado);
 }
 
+.numpad-ayuda {
+  /* Tira del hueco que ya deja `.numpad-valor` (20px) en vez de sumar uno
+     nuevo: los teclados que no la usan —casi todos— quedan exactamente
+     iguales que antes. */
+  margin: -14px 0 14px;
+}
+
 .numpad-cursor {
   width: 2px;
   height: 30px;
@@ -970,8 +989,20 @@
   margin-top: 16px;
 }
 
+/*
+ * Sin `display:flex` para centrar, el texto queda pegado al borde
+ * izquierdo: `flex:1`/`flex:2` dentro de `.numpad-acciones` (que sí es
+ * `flex`) los hace más anchos que su texto, y el `text-align` que heredan
+ * (`button { text-align: inherit }`) es el de la izquierda. Mismo patrón
+ * que `.midpto-boton-pagar` y `components/ui/Boton.tsx` — y el más grave de
+ * los dos, porque este es el único teclado numérico de la app: lecturas,
+ * agua, luz, gastos fijos, puntuales, correcciones y cargos pasan por aquí.
+ */
 .numpad-cancelar {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 52px;
   border-radius: var(--radius-pildora);
   background: var(--color-neutro-vacio);
@@ -980,6 +1011,9 @@
 
 .numpad-guardar {
   flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 52px;
   border-radius: var(--radius-pildora);
   background: var(--color-noche);
@@ -2089,6 +2123,13 @@
   padding: var(--spacing-fila) 0;
   border-bottom: 1px solid var(--color-linea);
 }
+.admin-fila-inactiva {
+  opacity: 0.55;
+}
+.fijo-fila-toggle {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+}
 .admin-pago {
   background: var(--color-papel);
   border-radius: var(--radius-bloque);
@@ -2124,7 +2165,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--spacing-toque);
+  /*
+   * `min-height`, no `height`: con letra grande de accesibilidad
+   * "Confirmar contra el estado de cuenta" pasa a dos líneas, y una altura
+   * fija recortaba la píldora dejando la segunda línea en texto blanco
+   * sobre el fondo crema de la tarjeta —el botón "se rompía" justo en la
+   * acción principal del panel de administración.
+   */
+  min-height: var(--spacing-toque);
+  padding: 8px 14px;
   border-radius: var(--radius-pildora);
   background: var(--color-noche);
   color: var(--color-sobre-noche);
@@ -2371,8 +2420,16 @@
 .cierre-correccion-botones {
   margin-top: 12px;
 }
+/*
+ * Mismo patrón que `.midpto-boton-pagar`: sin `display:flex` para centrar,
+ * el "Sí, usar X.XXX" / "No, dejar así" quedaban pegados al borde izquierdo
+ * de su píldora en vez de centrados.
+ */
 .cierre-correccion-si {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-toque);
   border-radius: var(--radius-pildora);
   background: var(--color-noche);
@@ -2381,6 +2438,9 @@
 }
 .cierre-correccion-no {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--spacing-toque);
   border-radius: var(--radius-pildora);
   background: var(--color-neutro-suave);
@@ -2435,6 +2495,7 @@
 .fijo-fila {
   width: 100%;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-fila-x);
   padding: var(--spacing-fila-alta) 0;
@@ -2448,6 +2509,36 @@
   padding-right: 10px;
   border-radius: var(--radius-mini);
   border-bottom-color: transparent;
+}
+/* El monto sigue siendo el toque rápido de siempre; el ⋯ de al lado abre el
+   panel de anual/activo, que es un cambio de fondo, no un número del mes. */
+.fijo-fila-monto {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-fila-x);
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.fijo-fila-editar {
+  width: var(--spacing-toque);
+  height: var(--spacing-toque);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-apagado);
+}
+.fijo-editar {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: var(--radius-tarjeta);
+  background: var(--color-neutro-suave);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 /* Agregar un concepto fijo nuevo (data que se inyecta en vivo desde el panel). */
 .fijo-anadir {
@@ -2481,7 +2572,17 @@
   gap: 8px;
 }
 .fijo-nuevo-boton {
+  /*
+   * Sin `display:flex` para centrar, el texto queda pegado al borde
+   * izquierdo: mide `flex:1` —más ancho que su texto— y el `text-align`
+   * que hereda (`button { text-align: inherit }`) es el de la izquierda,
+   * no el centro que un botón parece tener por defecto. Mismo patrón que
+   * `.midpto-boton-pagar` y `components/ui/Boton.tsx`.
+   */
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 12px 10px;
   border-radius: var(--radius-chico);
   background: var(--color-verde-suave);
@@ -2490,6 +2591,10 @@
 }
 .fijo-nuevo-boton:disabled {
   opacity: 0.45;
+}
+.fijo-nuevo-boton-ambar {
+  background: var(--color-ambar-suave);
+  color: var(--color-ambar);
 }
 .fijo-nuevo-cancelar {
   color: var(--color-gris);
@@ -2510,8 +2615,17 @@
 
 /* Paso 5 · lo puntual */
 .puntual-boton {
+  /*
+   * Sin relleno, el texto quedaba pegado al borde de la burbuja: la
+   * regla no tenía ningún `padding`, y `button { padding: 0 }` del reset
+   * de la base no deja nada por defecto. `min-height`, no `height`: el
+   * botón lleva dos líneas (título + ejemplo), y una altura fija las
+   * recortaba en cuanto el texto crecía —con la letra grande de
+   * accesibilidad, directo.
+   */
   width: 100%;
-  height: var(--spacing-boton-medio);
+  min-height: var(--spacing-boton-medio);
+  padding: 10px var(--spacing-interior-chico);
   border-radius: var(--radius-pildora);
   background: var(--color-papel);
   border: 1px solid var(--color-neutro-pista);

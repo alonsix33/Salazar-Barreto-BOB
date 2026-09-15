@@ -72,7 +72,14 @@ const RED_DE_SEGURIDAD_S = 300
 export interface Crudos {
   recibos: { mes: string; aguaM3: number; aguaMonto: number; descuento: number | null; luz: number }[]
   lecturas: { mes: string; dptoId: string; valor: number }[]
-  fijos: { concepto: string; monto: number | null; anual: boolean; vigenteDesde: string; orden: number }[]
+  fijos: {
+    concepto: string
+    monto: number | null
+    anual: boolean
+    activo: boolean
+    vigenteDesde: string
+    orden: number
+  }[]
   extras: {
     mes: string
     tipo: 'gasto' | 'credito'
@@ -166,6 +173,7 @@ async function leerCrudos(): Promise<Crudos> {
       concepto: f.concepto,
       monto: aNumero(f.monto),
       anual: f.anual,
+      activo: f.activo,
       vigenteDesde: f.vigenteDesde,
       orden: f.orden,
     })),

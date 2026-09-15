@@ -87,6 +87,12 @@ model GastoFijo {
   /// suma 0. La interfaz muestra las dos cosas distinto.
   monto        Decimal? @db.Decimal(10, 2)
   anual        Boolean  @default(false)
+  /// `false` = este concepto no se cobra desde `vigenteDesde`. No se borra
+  /// nada: el historial completo se queda en la tabla, y reactivarlo es una
+  /// fila nueva con `activo: true`, igual que cualquier otro cambio de
+  /// vigencia. Antes no existía ninguna forma de "apagar" un gasto fijo sin
+  /// dejarlo en la lista para siempre con el monto en 0.
+  activo       Boolean  @default(true)
   /// Mes desde el que aplica este monto, `'2026-07'`.
   vigenteDesde String   @db.VarChar(7)
   /// Posición en la lista de gastos del mes.

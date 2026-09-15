@@ -479,6 +479,13 @@ export const COPYS = {
     conceptoConMonto: 'Poner monto',
     conceptoPorConfirmar: 'Dejar por confirmar',
     conceptoCancelar: 'Cancelar',
+    // Editar un concepto ya existente: monto, si es anual, si está activo.
+    conceptoEditar: 'Editar',
+    conceptoTotalAlAnio: 'Monto total al año',
+    conceptoMontoMensual: 'Monto',
+    conceptoDesactivar: 'Desactivar',
+    conceptoActivar: 'Activar',
+    conceptoGuardar: 'Guardar',
     anadirCredito: 'Añadir un crédito a un departamento',
     anadirCreditoEjemplo: 'alguien adelantó un pago',
     montoGasto: 'Monto del gasto extraordinario',

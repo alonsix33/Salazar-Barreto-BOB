@@ -428,6 +428,96 @@ test.describe('el cierre del mes, paso a paso', () => {
 })
 
 /**
+ * Paso 4 · un gasto anual pide el total, no el mensual, y se puede
+ * activar/desactivar sin borrar su historia.
+ *
+ * Salta los pasos 1 a 3 por la API —ya probados arriba— para llegar directo
+ * al paso 4, que es lo único que cambia aquí.
+ */
+async function llegarAPaso4Julio(page: Page) {
+  for (const [dpto, valor] of Object.entries(JULIO)) {
+    const r = await page.request.put('/api/meses/2026-07/lecturas', {
+      data: {
+        lecturas: { [dpto]: Number(`${valor.slice(0, -3)}.${valor.slice(-3)}`) },
+        version: await versionDe(page, '2026-07'),
+      },
+    })
+    expect(r.ok(), `guardar la lectura del ${dpto}`).toBeTruthy()
+  }
+  const rec = await page.request.put('/api/meses/2026-07/recibo', {
+    data: { aguaM3: 81, aguaMonto: 338.6, luz: 361.2, version: await versionDe(page, '2026-07') },
+  })
+  expect(rec.ok()).toBeTruthy()
+  const p = await page.request.put('/api/meses/2026-07/paso', { data: { paso: 4 } })
+  expect(p.ok()).toBeTruthy()
+
+  await page.goto('/admin')
+  await page.getByRole('button', { name: /Seguir con/ }).click()
+  await expect(page.getByRole('heading', { name: 'Los gastos que no cambian' })).toBeVisible()
+}
+
+test.describe('paso 4 · gastos anuales, activar y desactivar', () => {
+  test('un concepto nuevo marcado anual pide el total y guarda el mensual', async ({ page }) => {
+    await llegarAPaso4Julio(page)
+
+    await page.getByText('Añadir un concepto fijo').click()
+    await page.getByLabel('Nombre del concepto').fill('Fumigación')
+    await page.getByLabel('Es anual (se divide entre 12)').check()
+    await page.getByRole('button', { name: 'Poner monto' }).click()
+
+    await expect(page.getByRole('dialog').last()).toBeVisible()
+    await page.getByRole('button', { name: '1', exact: true }).click()
+    await page.getByRole('button', { name: '2', exact: true }).click()
+    await page.getByRole('button', { name: '0', exact: true }).click()
+    // 120 al año: la ayuda en vivo tiene que decir 10 al mes.
+    await expect(page.getByText('Eso son S/ 10.00 al mes')).toBeVisible()
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+
+    const fila = page.locator('.fijo-fila', { hasText: 'Fumigación' })
+    await expect(fila).toContainText('10.00')
+    await expect(fila).toContainText('ANUAL')
+
+    const r = await page.request.get('/api/meses/2026-07')
+    const gasto = (await r.json()).resultado.gastos.find((g: { concepto: string }) => g.concepto === 'Fumigación')
+    expect(gasto.monto).toBe(10)
+    expect(gasto.anual).toBe(true)
+  })
+
+  test('marcar un concepto existente como anual, desde el panel de editar', async ({ page }) => {
+    await llegarAPaso4Julio(page)
+
+    const fila = page.locator('.fijo-fila', { hasText: 'Insumos limpieza' })
+    await expect(fila).not.toContainText('ANUAL')
+    await fila.getByRole('button', { name: /Editar/ }).click()
+    await fila.getByLabel('Es anual (se divide entre 12)').check()
+    await fila.getByRole('button', { name: 'Guardar', exact: true }).click()
+
+    await expect(fila).toContainText('ANUAL')
+    // El monto no se movió: solo cambió la etiqueta.
+    await expect(fila).toContainText('30.00')
+  })
+
+  test('desactivar un concepto lo saca de la lista de este mes', async ({ page }) => {
+    await llegarAPaso4Julio(page)
+
+    const antes = await (await page.request.get('/api/meses/2026-07')).json()
+    const totalAntes = antes.resultado.totalMes
+
+    const fila = page.locator('.fijo-fila', { hasText: 'Insumos limpieza' })
+    await fila.getByRole('button', { name: /Editar/ }).click()
+    await fila.getByRole('button', { name: 'Desactivar' }).click()
+
+    await expect(page.locator('.fijo-fila', { hasText: 'Insumos limpieza' })).toHaveCount(0)
+
+    const despues = await (await page.request.get('/api/meses/2026-07')).json()
+    expect(despues.resultado.totalMes).toBe(Math.round((totalAntes - 30) * 100) / 100)
+    expect(
+      despues.resultado.gastos.find((g: { concepto: string }) => g.concepto === 'Insumos limpieza'),
+    ).toBeUndefined()
+  })
+})
+
+/**
  * Tecleando rápido no se pierde un dígito.
  *
  * Esto no es una prueba de interfaz: una lectura de medidor con un dígito de

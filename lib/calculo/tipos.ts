@@ -227,7 +227,7 @@ export interface FilaSaldo {
   corto: string
   /** Σ cuota de los que pagaron **y están confirmados**. */
   recibido: number
-  /** `totalMes`. */
+  /** `totalMes` menos los gastos anuales del mes: esos no salieron del banco. */
   gastado: number
   /** `recibido − gastado`. */
   delta: number

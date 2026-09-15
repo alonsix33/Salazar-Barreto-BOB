@@ -86,7 +86,12 @@ export function Inicio({
             <Etiqueta tono="terra" className="block inicio-mes">
               {etiquetaMes(mes)}
             </Etiqueta>
-            <h1 className="tipo-titulo-pantalla whitespace-nowrap">{COPYS.inicio.saludo(dpto)}</h1>
+            {/* Sin `whitespace-nowrap`, igual que en `MiDepartamento`: con
+                letra grande de accesibilidad "Hola, 401" queda justo al
+                borde junto a la campana, y `nowrap` desactiva por completo el
+                `overflow-wrap` de `tipo-titulo-pantalla` —sin él, un dígito
+                de más se cortaría en vez de envolver. */}
+            <h1 className="tipo-titulo-pantalla">{COPYS.inicio.saludo(dpto)}</h1>
           </div>
           <Campana sinLeer={sinLeer} />
         </div>
@@ -95,8 +100,12 @@ export function Inicio({
       {/* 2 · Tarjeta noche · tu cuota */}
       <div className="animar-entrada px-tarjetas">
         <TarjetaNoche className="inicio-cuota">
-          <div className="flex items-center justify-between inicio-cuota-cabecera">
-            <Etiqueta tono="sobre-noche" className="whitespace-nowrap">
+          {/* `min-w-0 truncate` en la etiqueta, `shrink-0` ya en la píldora
+              (`PildoraEstado`): con letra grande de accesibilidad, "TU CUOTA
+              DE SETIEMBRE" sin esto empujaba la píldora "SIN REGISTRAR" fuera
+              del marco y se cortaba a "SIN REGISTRA", sin puntos suspensivos. */}
+          <div className="flex items-center justify-between inicio-cuota-cabecera gap-fila-x">
+            <Etiqueta tono="sobre-noche" className="min-w-0 truncate">
               {COPYS.inicio.tuCuota(nombreMes(mes))}
             </Etiqueta>
             <PildoraEstado estado={estado} sobreNoche />
@@ -108,11 +117,16 @@ export function Inicio({
               <span className="tipo-cuerpo-destacado text-sobre-noche-cuerpo">{COPYS.inicio.mantenimiento}</span>
               <span className="tipo-monto-lista">{fmt(mia.mantenimiento)}</span>
             </div>
-            <div className="flex justify-between inicio-desglose-fila">
-              <span className="tipo-cuerpo-destacado text-agua-claro whitespace-nowrap">
+            {/* `min-w-0 truncate` + `shrink-0`: mismo patrón que la lista de
+                "en qué se gastó" más abajo. Con letra grande de accesibilidad,
+                "Consumo de agua · 12.34 m³" sin esto empujaba el monto entero
+                fuera del marco de 390px —sin barra de scroll que lo delate,
+                `.marco-app` recorta con `overflow:hidden`—. */}
+            <div className="flex justify-between inicio-desglose-fila gap-fila-x">
+              <span className="tipo-cuerpo-destacado text-agua-claro min-w-0 truncate">
                 {COPYS.inicio.consumoAgua(mia.m3)}
               </span>
-              <span className="tipo-monto-lista">{fmt(mia.agua)}</span>
+              <span className="tipo-monto-lista shrink-0">{fmt(mia.agua)}</span>
             </div>
             {/* El valor sale del cálculo. Si el admin lo cambia a 3, dice 3.00. */}
             {mia.lavado > 0 && (

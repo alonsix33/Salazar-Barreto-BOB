@@ -9,6 +9,8 @@ const zUno = z.object({
   monto: zMonto.nullable(),
   /** Anual se divide entre 12. Se manda solo al crear o cambiar la marca. */
   anual: z.boolean().optional(),
+  /** `false` apaga el concepto desde este mes. Se manda solo al cambiarlo. */
+  activo: z.boolean().optional(),
   /**
    * El bloqueo optimista, que este esquema **no declaraba**.
    *
@@ -40,7 +42,9 @@ export async function PUT(peticion: Request, ctx: { params: Promise<{ mes: strin
     const cambio = await leerCuerpo(peticion, zUno)
     return guardarGastosFijos(
       {
-        cambios: [{ concepto: cambio.concepto, monto: cambio.monto, anual: cambio.anual }],
+        cambios: [
+          { concepto: cambio.concepto, monto: cambio.monto, anual: cambio.anual, activo: cambio.activo },
+        ],
         vigenteDesde: mesId,
       },
       true,
