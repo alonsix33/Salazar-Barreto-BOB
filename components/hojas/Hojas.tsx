@@ -20,7 +20,7 @@ import {
 
 export type ClaveHoja =
   | 'bob' | 'calculo' | 'pagos' | 'agua' | 'pagar' | 'aviso-ok'
-  | 'wizard' | 'cargos' | 'export' | 'corregir' | 'confirmar-pagos'
+  | 'wizard' | 'cargos' | 'export' | 'corregir' | 'confirmar-pagos' | 'gastos-fijos'
 
 interface Contexto {
   hoja: ClaveHoja | null

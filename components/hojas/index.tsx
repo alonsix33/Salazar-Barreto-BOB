@@ -47,6 +47,8 @@ export function Hojas() {
       return <HojaAdminDatos modo="corregir" />
     case 'confirmar-pagos':
       return <HojaAdminDatos modo="pagos" />
+    case 'gastos-fijos':
+      return <HojaAdminDatos modo="gastos-fijos" />
     default:
       return null
   }

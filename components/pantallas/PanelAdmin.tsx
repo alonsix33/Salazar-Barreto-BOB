@@ -86,20 +86,29 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
 
       <section className="admin-seccion">
         <Etiqueta className="block admin-seccion-titulo">Gastos fijos del edificio</Etiqueta>
-        {datos.gastosFijos.map((g) => (
-          <div key={g.concepto} className="admin-fila">
-            <span className="tipo-cuerpo-medio flex min-w-0 flex-1 items-center gap-etiqueta">
-              <span className="truncate">{g.concepto}</span>
-              {g.anual && <span className="tipo-etiqueta-anual etiqueta-anual">{COPYS.mes.anual}</span>}
-            </span>
-            <span className={g.monto === null ? 'tipo-cuerpo-enlace text-ambar' : 'tipo-monto-lista'}>
-              {g.monto === null ? 'por confirmar' : fmt(g.monto)}
-            </span>
-          </div>
-        ))}
+        {datos.gastosFijos
+          .filter((g) => g.activo)
+          .map((g) => (
+            <div key={g.concepto} className="admin-fila">
+              <span className="tipo-cuerpo-medio flex min-w-0 flex-1 items-center gap-etiqueta">
+                <span className="truncate">{g.concepto}</span>
+                {g.anual && <span className="tipo-etiqueta-anual etiqueta-anual">{COPYS.mes.anual}</span>}
+              </span>
+              <span className={g.monto === null ? 'tipo-cuerpo-enlace text-ambar' : 'tipo-monto-lista'}>
+                {g.monto === null ? 'por confirmar' : fmt(g.monto)}
+              </span>
+            </div>
+          ))}
         <p className="tipo-contexto text-gris admin-nota">
-          Se editan desde el paso 4 del cierre. Un cambio aplica a los meses siguientes, no reescribe el pasado.
+          El monto y si es anual se editan desde el paso 4 del cierre. Un cambio aplica a los meses
+          siguientes, no reescribe el pasado.
         </p>
+        <button type="button" onClick={() => abrir('gastos-fijos')} className="admin-accion">
+          <span className="tipo-cuerpo-destacado">Activar o desactivar un gasto fijo</span>
+          <span className="tipo-contexto text-gris">
+            Incluye los que ya no se cobran, para reactivarlos
+          </span>
+        </button>
       </section>
 
       <section className="admin-seccion admin-seccion-final">

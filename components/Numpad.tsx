@@ -35,6 +35,14 @@ export interface PeticionNumpad {
   sufijo?: 'S/' | 'm³' | null
   /** Cuántos decimales admite. Tres para lecturas, dos para montos. */
   maxDecimales?: 2 | 3
+  /**
+   * Una segunda línea, calculada en vivo con lo que se va tecleando.
+   *
+   * Nace del gasto anual: cuando se pide el **total al año**, sin esto no hay
+   * forma de ver cuánto es al mes hasta después de guardar. Solo se pinta
+   * mientras hay algo tecleado.
+   */
+  ayuda?: (valor: number) => string
   onOk: (valor: number) => void
 }
 
@@ -198,6 +206,11 @@ function Teclado({
           {peticion.sufijo === 'm³' && <span className="tipo-simbolo text-gris">m³</span>}
           <span className="numpad-cursor" aria-hidden="true" />
         </p>
+        {peticion.ayuda && valor && (
+          <p className="tipo-contexto-chico text-gris numpad-ayuda" aria-live="polite">
+            {peticion.ayuda(Number(valor))}
+          </p>
+        )}
         <div className="numpad-rejilla">
           {teclas.map((k, i) =>
             k === '' ? (

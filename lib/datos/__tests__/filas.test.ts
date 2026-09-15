@@ -97,9 +97,9 @@ describe('lavadoDeLasFilas · los m³ que aplican a un mes', () => {
 
 describe('fijosDeLasFilas · los gastos vigentes en un mes', () => {
   const fijos: FilaFijo[] = [
-    { concepto: 'Portería', monto: 1200, anual: false, vigenteDesde: '2026-01', orden: 0 },
-    { concepto: 'Portería', monto: 1300, anual: false, vigenteDesde: '2026-06', orden: 0 },
-    { concepto: 'Pozo a tierra', monto: null, anual: true, vigenteDesde: '2026-01', orden: 1 },
+    { concepto: 'Portería', monto: 1200, anual: false, activo: true, vigenteDesde: '2026-01', orden: 0 },
+    { concepto: 'Portería', monto: 1300, anual: false, activo: true, vigenteDesde: '2026-06', orden: 0 },
+    { concepto: 'Pozo a tierra', monto: null, anual: true, activo: true, vigenteDesde: '2026-01', orden: 1 },
   ]
 
   it('un mes anterior al cambio cobra el monto viejo', () => {
@@ -125,17 +125,40 @@ describe('fijosDeLasFilas · los gastos vigentes en un mes', () => {
   })
 
   it('un monto de cero NO es «por confirmar» · son dos cosas distintas', () => {
-    const cero: FilaFijo[] = [{ concepto: 'Algo', monto: 0, anual: false, vigenteDesde: '2026-01', orden: 0 }]
+    const cero: FilaFijo[] = [
+      { concepto: 'Algo', monto: 0, anual: false, activo: true, vigenteDesde: '2026-01', orden: 0 },
+    ]
     expect(fijosDeLasFilas(cero, '2026-01')).toEqual([{ concepto: 'Algo', monto: 0 }])
   })
 
   it('salen en el orden de la lista, y el empate lo rompe el nombre', () => {
     const mismos: FilaFijo[] = [
-      { concepto: 'Zeta', monto: 1, anual: false, vigenteDesde: '2026-01', orden: 3 },
-      { concepto: 'Alfa', monto: 1, anual: false, vigenteDesde: '2026-01', orden: 3 },
-      { concepto: 'Primero', monto: 1, anual: false, vigenteDesde: '2026-01', orden: 0 },
+      { concepto: 'Zeta', monto: 1, anual: false, activo: true, vigenteDesde: '2026-01', orden: 3 },
+      { concepto: 'Alfa', monto: 1, anual: false, activo: true, vigenteDesde: '2026-01', orden: 3 },
+      { concepto: 'Primero', monto: 1, anual: false, activo: true, vigenteDesde: '2026-01', orden: 0 },
     ]
     expect(fijosDeLasFilas(mismos, '2026-01').map((f) => f.concepto)).toEqual(['Primero', 'Alfa', 'Zeta'])
+  })
+
+  describe('activo: false apaga el concepto sin borrar su historia', () => {
+    it('un concepto desactivado desde el mes del cambio no aparece', () => {
+      const filas: FilaFijo[] = [
+        { concepto: 'Insumos limpieza', monto: 30, anual: false, activo: true, vigenteDesde: '2026-01', orden: 0 },
+        { concepto: 'Insumos limpieza', monto: 30, anual: false, activo: false, vigenteDesde: '2026-06', orden: 0 },
+      ]
+      expect(fijosDeLasFilas(filas, '2026-05').map((f) => f.concepto)).toEqual(['Insumos limpieza'])
+      expect(fijosDeLasFilas(filas, '2026-06')).toEqual([])
+    })
+
+    it('reactivarlo desde otro mes lo trae de vuelta, con el monto que se le puso', () => {
+      const filas: FilaFijo[] = [
+        { concepto: 'Insumos limpieza', monto: 30, anual: false, activo: true, vigenteDesde: '2026-01', orden: 0 },
+        { concepto: 'Insumos limpieza', monto: 30, anual: false, activo: false, vigenteDesde: '2026-06', orden: 0 },
+        { concepto: 'Insumos limpieza', monto: 35, anual: false, activo: true, vigenteDesde: '2026-08', orden: 0 },
+      ]
+      expect(fijosDeLasFilas(filas, '2026-07')).toEqual([])
+      expect(fijosDeLasFilas(filas, '2026-08')).toEqual([{ concepto: 'Insumos limpieza', monto: 35 }])
+    })
   })
 })
 

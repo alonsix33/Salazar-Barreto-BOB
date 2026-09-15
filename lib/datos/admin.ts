@@ -42,7 +42,7 @@ export interface DatosAdmin {
   /** En qué paso se quedó el cierre. */
   paso: number
   pagos: FilaPago[]
-  gastosFijos: { concepto: string; monto: number | null; anual: boolean }[]
+  gastosFijos: { concepto: string; monto: number | null; anual: boolean; activo: boolean }[]
   lavado: { dpto: string; concepto: string; m3: number; desde: string } | null
   /**
    * Los años que se pueden exportar, con **cuántos meses publicados** llevan.
@@ -154,6 +154,7 @@ export async function panelDeAdmin(): Promise<DatosAdmin> {
         concepto: f.concepto,
         monto: f.monto,
         anual: f.anual,
+        activo: f.activo,
       })),
     lavado: reasignacion
       ? {

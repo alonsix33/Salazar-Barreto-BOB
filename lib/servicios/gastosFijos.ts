@@ -44,7 +44,15 @@ export async function guardarGastosFijos(
     // Y desde el cierre pasa por el mismo bloqueo que el resto de los pasos.
     if (desdeElCierre) await tomarVersion(tx, datos.vigenteDesde, version)
 
-    const cambiados: { concepto: string; de: number | null; a: number | null }[] = []
+    const cambiados: {
+      concepto: string
+      de: number | null
+      a: number | null
+      activoDe: boolean
+      activoA: boolean
+      anualDe: boolean
+      anualA: boolean
+    }[] = []
 
     for (const cambio of datos.cambios) {
       const vigente = await tx.gastoFijo.findFirst({
@@ -52,7 +60,21 @@ export async function guardarGastosFijos(
         orderBy: { vigenteDesde: 'desc' },
       })
       const de = vigente ? aNumero(vigente.monto) : null
-      if (de === cambio.monto) continue
+      const activoDe = vigente?.activo ?? true
+      const activoA = cambio.activo ?? activoDe
+      const anualDe = vigente?.anual ?? false
+      const anualA = cambio.anual ?? anualDe
+      /**
+       * Antes esto solo miraba el monto: `if (de === cambio.monto) continue`.
+       * Con `activo` y `anual` de por medio, un cambio que solo los toca a
+       * ellos —el monto se queda igual, que es el caso normal de marcar o
+       * desmarcar «es anual» o de apagar un concepto— entraba en ese
+       * `continue` y no se escribía nada. Apagar "Guardianía" sin tocar su
+       * S/ 1,625, o marcarla como anual sin cambiar el monto, quedaba en
+       * silencio, sin auditoría y sin aviso, mientras la interfaz mostraba que
+       * ya se había guardado.
+       */
+      if (de === cambio.monto && activoA === activoDe && anualA === anualDe) continue
 
       await tx.gastoFijo.upsert({
         where: { concepto_vigenteDesde: { concepto: cambio.concepto, vigenteDesde: datos.vigenteDesde } },
@@ -60,12 +82,14 @@ export async function guardarGastosFijos(
           concepto: cambio.concepto,
           monto: cambio.monto === null ? null : aDecimal2(cambio.monto),
           anual: cambio.anual ?? vigente?.anual ?? false,
+          activo: activoA,
           vigenteDesde: datos.vigenteDesde,
           orden: vigente?.orden ?? 99,
         },
         update: {
           monto: cambio.monto === null ? null : aDecimal2(cambio.monto),
           ...(cambio.anual === undefined ? {} : { anual: cambio.anual }),
+          activo: activoA,
         },
       })
       await auditar(tx, {
@@ -73,26 +97,36 @@ export async function guardarGastosFijos(
         accion: vigente ? 'editar' : 'crear',
         entidad: 'gastoFijo',
         entidadId: `${cambio.concepto}@${datos.vigenteDesde}`,
-        campo: 'monto',
-        valorAnterior: de,
-        valorNuevo: cambio.monto,
+        campo: activoA !== activoDe ? 'activo' : 'monto',
+        valorAnterior: activoA !== activoDe ? (activoDe ? 'activo' : 'inactivo') : de,
+        valorNuevo: activoA !== activoDe ? (activoA ? 'activo' : 'inactivo') : cambio.monto,
         mes: datos.vigenteDesde,
       })
-      cambiados.push({ concepto: cambio.concepto, de, a: cambio.monto })
+      cambiados.push({ concepto: cambio.concepto, de, a: cambio.monto, activoDe, activoA, anualDe, anualA })
     }
 
     // Un gasto fijo cambia lo que pagan los siete a partir de ese mes: desde el
     // panel sí avisa, porque no es una tecla del cierre sino una decisión de
     // administración (`06` §3). Desde el paso 4, no: ver `desdeElCierre`.
     for (const c of desdeElCierre ? [] : cambiados) {
+      const desde = nombreMes(comoMes(datos.vigenteDesde))
+      const titulo =
+        c.activoA !== c.activoDe
+          ? c.activoA
+            ? `${c.concepto} vuelve a cobrarse desde ${desde}`
+            : `${c.concepto} ya no se cobra desde ${desde}`
+          : c.a === c.de && c.anualA !== c.anualDe
+            ? c.anualA
+              ? `${c.concepto} ahora se cobra dividido entre 12 meses, desde ${desde}`
+              : `${c.concepto} deja de dividirse entre 12 meses, desde ${desde}`
+            : c.a === null
+              ? `${c.concepto} queda por confirmar desde ${desde}`
+              : c.de === null
+                ? `${c.concepto} queda en S/ ${fmt(c.a)} desde ${desde}`
+                : `${c.concepto} pasó de S/ ${fmt(c.de)} a S/ ${fmt(c.a)} desde ${desde}`
       await avisar(tx, {
         tipo: 'gasto_fijo',
-        titulo:
-          c.a === null
-            ? `${c.concepto} queda por confirmar desde ${nombreMes(comoMes(datos.vigenteDesde))}`
-            : c.de === null
-              ? `${c.concepto} queda en S/ ${fmt(c.a)} desde ${nombreMes(comoMes(datos.vigenteDesde))}`
-              : `${c.concepto} pasó de S/ ${fmt(c.de)} a S/ ${fmt(c.a)} desde ${nombreMes(comoMes(datos.vigenteDesde))}`,
+        titulo,
         detalle: 'Los meses ya cerrados no cambian.',
         mes: datos.vigenteDesde,
       })

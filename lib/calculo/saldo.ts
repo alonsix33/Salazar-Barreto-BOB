@@ -3,7 +3,7 @@
  *
  * ```
  * recibido(mes) = Σ lo que entró de verdad de los CONFIRMADOS
- * gastado(mes)  = totalMes
+ * gastado(mes)  = totalMes − Σ gastos anuales de ese mes
  * delta(mes)    = recibido − gastado
  * saldo(mes)    = saldo(mes-1) + delta(mes)
  * ```
@@ -14,6 +14,18 @@
  *
  * **Solo cuentan los pagos confirmados.** Un pago avisado por el vecino pero no
  * verificado contra el banco no suma al saldo.
+ *
+ * **Un gasto `anual` no sale del banco ese mes.** Los vecinos sí lo pagan —está
+ * adentro de `totalMes` y de su cuota, eso no cambia—, pero el monto es la
+ * doceava parte de un contrato que se paga una vez al año (bomba, cisterna,
+ * cerco, extintor): el dinero se queda en la cuenta hasta que el gasto real
+ * ocurre y alguien lo escribe como puntual. Antes `gastado` era `totalMes` a
+ * secas, así que esos S/ 339.58/mes se restaban del saldo como si hubieran
+ * salido del banco, y cuando el gasto real llegaba —el tanque hidroneumático de
+ * julio, S/ 1 280.30— se restaba otra vez, completo. El saldo calculado nunca
+ * pudo acumular nada: todo lo que entraba por esos conceptos salía en el mismo
+ * mes, dos veces. Medido contra el estado de cuenta real de agosto de 2026: el
+ * saldo calculado daba S/ 267.31 cuando en el banco había S/ 4 098.35.
  */
 
 import { DPTOS, SALDO_BASE } from './constantes'
@@ -44,12 +56,35 @@ function aportadoPor(pago: MesConPagos['pagos'][DptoId], cuota: number): number 
   return round2(pago.monto ?? cuota)
 }
 
+/**
+ * Lo que de los gastos del mes es la doceava parte de un contrato anual: no
+ * salió del banco todavía, así que no se resta del saldo.
+ */
+function reservaAnualDe(c: ResultadoMes): number {
+  return round2(c.gastos.reduce((s, g) => s + (g.anual ? (g.monto ?? 0) : 0), 0))
+}
+
+function recibidoDe(m: MesConPagos, c: ResultadoMes): number {
+  return round2(DPTOS.reduce((s, d) => s + aportadoPor(m.pagos[d.id], c.cuotas[d.id].total), 0))
+}
+
 function deltaDe(m: MesConPagos): Delta {
   const c = m.resultado
   if (!c || !c.valido) return { recibido: 0, gastado: 0, delta: 0 }
-  const recibido = round2(
-    DPTOS.reduce((s, d) => s + aportadoPor(m.pagos[d.id], c.cuotas[d.id].total), 0),
-  )
+  const recibido = recibidoDe(m, c)
+  const gastado = round2(c.totalMes - reservaAnualDe(c))
+  return { recibido, gastado, delta: round2(recibido - gastado) }
+}
+
+/**
+ * El mismo delta, tal como lo calculaba el mockup: `gastado = totalMes`, sin
+ * la reserva anual afuera. Solo la usa `serieSaldoDerivada`, cuyo trabajo es
+ * reproducir el mockup al céntimo — no el saldo correcto de `deltaDe`.
+ */
+function deltaDeMockup(m: MesConPagos): Delta {
+  const c = m.resultado
+  if (!c || !c.valido) return { recibido: 0, gastado: 0, delta: 0 }
+  const recibido = recibidoDe(m, c)
   return { recibido, gastado: c.totalMes, delta: round2(recibido - c.totalMes) }
 }
 
@@ -115,12 +150,17 @@ export function serieSaldo(meses: readonly MesConPagos[], saldoInicial: number):
  * **No la usa ninguna pantalla ni ningún endpoint.** Existe solo para poder
  * comparar la serie del motor contra la del mockup en los tests de fidelidad de
  * la Fase 1. Si aparece importada fuera de un test, es un bug.
+ *
+ * Por eso usa `deltaDeMockup` y no `deltaDe`: su trabajo es reproducir el
+ * mockup al céntimo, reserva anual incluida en el gasto tal como el mockup la
+ * calculaba. Corregir eso aquí rompería la fidelidad que este código existe
+ * para comprobar.
  */
 export function serieSaldoDerivada(
   meses: readonly MesConPagos[],
   saldoBase: number = SALDO_BASE,
 ): FilaSaldo[] {
-  const deltas = meses.map(deltaDe)
+  const deltas = meses.map(deltaDeMockup)
   const totalDelta = deltas.reduce((s, x) => s + x.delta, 0)
   const inicial = round2(saldoBase - totalDelta)
   let saldo = inicial

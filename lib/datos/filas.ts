@@ -38,6 +38,8 @@ export interface FilaFijo {
   concepto: string
   monto: number | null
   anual: boolean
+  /** `false` = no se cobra desde `vigenteDesde`. Ver `GastoFijo.activo`. */
+  activo: boolean
   vigenteDesde: string
   orden: number
 }
@@ -104,7 +106,9 @@ export function lavadoDeLasFilas(
  * Los gastos fijos vigentes en un mes.
  *
  * Un cambio de monto no reescribe el pasado: para cada concepto se toma la fila
- * con el `vigenteDesde` más alto que no pase del mes pedido.
+ * con el `vigenteDesde` más alto que no pase del mes pedido — y si esa fila
+ * dice `activo: false`, el concepto no aparece en la lista de ese mes en
+ * adelante, aunque siga entero en la base para cuando se reactive.
  *
  * @param fijos Ordenados por `[orden asc, vigenteDesde asc]`. El orden importa:
  *   la última fila de cada concepto es la que gana, y es la más reciente.
@@ -113,6 +117,7 @@ export function fijosDeLasFilas(fijos: readonly FilaFijo[], mes: MesId): GastoFi
   const porConcepto = new Map<string, FilaFijo>()
   for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)
   return [...porConcepto.values()]
+    .filter((f) => f.activo)
     .sort((a, b) => a.orden - b.orden || a.concepto.localeCompare(b.concepto))
     .map((f) => ({
       concepto: f.concepto,

@@ -142,6 +142,8 @@ export const zGuardarGastosFijos = z.object({
         /** `null` es "por confirmar", que no es lo mismo que 0. */
         monto: zMonto.nullable(),
         anual: z.boolean().optional(),
+        /** `false` apaga el concepto desde `vigenteDesde`. Omitido = no lo toca. */
+        activo: z.boolean().optional(),
       }),
     )
     .min(1, 'No hay ningún cambio')
