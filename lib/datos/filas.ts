@@ -103,20 +103,39 @@ export function lavadoDeLasFilas(
 }
 
 /**
- * Los gastos fijos vigentes en un mes.
+ * La fila vigente de cada concepto de gasto fijo en un mes, **sin filtrar por
+ * `activo`**: quien la llama decide si le hace falta ver también los
+ * apagados (el panel de administración, para poder reactivarlos) o no (el
+ * motor, que solo cobra lo activo — ver `fijosDeLasFilas`).
  *
- * Un cambio de monto no reescribe el pasado: para cada concepto se toma la fila
- * con el `vigenteDesde` más alto que no pase del mes pedido — y si esa fila
- * dice `activo: false`, el concepto no aparece en la lista de ese mes en
- * adelante, aunque siga entero en la base para cuando se reactive.
+ * Un cambio de monto no reescribe el pasado: para cada concepto se toma la
+ * fila con el `vigenteDesde` más alto que no pase del mes pedido.
+ *
+ * Vivía duplicada: `lib/datos/admin.ts` tenía su propia copia de este mismo
+ * `Map` para el panel de administración. La regla de este archivo (`filas.ts`
+ * §"Por qué está aparte") es que no puede haber dos copias — ya costó caro
+ * antes, dos veces — así que ahora las dos usan esta.
  *
  * @param fijos Ordenados por `[orden asc, vigenteDesde asc]`. El orden importa:
  *   la última fila de cada concepto es la que gana, y es la más reciente.
  */
-export function fijosDeLasFilas(fijos: readonly FilaFijo[], mes: MesId): GastoFijo[] {
-  const porConcepto = new Map<string, FilaFijo>()
+export function fijosVigentesDeLasFilas<T extends { concepto: string; vigenteDesde: string }>(
+  fijos: readonly T[],
+  mes: MesId,
+): T[] {
+  const porConcepto = new Map<string, T>()
   for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)
   return [...porConcepto.values()]
+}
+
+/**
+ * Los gastos fijos **activos** de un mes, tal como los necesita el motor.
+ *
+ * Si una fila dice `activo: false`, el concepto no aparece en la lista de ese
+ * mes en adelante, aunque siga entero en la base para cuando se reactive.
+ */
+export function fijosDeLasFilas(fijos: readonly FilaFijo[], mes: MesId): GastoFijo[] {
+  return fijosVigentesDeLasFilas(fijos, mes)
     .filter((f) => f.activo)
     .sort((a, b) => a.orden - b.orden || a.concepto.localeCompare(b.concepto))
     .map((f) => ({

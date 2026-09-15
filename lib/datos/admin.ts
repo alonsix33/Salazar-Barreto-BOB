@@ -11,6 +11,7 @@ import { etiquetaMes, mesSiguiente, nombreMes, comoMes } from '@/lib/calculo/mes
 import type { DptoId, MesId, PagosMes } from '@/lib/calculo/tipos'
 import { modoDeBob, porQueEseModo } from '@/lib/bob'
 import { almanaqueFresco } from './almanaque'
+import { fijosVigentesDeLasFilas } from './filas'
 
 export interface FilaPago {
   dpto: DptoId
@@ -121,10 +122,10 @@ export async function panelDeAdmin(): Promise<DatosAdmin> {
   const pagosMes: PagosMes = mesPublicado ? foto.pagosDe(mesPublicado) : {}
   const reasignacion = foto.crudos.reasignaciones[0] ?? null
 
-  // Los fijos vigentes en el mes a cerrar: la última fila de cada concepto que
-  // ya aplica. `crudos.fijos` viene ordenado por [orden, vigenteDesde].
-  const porConcepto = new Map<string, (typeof foto.crudos.fijos)[number]>()
-  for (const f of foto.crudos.fijos) if (f.vigenteDesde <= mesACerrar) porConcepto.set(f.concepto, f)
+  // Los fijos vigentes en el mes a cerrar, activos e inactivos: el panel
+  // necesita ver los dos (los inactivos, para poder reactivarlos). La regla de
+  // cuál fila gana por concepto vive una sola vez, en `filas.ts`.
+  const vigentes = fijosVigentesDeLasFilas(foto.crudos.fijos, mesACerrar)
 
   return {
     mesPublicado,
@@ -148,7 +149,7 @@ export async function panelDeAdmin(): Promise<DatosAdmin> {
         texto: p?.texto ?? null,
       }
     }),
-    gastosFijos: [...porConcepto.values()]
+    gastosFijos: vigentes
       .sort((a, b) => a.orden - b.orden)
       .map((f) => ({
         concepto: f.concepto,
