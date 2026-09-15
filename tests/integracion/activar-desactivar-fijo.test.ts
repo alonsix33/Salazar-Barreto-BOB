@@ -121,3 +121,67 @@ describe('marcar o desmarcar «es anual» sin cambiar el monto', () => {
     expect(aviso?.titulo).toContain('dividido entre 12')
   })
 })
+
+/**
+ * Encontrado por un verificador adversarial: cuando `activo`/`anual` y
+ * `monto` cambiaban en la misma llamada, `guardarGastosFijos` elegía un solo
+ * campo para auditar (el de mayor prioridad) y un solo fragmento para el
+ * aviso, y el resto del cambio quedaba sin rastro y sin avisar. Hoy el panel
+ * nunca manda los dos juntos, pero la ruta pública `/api/gastos-fijos` no lo
+ * impide.
+ */
+describe('activo/anual y monto cambiando en la misma llamada', () => {
+  beforeEach(async () => {
+    await resembrar()
+    await cargarMesEnCurso(MES)
+  })
+
+  it('reactivar subiendo el monto a la vez audita los dos campos, no solo activo', async () => {
+    await guardarGastosFijos({
+      cambios: [{ concepto: 'Insumos limpieza', monto: 30, activo: false }],
+      vigenteDesde: MES,
+    })
+    await guardarGastosFijos({
+      cambios: [{ concepto: 'Insumos limpieza', monto: 45, activo: true }],
+      vigenteDesde: MES,
+    })
+    const apuntes = await prisma.auditoria.findMany({
+      where: { entidad: 'gastoFijo', entidadId: `Insumos limpieza@${MES}`, campo: { in: ['monto', 'activo'] } },
+      orderBy: { momento: 'asc' },
+    })
+    // La última escritura tuvo que dejar UN apunte de `monto` (30 → 45) y
+    // UNO de `activo` (inactivo → activo), no solo el de mayor prioridad.
+    const deLaUltima = apuntes.filter((a) => Number(a.valorNuevo) === 45 || a.valorNuevo === 'activo')
+    expect(deLaUltima.map((a) => a.campo).sort()).toEqual(['activo', 'monto'])
+  })
+
+  it('reactivar subiendo el monto a la vez lo dice completo en el aviso', async () => {
+    await guardarGastosFijos({
+      cambios: [{ concepto: 'Insumos limpieza', monto: 30, activo: false }],
+      vigenteDesde: MES,
+    })
+    await guardarGastosFijos({
+      cambios: [{ concepto: 'Insumos limpieza', monto: 45, activo: true }],
+      vigenteDesde: MES,
+    })
+    const aviso = await prisma.aviso.findFirst({
+      where: { tipo: 'gasto_fijo', titulo: { contains: 'vuelve a cobrarse' } },
+      orderBy: { creadoEn: 'desc' },
+    })
+    expect(aviso?.titulo).toContain('vuelve a cobrarse')
+    expect(aviso?.titulo).toContain('45')
+  })
+
+  it('marcar anual subiendo el monto a la vez lo dice completo, no solo «pasa de S/A a S/B»', async () => {
+    await guardarGastosFijos({
+      cambios: [{ concepto: 'Insumos limpieza', monto: 40, anual: true }],
+      vigenteDesde: MES,
+    })
+    const aviso = await prisma.aviso.findFirst({
+      where: { tipo: 'gasto_fijo', titulo: { contains: 'Insumos limpieza' } },
+      orderBy: { creadoEn: 'desc' },
+    })
+    expect(aviso?.titulo).toContain('dividido entre 12')
+    expect(aviso?.titulo).toContain('40')
+  })
+})

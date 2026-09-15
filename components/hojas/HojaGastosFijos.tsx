@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { COPYS } from '@/lib/copys'
 import { fmt } from '@/lib/calculo/redondeo'
@@ -25,6 +25,7 @@ export function HojaGastosFijos({
   vigenteDesde: string
 }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const cambiar = useMutation({
     mutationFn: async (cambio: { concepto: string; monto: number | null; activo: boolean }) => {
@@ -37,7 +38,15 @@ export function HojaGastosFijos({
       if (!r.ok) throw new Error(cuerpo.error ?? 'No se pudo guardar')
       return cuerpo
     },
-    onSuccess: () => router.refresh(),
+    onSuccess: () => {
+      router.refresh()
+      // `router.refresh()` re-pinta el panel de siempre, que recibe sus datos
+      // como prop de un Server Component, pero esta hoja los trae aparte con
+      // `useQuery(['admin'], …)` en `HojaAdminDatos` — la misma trampa que ya
+      // documentó `RegistrarPago.tsx`. Sin esto, activar o desactivar dejaba
+      // la fila y el botón mintiendo hasta que expiraba el `staleTime`.
+      void queryClient.invalidateQueries({ queryKey: ['admin'] })
+    },
   })
 
   return (
