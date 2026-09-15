@@ -76,8 +76,8 @@ const DEFECTOS = [
     '  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
     '  for (const f of fijos) porConcepto.set(f.concepto, f)'],
   ['datos/filas.ts', 'quedarse con el monto viejo de un gasto fijo, no el vigente',
-    '  const porConcepto = new Map<string, FilaFijo>()\n  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
-    '  const porConcepto = new Map<string, FilaFijo>()\n  for (const f of fijos) if (f.vigenteDesde <= mes && !porConcepto.has(f.concepto)) porConcepto.set(f.concepto, f)'],
+    '  const porConcepto = new Map<string, T>()\n  for (const f of fijos) if (f.vigenteDesde <= mes) porConcepto.set(f.concepto, f)',
+    '  const porConcepto = new Map<string, T>()\n  for (const f of fijos) if (f.vigenteDesde <= mes && !porConcepto.has(f.concepto)) porConcepto.set(f.concepto, f)'],
   ['datos/filas.ts', 'repartir un gasto entre los siete ignorando a los participantes',
     '        participantes: e.participantes as DptoId[],', '        participantes: [] as DptoId[],'],
 ]
