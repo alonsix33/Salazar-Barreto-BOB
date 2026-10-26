@@ -62,7 +62,7 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
           <Etiqueta tono="sobre-noche" className="block">
             {COPYS.admin.cerrarSiguiente}
           </Etiqueta>
-          <p className="tipo-titulo-hoja admin-cierre-mes">{datos.nombreACerrar}</p>
+          <p className="tipo-titulo-hoja admin-cierre-mes">{datos.etiquetaACerrar}</p>
           <p className="tipo-cuerpo-menor text-sobre-noche-contexto admin-cierre-texto">
             {datos.paso > 0 ? COPYS.admin.cierrePaso(datos.paso) : COPYS.admin.cierrePasos}
           </p>

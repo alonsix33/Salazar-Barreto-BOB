@@ -170,7 +170,7 @@ test.describe('el panel de administración', () => {
   /** Agregar un gasto fijo desde el panel: antes solo se podía apagar y encender. */
   test('se puede añadir un gasto fijo desde el panel', async ({ page }) => {
     await page.goto('/admin')
-    await page.getByRole('button', { name: /Añadir, cambiar o apagar un gasto fijo/ }).click()
+    await page.getByRole('button', { name: /Añadir, cambiar o apagar un gasto fijo|^Gastos fijos/ }).click()
     const hoja = page.getByRole('dialog')
     await hoja.getByRole('button', { name: /Añadir un concepto fijo/ }).click()
     await hoja.getByRole('textbox').fill('Jardinería')
@@ -182,8 +182,15 @@ test.describe('el panel de administración', () => {
 
     await expect(hoja.getByText('Jardinería')).toBeVisible()
     await expect(hoja.getByText('90.00')).toBeVisible()
-    const { gastos } = await (await page.request.get('/api/gastos-fijos')).json()
-    expect(gastos.find((g: { concepto: string }) => g.concepto === 'Jardinería')?.monto).toBe(90)
+
+    // Y queda guardado: se recarga el panel, se vuelve a abrir la hoja, y sigue.
+    // (`/api/gastos-fijos` enseña los vigentes del último mes con recibo, que
+    // no es el mes desde el que aplica un concepto nuevo.)
+    await page.reload()
+    await page.getByRole('button', { name: /Añadir, cambiar o apagar un gasto fijo|^Gastos fijos/ }).click()
+    const otraVez = page.getByRole('dialog')
+    await expect(otraVez.getByText('Jardinería')).toBeVisible()
+    await expect(otraVez.getByText('90.00')).toBeVisible()
   })
 
   test('el Excel se descarga de verdad y sus cifras son las de la app', async ({ page }) => {

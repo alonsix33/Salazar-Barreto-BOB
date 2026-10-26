@@ -276,7 +276,16 @@ function Pantallas({
   const queryClient = useQueryClient()
   const envio = cambiosParaEnviar(datos, cambios)
   const hayCambios = Object.keys(envio).length > 0
-  const marcado = (p: Parte) => p in envio
+  /**
+   * Qué clave del envío corresponde a cada tarjeta. Las dos no se llaman igual
+   * en los gastos puntuales —`puntuales` y `extras`—, y con `p in envio` la
+   * marca «Cambiado» no salía nunca en esa tarjeta: quien añadía un gasto
+   * volvía a la lista sin ninguna señal de que había algo sin guardar.
+   */
+  const CLAVE_DEL_ENVIO: Record<Parte, string> = {
+    lecturas: 'lecturas', recibo: 'recibo', fijos: 'fijos', puntuales: 'extras', lavado: 'lavado',
+  }
+  const marcado = (p: Parte) => CLAVE_DEL_ENVIO[p] in envio
 
   const volver = () => setVista('que')
 

@@ -167,7 +167,7 @@ test.describe('las hojas de administración tampoco se desbordan', () => {
   const HOJAS = [
     { boton: /Cerrar el mes siguiente|Empezar |Seguir con /, titulo: /Vamos a cerrar/ },
     { boton: /lavado de vehículo/, titulo: /Cargos y créditos activos/ },
-    { boton: /Corregir/, titulo: /Corregir /, },
+    { boton: /Corregir/, titulo: /¿Qué mes\?/ },
     { boton: /Exportar el año en Excel/, titulo: /Exportar el año/ },
   ]
 
