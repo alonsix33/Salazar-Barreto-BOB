@@ -10,8 +10,9 @@ import { balancePorDpto, serieSaldo, type MesConPagos } from '@/lib/calculo/sald
 import { etiquetaMes, mesAnterior, mesCorto, nombreMes, comoMes } from '@/lib/calculo/mes'
 import { DPTO_IDS } from '@/lib/calculo/constantes'
 import { nadaPendiente } from '@/lib/estados'
-import type { DptoId, FilaSaldo, MesId, ResultadoMes } from '@/lib/calculo/tipos'
+import type { DptoId, Extra, FilaSaldo, MesId, ResultadoMes } from '@/lib/calculo/tipos'
 import { almanaque, almanaqueFresco, type Almanaque } from './almanaque'
+import { fijosVigentesDeLasFilas } from './filas'
 
 export interface ResumenMes {
   mes: MesId
@@ -142,6 +143,12 @@ export interface Borrador {
   lecturas: Record<string, number>
   /** Las lecturas del mes anterior, para mostrarlas al lado. */
   lecturasAnteriores: Record<string, number>
+  /**
+   * Los gastos puntuales y créditos tal como están guardados —con quiénes pagan
+   * y cómo se reparte—. El paso 5 los reconstruía desde el cálculo y por el
+   * camino perdía los créditos y la lista de quiénes pagaban.
+   */
+  extras: Extra[]
   /** Promedio histórico de consumo por departamento, para avisar de lo raro. */
   promedios: Record<string, number>
   /**
@@ -205,6 +212,7 @@ export async function borradorDeMes(mes: MesId): Promise<Borrador> {
     // como diccionario llano para la interfaz, que las lee por id de dpto.
     lecturas: entradas.lecturas as Record<string, number>,
     lecturasAnteriores: entradas.lecturasAnteriores as Record<string, number>,
+    extras: [...entradas.extras],
     promedios: await promediosDeConsumo(mes, foto),
     m3Anteriores: mesesAnterioresDe(foto, mes, (r) => r.aguaM3),
     luzAnteriores: mesesAnterioresDe(foto, mes, (r) => r.luz).map((x) => ({
@@ -295,3 +303,45 @@ export async function promediosDeConsumo(
   for (const d of DPTO_IDS) salida[d] = cuenta[d] ? suma[d]! / cuenta[d]! : 0
   return salida
 }
+
+/**
+ * Todo lo que la hoja de **corregir un mes publicado** necesita para pintar las
+ * cinco cosas que se pueden corregir, tal como están guardadas hoy.
+ *
+ * Las listas salen **exactas** de la base —cada gasto con quiénes lo pagan y
+ * cómo se reparte, y los fijos apagados también—, no reconstruidas desde el
+ * cálculo: reconstruirlas perdía quiénes pagaban y los créditos, y quien
+ * corregía guardaba una lista distinta de la que había abierto.
+ *
+ * Sin la caché entre peticiones, como todo lo de administración.
+ */
+export async function datosDeCorreccion(mes: MesId) {
+  const foto = await almanaqueFresco()
+  const entradas = foto.entradasDe(mes)
+  const resultado = foto.resultadoDe(mes)
+  const reasignacion = foto.crudos.reasignaciones.find((r) => r.desde <= mes) ?? null
+  return {
+    mes,
+    etiqueta: etiquetaMes(mes),
+    version: foto.cierreDe(mes)?.version ?? 0,
+    publicado: foto.cierreDe(mes)?.publicado ?? false,
+    resultado,
+    pagos: foto.pagosDe(mes),
+    lecturas: entradas.lecturas as Record<string, number>,
+    extras: entradas.extras,
+    fijos: fijosVigentesDeLasFilas(foto.crudos.fijos, mes)
+      .sort((a, b) => a.orden - b.orden)
+      .map((f) => ({ concepto: f.concepto, monto: f.monto, anual: f.anual, activo: f.activo })),
+    lavado: reasignacion
+      ? {
+          m3: reasignacion.m3,
+          activo: entradas.lavadoM3 > 0,
+          aplicado: resultado.valido && resultado.lavado > 0,
+          dpto: reasignacion.dptoId,
+          concepto: reasignacion.concepto,
+        }
+      : null,
+  }
+}
+
+export type DatosDeCorreccion = Awaited<ReturnType<typeof datosDeCorreccion>>

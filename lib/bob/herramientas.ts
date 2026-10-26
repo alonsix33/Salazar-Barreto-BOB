@@ -193,6 +193,8 @@ export const HERRAMIENTAS: Herramienta[] = [
         alDia,
         enVerificacion: por('en-verificacion'),
         sinRegistrar: por('sin-registrar'),
+        /** Pagaron y está confirmado, pero la cuota es mayor que lo que pusieron. */
+        faltaUnaParte: por('falta-parte'),
         /** No deben nada porque su cuota quedó en cero. No es que falten. */
         sinNadaQuePagar: sinCobro,
         cuantosAlDia: alDia.length,

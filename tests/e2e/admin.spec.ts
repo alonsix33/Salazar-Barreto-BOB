@@ -23,6 +23,9 @@ test.describe('el panel de administración', () => {
     await page.getByRole('button', { name: /Corregir/ }).click()
     const hoja = page.getByRole('dialog')
     await expect(hoja).toBeVisible()
+    // El recorrido es mes → qué parte → cambios → revisión.
+    await hoja.getByRole('button', { name: 'Junio 2026' }).click()
+    await hoja.getByRole('button', { name: /Lecturas de los medidores/ }).click()
 
     // Se cambia la lectura del 202: 35.112 → 35.500. El teclado abre con la
     // lectura actual puesta, así que primero se borra.
@@ -35,6 +38,8 @@ test.describe('el panel de administración', () => {
     }
     await page.getByRole('button', { name: 'Guardar', exact: true }).click()
     await expect(hoja.getByText('35.500')).toBeVisible()
+    await hoja.getByRole('button', { name: 'Listo', exact: true }).click()
+    await hoja.getByRole('button', { name: /Revisar lo que cambia/ }).click()
 
     await hoja.getByRole('textbox').fill('Se había tecleado mal la lectura del 202.')
     await hoja.getByRole('button', { name: 'Guardar la corrección y avisar' }).click()
@@ -77,10 +82,10 @@ test.describe('el panel de administración', () => {
     const hoja = page.getByRole('dialog')
     await expect(hoja).toBeVisible()
 
-    // Se abre por el más reciente y se elige mayo.
-    await expect(hoja.getByText('Corregir Junio 2026')).toBeVisible()
+    // Lo primero es elegir el mes, y están todos los publicados.
     await hoja.getByRole('button', { name: 'Mayo 2026' }).click()
     await expect(hoja.getByText('Corregir Mayo 2026')).toBeVisible()
+    await hoja.getByRole('button', { name: /Lecturas de los medidores/ }).click()
 
     // La lectura del 202 en mayo es 27.264. Se baja a 27.200: el 202 consume
     // menos y el área común crece, que es el sentido seguro — subirla la mete en
@@ -93,6 +98,8 @@ test.describe('el panel de administración', () => {
       await page.getByRole('button', { name: d === '.' ? 'Punto decimal' : d, exact: true }).click()
     }
     await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+    await hoja.getByRole('button', { name: 'Listo', exact: true }).click()
+    await hoja.getByRole('button', { name: /Revisar lo que cambia/ }).click()
 
     await hoja.getByRole('textbox').fill('Se leyó mal el medidor del 202 en mayo.')
     await hoja.getByRole('button', { name: 'Guardar la corrección y avisar' }).click()
@@ -108,6 +115,82 @@ test.describe('el panel de administración', () => {
     // Y junio, que no se tocó, sigue igual.
     const junio = await (await page.request.get('/api/meses/2026-06')).json()
     expect(junio.resultado.valido).toBe(true)
+  })
+
+  /**
+   * El caso que pidió esta pantalla: se cerró el mes y después llegó un gasto
+   * que es de ese mes. Tiene que poder entrar **a ese mes**, repartirse por
+   * porcentaje, avisar a los siete —y quien ya había pagado debe solo la
+   * diferencia, a la vista, no «al día»—.
+   */
+  test('un gasto que llega después de cerrar el mes entra a ese mes', async ({ page }) => {
+    const antes = await (await page.request.get('/api/meses/2026-06')).json()
+    const totalAntes = antes.resultado.totalMes as number
+    const cuota101 = antes.resultado.cuotas['101'].total as number
+
+    await page.goto('/admin')
+    await page.getByRole('button', { name: /Corregir/ }).click()
+    const hoja = page.getByRole('dialog')
+    await hoja.getByRole('button', { name: 'Junio 2026' }).click()
+    await hoja.getByRole('button', { name: /Gastos puntuales y créditos/ }).click()
+    await hoja.getByRole('button', { name: /Añadir un gasto extraordinario/ }).click()
+    for (const d of '450') {
+      await page.getByRole('button', { name: d, exact: true }).click()
+    }
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+
+    // Recién añadido, pide el nombre: «Gasto extraordinario» no le dice nada a
+    // los siete que reciben el aviso.
+    const nombre = hoja.getByRole('textbox')
+    await expect(nombre).toBeVisible()
+    await nombre.fill('Reparación de la bomba')
+    await nombre.press('Enter')
+    await expect(hoja.getByText('Reparación de la bomba')).toBeVisible()
+    await hoja.getByRole('button', { name: 'Listo', exact: true }).click()
+    await expect(hoja.getByText('Cambiado')).toBeVisible()
+    await hoja.getByRole('button', { name: /Revisar lo que cambia/ }).click()
+
+    // La revisión dice quién ya había pagado y cuánto le falta.
+    await expect(hoja.getByText(/Ya había pagado S\/ /).first()).toBeVisible()
+    await hoja.getByRole('textbox').fill('Llegó la factura de la bomba, es de este mes.')
+    await hoja.getByRole('button', { name: 'Guardar la corrección y avisar' }).click()
+    await expect(hoja.getByText('Listo, los siete ya lo saben')).toBeVisible()
+
+    const despues = await (await page.request.get('/api/meses/2026-06')).json()
+    expect(Math.round((despues.resultado.totalMes - totalAntes) * 100) / 100).toBe(450)
+    expect(despues.resultado.gastos.some((g: { concepto: string }) => g.concepto === 'Reparación de la bomba')).toBe(true)
+
+    // El 101 ya había pagado: ve «Falta una parte» y cuánto, no «Al día».
+    await page.context().addCookies([{ name: 'sb_dpto', value: '101', domain: 'localhost', path: '/' }])
+    await page.goto('/')
+    await expect(page.getByText('Falta una parte').first()).toBeVisible()
+    await expect(page.getByText(new RegExp(`Pagaste S/ ${cuota101.toFixed(2)}`))).toBeVisible()
+  })
+
+  /** Agregar un gasto fijo desde el panel: antes solo se podía apagar y encender. */
+  test('se puede añadir un gasto fijo desde el panel', async ({ page }) => {
+    await page.goto('/admin')
+    await page.getByRole('button', { name: /Añadir, cambiar o apagar un gasto fijo|^Gastos fijos/ }).click()
+    const hoja = page.getByRole('dialog')
+    await hoja.getByRole('button', { name: /Añadir un concepto fijo/ }).click()
+    await hoja.getByRole('textbox').fill('Jardinería')
+    await hoja.getByRole('button', { name: 'Poner monto' }).click()
+    for (const d of '90') {
+      await page.getByRole('button', { name: d, exact: true }).click()
+    }
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+
+    await expect(hoja.getByText('Jardinería')).toBeVisible()
+    await expect(hoja.getByText('90.00')).toBeVisible()
+
+    // Y queda guardado: se recarga el panel, se vuelve a abrir la hoja, y sigue.
+    // (`/api/gastos-fijos` enseña los vigentes del último mes con recibo, que
+    // no es el mes desde el que aplica un concepto nuevo.)
+    await page.reload()
+    await page.getByRole('button', { name: /Añadir, cambiar o apagar un gasto fijo|^Gastos fijos/ }).click()
+    const otraVez = page.getByRole('dialog')
+    await expect(otraVez.getByText('Jardinería')).toBeVisible()
+    await expect(otraVez.getByText('90.00')).toBeVisible()
   })
 
   test('el Excel se descarga de verdad y sus cifras son las de la app', async ({ page }) => {

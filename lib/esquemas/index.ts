@@ -42,41 +42,47 @@ export const zGuardarRecibo = z
     message: 'No hay ningún dato del recibo que guardar',
   })
 
+/**
+ * Un gasto extraordinario o un crédito. Lo comparten el paso 5 del cierre y la
+ * corrección de un mes publicado: **una sola definición** de qué es un extra
+ * válido, para que una corrección no pueda colar lo que el cierre rechaza.
+ */
+export const zExtra = z.discriminatedUnion('tipo', [
+  z.object({
+    tipo: z.literal('gasto'),
+    concepto: zTexto(80).min(1, 'El gasto necesita un concepto'),
+    monto: zMonto,
+    /**
+     * Quiénes lo pagan. Vacío o ausente = los siete, que es lo normal.
+     * Se valida contra los ids reales: un departamento inventado aquí
+     * repartiría el gasto entre menos gente sin que nada avise.
+     */
+    participantes: z
+      .array(z.string())
+      .optional()
+      .refine(
+        (v) => !v || v.every((id) => (DPTO_IDS as readonly string[]).includes(id)),
+        'Hay un departamento que no existe en la lista de quiénes pagan este gasto',
+      ),
+    reparto: z.enum(['porcentaje', 'iguales']).optional(),
+  }),
+  z.object({
+    tipo: z.literal('credito'),
+    concepto: zTexto(80).default('Crédito'),
+    monto: zMonto,
+    // Un crédito sin departamento se evapora: no se le resta a nadie y el
+    // mes cuadra igual. Por eso aquí es obligatorio, y además hay un CHECK
+    // en la base.
+    dpto: zDpto,
+  }),
+])
+
+/** La lista de extras de un mes. */
+export const zExtras = z.array(zExtra).max(50, 'Demasiados gastos puntuales en un mes')
+
 /** `PUT /api/meses/[mes]/gastos` · gastos extraordinarios y créditos. */
 export const zGuardarGastos = z.object({
-  extras: z
-    .array(
-      z.discriminatedUnion('tipo', [
-        z.object({
-          tipo: z.literal('gasto'),
-          concepto: zTexto(80).min(1, 'El gasto necesita un concepto'),
-          monto: zMonto,
-          /**
-           * Quiénes lo pagan. Vacío o ausente = los siete, que es lo normal.
-           * Se valida contra los ids reales: un departamento inventado aquí
-           * repartiría el gasto entre menos gente sin que nada avise.
-           */
-          participantes: z
-            .array(z.string())
-            .optional()
-            .refine(
-              (v) => !v || v.every((id) => (DPTO_IDS as readonly string[]).includes(id)),
-              'Hay un departamento que no existe en la lista de quiénes pagan este gasto',
-            ),
-          reparto: z.enum(['porcentaje', 'iguales']).optional(),
-        }),
-        z.object({
-          tipo: z.literal('credito'),
-          concepto: zTexto(80).default('Crédito'),
-          monto: zMonto,
-          // Un crédito sin departamento se evapora: no se le resta a nadie y el
-          // mes cuadra igual. Por eso aquí es obligatorio, y además hay un CHECK
-          // en la base.
-          dpto: zDpto,
-        }),
-      ]),
-    )
-    .max(50, 'Demasiados gastos puntuales en un mes'),
+  extras: zExtras,
   version: zVersion,
 })
 
@@ -105,6 +111,30 @@ export const zCorregir = z.object({
       descuento: zMonto.nullable().optional(),
     })
     .optional(),
+  /**
+   * La lista **entera** de gastos puntuales y créditos del mes, como en el paso
+   * 5: quien corrige ve la lista y la deja como debe quedar. Omitida = no se
+   * toca.
+   */
+  extras: zExtras.optional(),
+  /**
+   * Gastos fijos de **este mes solamente**. No mueven los meses siguientes:
+   * una corrección es de ese mes. Para cambiar lo que se cobra a futuro está
+   * `PUT /api/gastos-fijos`.
+   */
+  fijos: z
+    .array(
+      z.object({
+        concepto: zTexto(80).min(1),
+        monto: zMonto.nullable(),
+        anual: z.boolean().optional(),
+        activo: z.boolean().optional(),
+      }),
+    )
+    .max(30)
+    .optional(),
+  /** La casilla del lavado de ese mes. */
+  lavado: z.object({ activa: z.boolean() }).optional(),
   motivo: zTexto(500).min(1, 'Di qué estás corrigiendo: el aviso a los siete lo lleva'),
   /**
    * También aquí. Dos correcciones simultáneas del mismo mes salían las dos
@@ -113,6 +143,9 @@ export const zCorregir = z.object({
    */
   version: zVersion,
 })
+
+/** La vista previa de una corrección: lo mismo, y el motivo todavía puede faltar. */
+export const zCorregirPrevia = zCorregir.extend({ motivo: zTexto(500).optional() })
 
 /** `POST /api/pagos/aviso` · el vecino dice "ya pagué". */
 export const zAvisoPago = z.object({
@@ -205,5 +238,6 @@ export type Publicar = SinVersionObligatoria<z.infer<typeof zPublicar>>
 export type Corregir = SinVersionObligatoria<z.infer<typeof zCorregir>>
 export type AvisoPago = z.infer<typeof zAvisoPago>
 export type ConfirmarPago = z.infer<typeof zConfirmarPago>
+export type ExtraEntrada = z.infer<typeof zExtra>
 export type GuardarGastosFijos = z.infer<typeof zGuardarGastosFijos>
 export type PreguntaBob = z.infer<typeof zPreguntaBob>

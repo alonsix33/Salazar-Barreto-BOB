@@ -1,11 +1,14 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { COPYS } from '@/lib/copys'
 import { fmt } from '@/lib/calculo/redondeo'
 import { fechaCorta } from '@/lib/formato'
 import type { DatosAdmin } from '@/lib/datos/admin'
+import { Boton } from '@/components/ui/Boton'
 import { Etiqueta } from '@/components/ui/Etiqueta'
+import { TarjetaNoche } from '@/components/ui/TarjetaNoche'
 import { useHoja } from '@/components/hojas/Hojas'
 import { FijarContexto } from '@/components/hojas/Contexto'
 import { RegistrarPago } from './RegistrarPago'
@@ -13,8 +16,17 @@ import { RegistrarPago } from './RegistrarPago'
 /**
  * El panel de administración. `04-cierre-del-mes.md` §"otras funciones".
  *
- * Lo primero que se ve es lo que hay que hacer: los pagos por verificar. Después
- * el cierre del mes, y al final el resto de ajustes.
+ * Tres bloques, en el orden en que se usan:
+ *
+ *  1. **Lo que toca hacer ahora**: el cierre del mes, con un solo botón grande.
+ *  2. **Los pagos**: solo lo que pide una acción —quién avisó, quién falta, a
+ *     quién le queda una parte—. Lo ya confirmado se recoge: ocupaba media
+ *     pantalla para decir que no hay nada que hacer.
+ *  3. **Todo lo demás**, en una rejilla de cuatro accesos con su subtítulo.
+ *
+ * Antes era una columna de dos mil píxeles donde el cierre, la lista de gastos
+ * fijos —que solo se leía, no se tocaba— y seis botones sueltos valían lo mismo,
+ * y nada decía por dónde empezar.
  */
 export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
   const { abrir } = useHoja()
@@ -22,6 +34,8 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
   const avisados = datos.pagos.filter((p) => p.estado === 'aviso')
   const sinAviso = datos.pagos.filter((p) => p.estado === null)
   const confirmados = datos.pagos.filter((p) => p.estado === 'confirmado')
+  const conParte = confirmados.filter((p) => p.falta > 0)
+  const hayPagosQueAtender = avisados.length + sinAviso.length + conParte.length > 0
 
   return (
     <div className="pantalla scroll-limpio admin-pantalla">
@@ -42,121 +56,126 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
         <p className="tipo-cuerpo-chico text-gris admin-subtitulo">{datos.etiquetaPublicado}</p>
       </div>
 
-      {avisados.length > 0 && (
+      {/* 1 · Lo que toca ahora */}
+      <div className="admin-seccion">
+        <TarjetaNoche>
+          <Etiqueta tono="sobre-noche" className="block">
+            {COPYS.admin.cerrarSiguiente}
+          </Etiqueta>
+          <p className="tipo-titulo-hoja admin-cierre-mes">{datos.etiquetaACerrar}</p>
+          <p className="tipo-cuerpo-menor text-sobre-noche-contexto admin-cierre-texto">
+            {datos.paso > 0 ? COPYS.admin.cierrePaso(datos.paso) : COPYS.admin.cierrePasos}
+          </p>
+          <Boton tono="terra" onClick={() => abrir('wizard')}>
+            {datos.paso > 0 ? `Seguir con ${datos.nombreACerrar}` : `Empezar ${datos.nombreACerrar}`}
+          </Boton>
+        </TarjetaNoche>
+      </div>
+
+      {/* 2 · Los pagos */}
+      {datos.mesPublicado && (
         <section className="admin-seccion">
-          <Etiqueta className="block admin-seccion-titulo">Avisaron · falta confirmar</Etiqueta>
-          {avisados.map((p) => (
-            <RegistrarPago key={p.dpto} pago={p} mes={datos.mesPublicado!} />
-          ))}
+          <Etiqueta className="block admin-seccion-titulo">
+            {COPYS.admin.pagosDe(datos.etiquetaPublicado)}
+          </Etiqueta>
+          {!hayPagosQueAtender && (
+            <p className="tipo-cuerpo-chico text-gris admin-texto">{COPYS.admin.pagosAlDia}</p>
+          )}
+          {avisados.length > 0 && (
+            <>
+              <p className="tipo-cuerpo-destacado admin-subgrupo">{COPYS.admin.avisaronConfirmar}</p>
+              {avisados.map((p) => (
+                <RegistrarPago key={p.dpto} pago={p} mes={datos.mesPublicado!} />
+              ))}
+            </>
+          )}
+          {sinAviso.length > 0 && (
+            <>
+              <p className="tipo-cuerpo-destacado admin-subgrupo">{COPYS.admin.sinAvisoTodavia}</p>
+              {sinAviso.map((p) => (
+                <RegistrarPago key={p.dpto} pago={p} mes={datos.mesPublicado!} />
+              ))}
+            </>
+          )}
+          {conParte.length > 0 && (
+            <>
+              <p className="tipo-cuerpo-destacado admin-subgrupo">{COPYS.admin.faltaUnaParte}</p>
+              {conParte.map((p) => (
+                <div key={p.dpto} className="admin-fila">
+                  <span className="tipo-numero-dpto w-columna-dpto">{p.dpto}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="tipo-cuerpo-chico block truncate">{p.nombre}</span>
+                    <span className="tipo-contexto-chico block text-ambar admin-pago-detalle">
+                      {COPYS.pagos.faltaAun(p.falta)}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+          {confirmados.length > 0 && (
+            <details className="admin-recogido">
+              <summary className="tipo-cuerpo-chico text-gris admin-recogido-titulo">
+                {COPYS.admin.confirmados(confirmados.length)}
+              </summary>
+              {confirmados.map((p) => (
+                <div key={p.dpto} className="admin-fila">
+                  <span className="tipo-numero-dpto w-columna-dpto">{p.dpto}</span>
+                  <span className="tipo-cuerpo-chico min-w-0 flex-1 truncate text-gris">{p.nombre}</span>
+                  <span className="tipo-contexto-mini text-gris">{fechaCorta(p.fecha)}</span>
+                </div>
+              ))}
+            </details>
+          )}
+          {datos.publicados.length > 1 && (
+            <button type="button" onClick={() => abrir('confirmar-pagos')} className="admin-enlace-pagos tipo-cuerpo-enlace text-gris">
+              {COPYS.pagos.confirmarPasados}
+            </button>
+          )}
         </section>
       )}
 
-      {sinAviso.length > 0 && (
-        <section className="admin-seccion">
-          <Etiqueta className="block admin-seccion-titulo">Sin aviso todavía</Etiqueta>
-          {sinAviso.map((p) => (
-            <RegistrarPago key={p.dpto} pago={p} mes={datos.mesPublicado!} />
-          ))}
-        </section>
-      )}
-
-      {confirmados.length > 0 && (
-        <section className="admin-seccion">
-          <Etiqueta className="block admin-seccion-titulo">Confirmados · {confirmados.length}</Etiqueta>
-          {confirmados.map((p) => (
-            <div key={p.dpto} className="admin-fila">
-              <span className="tipo-numero-dpto w-columna-dpto">{p.dpto}</span>
-              <span className="tipo-cuerpo-chico min-w-0 flex-1 truncate text-gris">{p.nombre}</span>
-              <span className="tipo-contexto-mini text-gris">{fechaCorta(p.fecha)}</span>
-            </div>
-          ))}
-        </section>
-      )}
-
+      {/* 3 · Todo lo demás */}
       <section className="admin-seccion">
-        <Etiqueta className="block admin-seccion-titulo">Cerrar el mes siguiente</Etiqueta>
-        <p className="tipo-cuerpo-chico text-gris admin-texto">
-          Siete pasos: lecturas, SEDAPAL, luz, gastos fijos, lo puntual, revisión y publicar. Se guarda solo
-          en cada uno.
-        </p>
-        <button type="button" onClick={() => abrir('wizard')} className="admin-boton">
-          {datos.paso > 0 ? `Seguir con ${datos.nombreACerrar}` : `Empezar ${datos.nombreACerrar}`}
-        </button>
-      </section>
-
-      <section className="admin-seccion">
-        <Etiqueta className="block admin-seccion-titulo">Gastos fijos del edificio</Etiqueta>
-        {datos.gastosFijos
-          .filter((g) => g.activo)
-          .map((g) => (
-            <div key={g.concepto} className="admin-fila">
-              <span className="tipo-cuerpo-medio flex min-w-0 flex-1 items-center gap-etiqueta">
-                <span className="truncate">{g.concepto}</span>
-                {g.anual && <span className="tipo-etiqueta-anual etiqueta-anual">{COPYS.mes.anual}</span>}
-              </span>
-              <span className={g.monto === null ? 'tipo-cuerpo-enlace text-ambar' : 'tipo-monto-lista'}>
-                {g.monto === null ? 'por confirmar' : fmt(g.monto)}
-              </span>
-            </div>
-          ))}
-        <p className="tipo-contexto text-gris admin-nota">
-          El monto y si es anual se editan desde el paso 4 del cierre. Un cambio aplica a los meses
-          siguientes, no reescribe el pasado.
-        </p>
-        <button type="button" onClick={() => abrir('gastos-fijos')} className="admin-accion">
-          <span className="tipo-cuerpo-destacado">Activar o desactivar un gasto fijo</span>
-          <span className="tipo-contexto text-gris">
-            Incluye los que ya no se cobran, para reactivarlos
-          </span>
-        </button>
+        <Etiqueta className="block admin-seccion-titulo">{COPYS.admin.masAcciones}</Etiqueta>
+        <div className="admin-rejilla">
+          {datos.publicados.length > 0 && (
+            <Acceso
+              titulo={COPYS.correccion.corregirMes}
+              nota={COPYS.admin.notaCorregir}
+              onClick={() => abrir('corregir')}
+              icono={<path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" />}
+            />
+          )}
+          <Acceso
+            titulo={COPYS.admin.accesoFijos}
+            nota={`${datos.gastosFijos.filter((g) => g.activo).length} ${COPYS.admin.conceptos} · ${fmt(
+              datos.gastosFijos.filter((g) => g.activo).reduce((s, g) => s + (g.monto ?? 0), 0),
+            )}`}
+            onClick={() => abrir('gastos-fijos')}
+            icono={<path d="M5 7h14M5 12h14M5 17h9" />}
+          />
+          {datos.lavado && (
+            <Acceso
+              /* `04` lo lista como «Cargos adicionales y créditos». La hoja abre
+                 los cargos y créditos activos; el lavado del 401 es hoy el único,
+                 y sus m³ van de indicador. */
+              titulo="Cargos y créditos"
+              nota={`${datos.lavado.concepto} · ${datos.lavado.dpto} · ${fmt(datos.lavado.m3)} m³`}
+              onClick={() => abrir('cargos')}
+              icono={<path d="M12 3v18M7 8c0-2 2-3 5-3s5 1 5 3-2 3-5 3-5 1-5 3 2 3 5 3 5-1 5-3" />}
+            />
+          )}
+          <Acceso
+            titulo="Exportar el año en Excel"
+            nota={COPYS.admin.notaExportar}
+            onClick={() => abrir('export')}
+            icono={<path d="M12 4v11M7 11l5 5 5-5M5 20h14" />}
+          />
+        </div>
       </section>
 
       <section className="admin-seccion admin-seccion-final">
-        <Etiqueta className="block admin-seccion-titulo">Otras acciones</Etiqueta>
-        {datos.lavado && (
-          <button type="button" onClick={() => abrir('cargos')} className="admin-accion">
-            {/* `04` lista esto como «Cargos adicionales y créditos». La fila abre
-                la hoja de cargos y créditos activos; el lavado del 401 es hoy el
-                único activo, y sus m³ van de indicador. Antes la fila se llamaba
-                solo por el lavado, así que la función del panel quedaba oculta. */}
-            <span className="min-w-0 flex-1">
-              <span className="tipo-cuerpo-destacado block">Cargos y créditos</span>
-              <span className="tipo-contexto-chico block text-gris">
-                {datos.lavado.concepto} · {datos.lavado.dpto}
-              </span>
-            </span>
-            <span className="tipo-monto-lista">{fmt(datos.lavado.m3)} m³</span>
-          </button>
-        )}
-        {datos.publicados.length > 0 && (
-          <button type="button" onClick={() => abrir('corregir')} className="admin-accion">
-            <span className="tipo-cuerpo-destacado">{COPYS.correccion.corregirMes}</span>
-            <span className="tipo-contexto text-gris">
-              {datos.publicados.length === 1
-                ? datos.etiquetaPublicado
-                : `${datos.publicados.length} meses publicados`}
-            </span>
-          </button>
-        )}
-        {/* Arriba, "Avisaron"/"Sin aviso" solo miran `datos.mesPublicado` —el
-            último—. Esta es la puerta para confirmar el pago de un mes
-            publicado anterior, que antes no tenía dónde vivir en la app. */}
-        {datos.publicados.length > 0 && (
-          <button type="button" onClick={() => abrir('confirmar-pagos')} className="admin-accion">
-            <span className="tipo-cuerpo-destacado">{COPYS.pagos.confirmarPasados}</span>
-            <span className="tipo-contexto text-gris">
-              {datos.publicados.length === 1
-                ? datos.etiquetaPublicado
-                : `${datos.publicados.length} meses publicados`}
-            </span>
-          </button>
-        )}
-        <button type="button" onClick={() => abrir('export')} className="admin-accion">
-          <span className="tipo-cuerpo-destacado">Exportar el año en Excel</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-apagado" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
         {/* El estado de Bob, a la vista.
 
             No es decoración: el modo de Bob no se nota desde fuera —el catálogo
@@ -175,6 +194,31 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
         </form>
       </section>
     </div>
+  )
+}
+
+/** Un acceso de la rejilla: icono, título y una línea que dice qué hay dentro. */
+function Acceso({
+  titulo,
+  nota,
+  onClick,
+  icono,
+}: {
+  titulo: string
+  nota: string
+  onClick: () => void
+  icono: ReactNode
+}) {
+  return (
+    <button type="button" onClick={onClick} className="admin-acceso">
+      <span className="admin-acceso-icono" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {icono}
+        </svg>
+      </span>
+      <span className="tipo-cuerpo-destacado block admin-acceso-titulo">{titulo}</span>
+      <span className="tipo-contexto-chico block text-gris admin-acceso-nota">{nota}</span>
+    </button>
   )
 }
 

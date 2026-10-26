@@ -2107,6 +2107,68 @@
 .admin-seccion-final {
   padding-bottom: 20px;
 }
+.admin-cierre-mes {
+  margin: 10px 0 0;
+  color: var(--color-sobre-noche);
+}
+.admin-cierre-texto {
+  margin: 8px 0 18px;
+}
+.admin-subgrupo {
+  margin: 18px 0 10px;
+}
+/* Lo ya confirmado se recoge: no pide ninguna acción. */
+.admin-recogido {
+  margin-top: 18px;
+}
+.admin-recogido-titulo {
+  min-height: var(--spacing-toque);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.admin-enlace-pagos {
+  display: block;
+  margin-top: 14px;
+  min-height: var(--spacing-toque);
+  text-align: left;
+}
+/* Cuatro accesos en dos columnas. En 320 px caben igual: cada uno ocupa la
+   mitad y el texto envuelve, no desborda. */
+.admin-rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.admin-acceso {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 118px;
+  padding: var(--spacing-interior-chico);
+  border-radius: var(--radius-bloque);
+  background: var(--color-papel);
+  border: 1px solid var(--color-borde-tarjeta);
+  text-align: left;
+}
+.admin-acceso-icono {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pildora);
+  background: var(--color-neutro-suave);
+  color: var(--color-tinta);
+}
+.admin-acceso-titulo {
+  overflow-wrap: anywhere;
+}
+.admin-acceso-nota {
+  overflow-wrap: anywhere;
+}
 .admin-seccion-titulo {
   margin-bottom: 12px;
 }
@@ -2994,6 +3056,42 @@
   color: var(--color-crema);
 }
 
+/* Corregir un mes publicado · qué, cambios, revisión */
+.corregir-atras {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--spacing-toque);
+  margin-bottom: 4px;
+}
+.corregir-resumen {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+/* «Cambiado»: ámbar suave, como todo lo que está a medias. Nunca rojo. */
+.corregir-marca {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-pildora);
+  background: var(--color-ambar-suave);
+  color: var(--color-ambar);
+}
+.corregir-de-a {
+  flex: 0 1 auto;
+  max-width: 55%;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.corregir-cuota {
+  border-bottom: 1px solid var(--color-linea);
+}
+.corregir-cuota-fila {
+  border-bottom: 0;
+}
+.corregir-falta {
+  margin: 0 0 var(--spacing-fila);
+  padding-left: calc(var(--spacing-fila-x) + 44px);
+}
+
 /* El alcance real de lo que baja el Excel, bajo su botón. */
 .export-alcance {
   margin-top: var(--spacing-fila-x);
@@ -3302,6 +3400,10 @@
 
 /* El botón que abre "¿quiénes pagan?" en el paso 5. Es texto, no un botón
    con cara de botón: vive dentro de la línea del gasto. */
+.puntual-nombre {
+  max-width: 100%;
+  text-align: left;
+}
 .puntual-quien-boton {
   text-align: left;
   text-decoration: underline;

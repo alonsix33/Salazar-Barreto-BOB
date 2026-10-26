@@ -142,9 +142,9 @@ No las reabras sin que el usuario lo pida:
 ## 4. Antes de dar algo por terminado
 
 ```bash
-npm run verify            # tipos + tokens + documentos + 502 de unidad  (~30 s)
-npm run test:integracion  # 197 tests contra Postgres              (~75 s)
-npm run test:e2e          # 167 tests de pantalla                  (~4 min)
+npm run verify            # tipos + tokens + documentos + 575 de unidad  (~30 s)
+npm run test:integracion  # 262 tests contra Postgres              (~75 s)
+npm run test:e2e          # 222 tests de pantalla                  (~4 min)
 ```
 
 Y si tocaste el motor, las reglas de lectura, los servicios o la capa de datos,
@@ -153,7 +153,7 @@ segundo plano):
 
 ```bash
 npm run prueba-negativa                        # 18 defectos · motor y reglas
-node scripts/prueba-negativa-integracion.mjs   # 17 defectos · servicios y datos
+node scripts/prueba-negativa-integracion.mjs   # 22 defectos · servicios y datos
 ```
 
 Y si tocaste el README, `CLAUDE.md` o el handoff —o moviste un fichero que

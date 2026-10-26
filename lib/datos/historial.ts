@@ -6,6 +6,7 @@
 
 import { DPTOS } from '@/lib/calculo/constantes'
 import { etiquetaMes, mesCorto } from '@/lib/calculo/mes'
+import { aporteDeFila } from '@/lib/estados'
 import { round2 } from '@/lib/calculo/redondeo'
 import type { DptoId, EstadoPago } from '@/lib/calculo/tipos'
 import { almanaque } from './almanaque'
@@ -20,6 +21,8 @@ export interface FilaHistorial {
   estado: EstadoPago | null
   fecha: string | null
   operacion: string | null
+  /** Lo que se anotó que entró de verdad; `null` = pagó justo su cuota. */
+  monto: number | null
 }
 
 export interface HistorialDpto {
@@ -56,9 +59,10 @@ export async function historialDeDpto(dpto: DptoId): Promise<HistorialDpto> {
     const cuota = resultado.valido ? resultado.cuotas[dpto].total : null
     const m3 = resultado.valido ? resultado.cuotas[dpto].m3 : 0
     sumaM3 += m3
-    if (pago?.estado === 'confirmado') {
-      alDia++
-      totalPagado += cuota ?? 0
+    const aporte = aporteDeFila({ estado: pago?.estado ?? null, cuota, monto: pago?.monto ?? null })
+    if (aporte) {
+      if (aporte.completo) alDia++
+      totalPagado += aporte.puso
     } else if (pago?.estado === 'aviso') {
       enVerificacion++
     }
@@ -72,6 +76,7 @@ export async function historialDeDpto(dpto: DptoId): Promise<HistorialDpto> {
       estado: pago?.estado ?? null,
       fecha: pago?.fecha ?? null,
       operacion: pago?.op ?? null,
+      monto: pago?.monto ?? null,
     })
   }
 
@@ -129,9 +134,10 @@ export function vistaAnual(filas: readonly FilaHistorial[], anio: number): Vista
   let conM3 = 0
   let maximoM3 = 0
   for (const f of delAnio) {
-    if (f.estado === 'confirmado') {
-      alDia++
-      totalPagado += f.cuota ?? 0
+    const aporte = aporteDeFila(f)
+    if (aporte) {
+      if (aporte.completo) alDia++
+      totalPagado += aporte.puso
     } else if (f.estado === 'aviso') {
       enVerificacion++
     }

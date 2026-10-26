@@ -59,7 +59,8 @@ describe('lo que sí es texto abre el teclado normal', () => {
     ['components/hojas/HojaBob.tsx', 'la pregunta a Bob'],
     ['components/cierre/Paso7Publicar.tsx', 'las notas del mes'],
     ['components/hojas/HojaCorregir.tsx', 'el motivo de una corrección'],
-    ['components/cierre/Paso4Fijos.tsx', 'el nombre de un concepto nuevo'],
+    ['components/cierre/NuevoFijo.tsx', 'el nombre de un concepto nuevo'],
+    ['components/cierre/EditorExtras.tsx', 'el nombre de un gasto puntual'],
   ]
 
   for (const [fichero, que] of DE_TEXTO) {
@@ -75,11 +76,34 @@ describe('lo que sí es texto abre el teclado normal', () => {
 
 describe('todo lo numérico pasa por el numpad propio', () => {
   it('los pasos del cierre que piden cifras abren el numpad', () => {
-    for (const paso of ['Paso1Lecturas', 'Paso2Agua', 'Paso3Luz', 'Paso4Fijos', 'Paso5Puntual']) {
+    for (const paso of ['Paso1Lecturas', 'Paso2Agua', 'Paso3Luz']) {
       const c = CONTENIDO.get(`components/cierre/${paso}.tsx`)
       expect(c, `${paso} no existe`).toBeTruthy()
       expect(c, `${paso} pide cifras sin el numpad`).toContain('useNumpad')
     }
+  })
+
+  /**
+   * Los pasos 4 y 5 y la corrección de un mes publicado comparten piezas: el
+   * numpad vive en la pieza, y el paso solo la monta. Se comprueba las dos
+   * cosas, porque si el paso dejara de montarla, la pieza tendría numpad y el
+   * paso ninguna cifra.
+   */
+  it('los pasos 4 y 5 y la corrección montan piezas que abren el numpad', () => {
+    const piezas: [string, string][] = [
+      ['components/cierre/Paso4Fijos.tsx', 'FilaFijo'],
+      ['components/cierre/Paso4Fijos.tsx', 'NuevoFijo'],
+      ['components/cierre/Paso5Puntual.tsx', 'EditorExtras'],
+      ['components/hojas/HojaCorregir.tsx', 'EditorExtras'],
+      ['components/hojas/HojaCorregir.tsx', 'FilaFijo'],
+      ['components/hojas/HojaGastosFijos.tsx', 'NuevoFijo'],
+    ]
+    for (const [fichero, pieza] of piezas) {
+      expect(CONTENIDO.get(fichero), `${fichero} no existe`).toBeTruthy()
+      expect(CONTENIDO.get(fichero), `${fichero} ya no monta ${pieza}`).toContain(`<${pieza}`)
+      expect(CONTENIDO.get(`components/cierre/${pieza}.tsx`), `${pieza} pide cifras sin el numpad`).toContain('useNumpad')
+    }
+    expect(CONTENIDO.get('components/hojas/HojaCorregir.tsx')).toContain('useNumpad')
   })
 
   it('el PIN tiene su propio teclado de dígitos, no un campo de texto', () => {

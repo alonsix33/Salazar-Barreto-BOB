@@ -1,7 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { fmt } from '@/lib/calculo/redondeo'
+import { fmt, round2 } from '@/lib/calculo/redondeo'
+import { aporteDeFila } from '@/lib/estados'
 import { fechaCorta } from '@/lib/formato'
 import type { DptoId } from '@/lib/calculo/tipos'
 import type { HistorialDpto } from '@/lib/datos/historial'
@@ -66,7 +67,9 @@ export function HojaHistorial({ dpto, modo }: { dpto: DptoId; modo: 'pagos' | 'a
                   {f.estado === 'aviso'
                     ? `avisó el ${fechaCorta(f.fecha)}`
                     : f.estado === 'confirmado'
-                      ? `${fechaCorta(f.fecha)} · op. ${f.operacion ?? '—'}`
+                      ? aporteDeFila(f)?.completo === false
+                        ? `pagaste S/ ${fmt(f.monto ?? 0)} · te faltan S/ ${fmt(round2((f.cuota ?? 0) - (f.monto ?? 0)))}`
+                        : `${fechaCorta(f.fecha)} · op. ${f.operacion ?? '—'}`
                       : 'sin registrar'}
                 </span>
               </span>
@@ -81,12 +84,18 @@ export function HojaHistorial({ dpto, modo }: { dpto: DptoId; modo: 'pagos' | 'a
               <span
                 aria-hidden="true"
                 className={`punto ${
-                  f.estado === 'confirmado' ? 'bg-verde' : f.estado === 'aviso' ? 'bg-agua' : 'bg-ambar'
+                  f.estado === 'confirmado' && aporteDeFila(f)?.completo !== false
+                    ? 'bg-verde'
+                    : f.estado === 'aviso'
+                      ? 'bg-agua'
+                      : 'bg-ambar'
                 }`}
               />
               <span className="sr-only">
                 {f.estado === 'confirmado'
-                  ? 'Al día.'
+                  ? aporteDeFila(f)?.completo === false
+                    ? 'Falta una parte.'
+                    : 'Al día.'
                   : f.estado === 'aviso'
                     ? 'En verificación.'
                     : 'Sin registrar.'}
