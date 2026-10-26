@@ -100,11 +100,10 @@ export function PanelAdmin({ datos }: { datos: DatosAdmin }) {
             </div>
           ))}
         <p className="tipo-contexto text-gris admin-nota">
-          El monto y si es anual se editan desde el paso 4 del cierre. Un cambio aplica a los meses
-          siguientes, no reescribe el pasado.
+          Un cambio aplica desde el mes que se está cerrando y no reescribe el pasado.
         </p>
         <button type="button" onClick={() => abrir('gastos-fijos')} className="admin-accion">
-          <span className="tipo-cuerpo-destacado">Activar o desactivar un gasto fijo</span>
+          <span className="tipo-cuerpo-destacado">Añadir, cambiar o apagar un gasto fijo</span>
           <span className="tipo-contexto text-gris">
             Incluye los que ya no se cobran, para reactivarlos
           </span>

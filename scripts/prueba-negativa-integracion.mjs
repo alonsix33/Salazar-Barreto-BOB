@@ -105,6 +105,29 @@ const DEFECTOS = [
     '          void operation'],
   ['datos/prisma.ts', 'que se caiga una operación de la lista de escrituras',
     "  'upsert',\n", ''],
+  /**
+   * Corregir un mes ya publicado (`tests/integracion/corregir-todo.test.ts`).
+   *
+   * Los cuatro defectos son de los que dan cifras plausibles y equivocadas: el
+   * pago que sube con la cuota sin que nadie deposite, el fijo «solo de un mes»
+   * que se lleva los meses de después, la vista previa que guarda de verdad, y
+   * la corrección que deja el mes sin cuadrar.
+   */
+  ['servicios/cierre.ts', 'no fijar el pago de quien ya pagó al corregir',
+    'if (pago.monto === null && cuotaAntes !== cuotaDespues) {',
+    'if (false as boolean) {'],
+  ['servicios/gastosFijos.ts', 'que un fijo corregido solo en un mes arrastre los siguientes',
+    '    if (!yaTieneFila) {',
+    '    if (false as boolean) {'],
+  ['servicios/cierre.ts', 'que la vista previa de una corrección guarde de verdad',
+    'if (opciones.simular) throw new SimulacionTerminada(hecha)',
+    'if (false as boolean) throw new SimulacionTerminada(hecha)'],
+  ['servicios/cierre.ts', 'guardar una corrección que deja el mes sin cuadrar',
+    'if (!despues.valido || !despues.cuadra) {',
+    'if (false as boolean) {'],
+  ['servicios/cierre.ts', 'corregir un mes que todavía no se publicó',
+    '      if (!cierre?.publicado) {\n        throw conflicto(\'Este mes no está publicado',
+    '      if (false as boolean) {\n        throw conflicto(\'Este mes no está publicado'],
   ['servicios/pagos.ts', 'contar un aviso de pago como confirmado',
     "      update: { estado: 'aviso', operacion: datos.operacion ?? null, texto: datos.texto ?? null },",
     "      update: { estado: 'confirmado', operacion: datos.operacion ?? null, texto: datos.texto ?? null },"],

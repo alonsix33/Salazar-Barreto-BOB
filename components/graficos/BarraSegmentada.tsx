@@ -13,6 +13,7 @@ const COLOR: Record<EstadoCuota, string> = {
   'en-verificacion': 'bg-agua',
   'sin-registrar': 'bg-ambar-punto',
   'sin-cobro': 'bg-neutro-barra',
+  'falta-parte': 'bg-ambar-punto',
 }
 
 export function BarraSegmentada({

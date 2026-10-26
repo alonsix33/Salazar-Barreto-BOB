@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest'
 import { vistaAnual, type FilaHistorial } from '../historial'
 
 function fila(mes: string, m3: number, estado: FilaHistorial['estado'] = 'confirmado'): FilaHistorial {
-  return { mes, etiqueta: mes, corto: mes, cuota: 100, m3, lavado: 0, estado, fecha: null, operacion: null }
+  return { mes, etiqueta: mes, corto: mes, cuota: 100, m3, lavado: 0, estado, fecha: null, operacion: null, monto: null }
 }
 
 describe('vistaAnual · cada casilla es su mes de calendario', () => {
@@ -60,5 +60,20 @@ describe('vistaAnual · cada casilla es su mes de calendario', () => {
     )
     // Solo enero tiene consumo de verdad; febrero está pagado pero sin recibo.
     expect(v.promedioM3).toBe(20)
+  })
+})
+
+describe('vistaAnual · lo pagado es lo que entró, no la cuota', () => {
+  it('un pago confirmado por menos de la cuota suma lo que puso y no cuenta como al día', () => {
+    // Pagó 60 de 100: el mes se corrigió después de pagar.
+    const v = vistaAnual([{ ...fila('2026-03', 30), monto: 60 }, fila('2026-04', 40)], 2026)
+    expect(v.totalPagado).toBe(160) // 60 + 100, no 200
+    expect(v.mesesAlDia).toBe(1)
+  })
+
+  it('pagar de más suma lo que entró y sigue al día', () => {
+    const v = vistaAnual([{ ...fila('2026-03', 30), monto: 130 }], 2026)
+    expect(v.totalPagado).toBe(130)
+    expect(v.mesesAlDia).toBe(1)
   })
 })

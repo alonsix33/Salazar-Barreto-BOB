@@ -15,11 +15,13 @@ import { aDecimal2, aDecimal3, aNumero, aNumeroObligatorio } from '@/lib/datos/d
 import { entradasDeMes, resultadoDeMes, lavadoM3En } from '@/lib/datos/mes'
 import { nombreMes } from '@/lib/calculo/mes'
 import { enumerar } from '@/lib/formato'
-import { fmt } from '@/lib/calculo/redondeo'
+import { fmt, round2 } from '@/lib/calculo/redondeo'
 import { DPTO_IDS } from '@/lib/calculo/constantes'
 import type { MesId, ResultadoMes } from '@/lib/calculo/tipos'
-import type { GuardarGastos, GuardarLecturas, GuardarRecibo, Publicar } from '@/lib/esquemas'
-import { auditar } from './auditoria'
+import type { GuardarGastos, GuardarGastosFijos, GuardarLecturas, GuardarRecibo, Publicar } from '@/lib/esquemas'
+import { huellaDeExtras } from '@/lib/calculo/extras'
+import { auditar, type Tx } from './auditoria'
+import { ajustarFijosDeUnMes } from './gastosFijos'
 import { cierreDe, exigirNoPublicado, tomarVersion } from './bloqueo'
 import { conflicto, peticionMala } from './errores'
 import { enviarPushATodos } from '@/lib/push'
@@ -118,41 +120,68 @@ export async function guardarRecibo(mes: MesId, datos: GuardarRecibo) {
   })
 }
 
+type ExtraDeEntrada = GuardarGastos['extras'][number]
+
+/**
+ * Escribe la lista de gastos puntuales del mes, reemplazándola entera, y deja
+ * el rastro. **Es la única copia**: la usan el paso 5 del cierre y la corrección
+ * de un mes publicado. Devuelve `null` si la lista ya era esa y no se escribió
+ * nada.
+ */
+async function escribirExtras(
+  tx: Tx,
+  mes: MesId,
+  extras: readonly ExtraDeEntrada[],
+  accion: 'editar' | 'corregir',
+): Promise<{ antes: string; despues: string } | null> {
+  const anteriores = await tx.gastoExtra.findMany({
+    where: { mes },
+    orderBy: [{ creadoEn: 'asc' }, { id: 'asc' }],
+  })
+  const nuevos = extras.map((e) => ({ ...e, dpto: e.tipo === 'credito' ? e.dpto : null }))
+  const huellaAntes = huellaDeExtras(
+    anteriores.map((a) => ({
+      tipo: a.tipo, concepto: a.concepto, monto: a.monto, dpto: a.dptoId,
+      participantes: a.participantes, reparto: a.reparto,
+    })),
+  )
+  // El paso 5 reescribe siempre, como siempre lo hizo; la corrección no escribe
+  // —ni audita, ni avisa— una lista que no cambió.
+  if (accion === 'corregir' && huellaAntes === huellaDeExtras(nuevos)) return null
+
+  await tx.gastoExtra.deleteMany({ where: { mes } })
+  for (const e of extras) {
+    await tx.gastoExtra.create({
+      data: {
+        mes,
+        tipo: e.tipo,
+        concepto: e.concepto,
+        monto: aDecimal2(e.monto),
+        dptoId: e.tipo === 'credito' ? e.dpto : null,
+        // Quién paga y cómo se reparte. Solo aplica a los gastos: un crédito
+        // es de un departamento y no se reparte.
+        participantes: e.tipo === 'gasto' ? (e.participantes ?? []) : [],
+        reparto: e.tipo === 'gasto' ? (e.reparto ?? 'porcentaje') : 'porcentaje',
+      },
+    })
+  }
+  const resumen = (lista: { tipo: string; concepto: string; monto: unknown; dptoId?: string | null }[]) =>
+    lista.map((e) => `${e.tipo} ${e.concepto} ${String(e.monto)}${e.dptoId ? ` → ${e.dptoId}` : ''}`).join(' · ')
+  const antes = resumen(anteriores)
+  const despues = resumen(nuevos.map((e) => ({ ...e, dptoId: e.dpto })))
+  await auditar(tx, {
+    usuario: ADMIN, accion, entidad: 'gastoExtra', entidadId: mes, campo: 'lista',
+    valorAnterior: antes, valorNuevo: despues, mes,
+  })
+  return { antes, despues }
+}
+
 /** Guardar los gastos puntuales del mes. Reemplaza la lista entera. */
 export async function guardarGastos(mes: MesId, datos: GuardarGastos) {
   return prisma.$transaction(async (tx) => {
     await exigirNoPublicado(tx, mes)
     const version = await tomarVersion(tx, mes, datos.version)
-
-    const anteriores = await tx.gastoExtra.findMany({ where: { mes } })
-    await tx.gastoExtra.deleteMany({ where: { mes } })
-    for (const e of datos.extras) {
-      await tx.gastoExtra.create({
-        data: {
-          mes,
-          tipo: e.tipo,
-          concepto: e.concepto,
-          monto: aDecimal2(e.monto),
-          dptoId: e.tipo === 'credito' ? e.dpto : null,
-          // Quién paga y cómo se reparte. Solo aplica a los gastos: un crédito
-          // es de un departamento y no se reparte.
-          participantes: e.tipo === 'gasto' ? (e.participantes ?? []) : [],
-          reparto: e.tipo === 'gasto' ? (e.reparto ?? 'porcentaje') : 'porcentaje',
-        },
-      })
-    }
-    const resumen = (lista: { tipo: string; concepto: string; monto: unknown; dptoId?: string | null }[]) =>
-      lista.map((e) => `${e.tipo} ${e.concepto} ${String(e.monto)}${e.dptoId ? ` → ${e.dptoId}` : ''}`).join(' · ')
-    await auditar(tx, {
-      usuario: ADMIN,
-      accion: 'editar',
-      entidad: 'gastoExtra',
-      entidadId: mes,
-      campo: 'lista',
-      valorAnterior: resumen(anteriores),
-      valorNuevo: resumen(datos.extras.map((e) => ({ ...e, dptoId: e.tipo === 'credito' ? e.dpto : null }))),
-      mes,
-    })
+    await escribirExtras(tx, mes, datos.extras, 'editar')
     return { version }
   })
 }
@@ -368,154 +397,288 @@ export async function publicarMes(mes: MesId, datos: Publicar) {
   return publicado
 }
 
+/** Lo que una corrección hace con un departamento, para mostrarlo antes de guardar. */
+export interface VistaCuota {
+  dpto: string
+  antes: number
+  despues: number
+  /** Lo que ya puso, si su pago está confirmado; `null` si no hay pago confirmado. */
+  pagado: number | null
+  /** Lo que le falta poner de este mes tras la corrección. 0 si no le falta nada. */
+  falta: number
+}
+
+export interface CorreccionHecha {
+  cambios: { que: string; de: string; a: string; dpto?: string }[]
+  cuotasQueCambiaron: number
+  totalMes: number
+  cuotas: VistaCuota[]
+}
+
+/** Se lanza al final de una simulación para deshacer la transacción entera. */
+class SimulacionTerminada extends Error {
+  constructor(readonly hecha: CorreccionHecha) {
+    super('simulación')
+  }
+}
+
 /**
  * Corregir un mes ya publicado.
  *
  * **Está permitido, y deja rastro.** Se recalcula, se avisa a los siete con qué
  * cambió, y queda en auditoría. No hay correcciones silenciosas: es la
  * contrapartida de permitir editar.
+ *
+ * Se puede corregir **todo** lo que entra en el cálculo del mes —lecturas,
+ * recibo, gastos puntuales y créditos, gastos fijos de ese mes, la casilla del
+ * lavado— en una sola corrección, con un solo motivo y un solo aviso. Antes
+ * solo cabían las lecturas, y un gasto de S/ 450 que llegaba después de cerrar
+ * octubre no tenía dónde entrar.
+ *
+ * **Quien ya pagó no pasa a deber en silencio, y tampoco paga de más sin
+ * haberlo hecho.** Un pago confirmado sin monto anotado significa «pagó justo
+ * su cuota»; si la cuota sube, ese «justo» subía con ella y el vecino seguía
+ * «al día» por una plata que nunca puso: medido, el 101 pasó de S/ 374.61 a
+ * S/ 410.24 y su «pagado en 2026» subió S/ 35.63 sin que depositara nada. Por
+ * eso, si la cuota de alguien cambia, su pago confirmado sin monto se fija en la
+ * cuota que se publicó: lo que de verdad puso. Si pagó 600 y ahora son 800,
+ * debe 200.
+ *
+ * Con `simular` hace todo lo mismo dentro de la transacción y la **deshace al
+ * final**: es la vista previa, y al ser el mismo código no puede enseñar unas
+ * cuotas y guardar otras.
  */
 export async function corregirMes(
   mes: MesId,
   datos: {
     lecturas?: Record<string, number>
     recibo?: Record<string, number | null>
+    extras?: GuardarGastos['extras']
+    fijos?: GuardarGastosFijos['cambios']
+    lavado?: { activa: boolean }
     motivo: string
     version?: number
   },
-) {
-  const corregido = await prisma.$transaction(async (tx) => {
-    const cierre = await tx.cierre.findUnique({ where: { mes } })
-    if (!cierre?.publicado) {
-      throw conflicto('Este mes no está publicado: se edita desde el cierre, sin avisar a nadie.')
-    }
-
-    /**
-     * El "antes" del aviso sale de la **instantánea** que se guardó al publicar
-     * (`06` §2): es la cuota que el vecino vio de verdad, no un recálculo. Se
-     * mantiene al día —cada corrección la reescribe con su resultado, más abajo—,
-     * así que «pasó de X a Y» siempre cita lo último que se le comunicó. Si por lo
-     * que sea faltara (nunca debería en un mes publicado), se recalcula dentro de
-     * la transacción, que también evita que dos correcciones a la vez citen el
-     * mismo «pasó de S/ …».
-     */
-    const antes =
-      (cierre.instantanea as unknown as ResultadoMes | null) ?? (await resultadoDeMes(mes, {}, tx))
-
-    const cambios: { que: string; de: string; a: string; dpto?: string }[] = []
-
-    for (const [dpto, valor] of Object.entries(datos.lecturas ?? {})) {
-      const anterior = await tx.lectura.findUnique({ where: { mes_dptoId: { mes, dptoId: dpto } } })
-      const de = anterior ? aNumeroObligatorio(anterior.valor) : null
-      if (de === valor) continue
-      await tx.lectura.upsert({
-        where: { mes_dptoId: { mes, dptoId: dpto } },
-        create: { mes, dptoId: dpto, valor: aDecimal3(valor), registradoPor: ADMIN },
-        update: { valor: aDecimal3(valor) },
-      })
-      await auditar(tx, {
-        usuario: ADMIN, accion: 'corregir', entidad: 'lectura', entidadId: `${mes}/${dpto}`,
-        campo: 'valor', valorAnterior: de, valorNuevo: valor, mes,
-      })
-      cambios.push({
-        que: `la lectura del ${dpto}`,
-        de: de === null ? '—' : de.toFixed(3),
-        a: valor.toFixed(3),
-        dpto,
-      })
-    }
-
-    if (datos.recibo) {
-      const anterior = await tx.recibo.findUnique({ where: { mes } })
-      if (!anterior) throw peticionMala('No hay recibo que corregir en este mes.')
-      const nuevo = {
-        aguaM3: (datos.recibo.aguaM3 as number | undefined) ?? anterior.aguaM3,
-        aguaMonto: (datos.recibo.aguaMonto as number | undefined) ?? aNumeroObligatorio(anterior.aguaMonto),
-        luz: (datos.recibo.luz as number | undefined) ?? aNumeroObligatorio(anterior.luz),
-        descuento:
-          datos.recibo.descuento !== undefined ? (datos.recibo.descuento as number | null) : aNumero(anterior.descuento),
+  opciones: { simular?: boolean } = {},
+): Promise<CorreccionHecha> {
+  let corregido: CorreccionHecha
+  try {
+    corregido = await prisma.$transaction(async (tx) => {
+      const cierre = await tx.cierre.findUnique({ where: { mes } })
+      if (!cierre?.publicado) {
+        throw conflicto('Este mes no está publicado: se edita desde el cierre, sin avisar a nadie.')
       }
-      if (nuevo.descuento !== null && nuevo.descuento > nuevo.aguaMonto) {
-        throw peticionMala('El descuento no puede ser mayor que el monto de la factura.')
-      }
-      await tx.recibo.update({
-        where: { mes },
-        data: {
-          aguaM3: nuevo.aguaM3,
-          aguaMonto: aDecimal2(nuevo.aguaMonto),
-          luz: aDecimal2(nuevo.luz),
-          descuento: nuevo.descuento === null ? null : aDecimal2(nuevo.descuento),
-        },
-      })
-      const antesRecibo: Record<string, number | null> = {
-        aguaM3: anterior.aguaM3,
-        aguaMonto: aNumeroObligatorio(anterior.aguaMonto),
-        luz: aNumeroObligatorio(anterior.luz),
-        descuento: aNumero(anterior.descuento),
-      }
-      for (const campo of ['aguaM3', 'aguaMonto', 'luz', 'descuento'] as const) {
-        if (antesRecibo[campo] === nuevo[campo]) continue
+
+      /**
+       * El "antes" del aviso sale de la **instantánea** que se guardó al publicar
+       * (`06` §2): es la cuota que el vecino vio de verdad, no un recálculo. Se
+       * mantiene al día —cada corrección la reescribe con su resultado, más abajo—,
+       * así que «pasó de X a Y» siempre cita lo último que se le comunicó. Si por lo
+       * que sea faltara (nunca debería en un mes publicado), se recalcula dentro de
+       * la transacción, que también evita que dos correcciones a la vez citen el
+       * mismo «pasó de S/ …».
+       */
+      const antes =
+        (cierre.instantanea as unknown as ResultadoMes | null) ?? (await resultadoDeMes(mes, {}, tx))
+
+      const cambios: { que: string; de: string; a: string; dpto?: string }[] = []
+
+      for (const [dpto, valor] of Object.entries(datos.lecturas ?? {})) {
+        const anterior = await tx.lectura.findUnique({ where: { mes_dptoId: { mes, dptoId: dpto } } })
+        const de = anterior ? aNumeroObligatorio(anterior.valor) : null
+        if (de === valor) continue
+        await tx.lectura.upsert({
+          where: { mes_dptoId: { mes, dptoId: dpto } },
+          create: { mes, dptoId: dpto, valor: aDecimal3(valor), registradoPor: ADMIN },
+          update: { valor: aDecimal3(valor) },
+        })
         await auditar(tx, {
-          usuario: ADMIN, accion: 'corregir', entidad: 'recibo', entidadId: mes,
-          campo, valorAnterior: antesRecibo[campo], valorNuevo: nuevo[campo], mes,
+          usuario: ADMIN, accion: 'corregir', entidad: 'lectura', entidadId: `${mes}/${dpto}`,
+          campo: 'valor', valorAnterior: de, valorNuevo: valor, mes,
         })
         cambios.push({
-          que: `el ${campo === 'aguaM3' ? 'consumo del recibo' : campo === 'aguaMonto' ? 'monto del agua' : campo === 'luz' ? 'recibo de luz' : 'descuento'}`,
-          de: String(antesRecibo[campo] ?? '—'),
-          a: String(nuevo[campo] ?? '—'),
+          que: `la lectura del ${dpto}`,
+          de: de === null ? '—' : de.toFixed(3),
+          a: valor.toFixed(3),
+          dpto,
         })
       }
-    }
 
-    if (cambios.length === 0) throw peticionMala('No hay nada que corregir: los valores son los mismos.')
+      if (datos.recibo) {
+        const anterior = await tx.recibo.findUnique({ where: { mes } })
+        if (!anterior) throw peticionMala('No hay recibo que corregir en este mes.')
+        const nuevo = {
+          aguaM3: (datos.recibo.aguaM3 as number | undefined) ?? anterior.aguaM3,
+          aguaMonto: (datos.recibo.aguaMonto as number | undefined) ?? aNumeroObligatorio(anterior.aguaMonto),
+          luz: (datos.recibo.luz as number | undefined) ?? aNumeroObligatorio(anterior.luz),
+          descuento:
+            datos.recibo.descuento !== undefined ? (datos.recibo.descuento as number | null) : aNumero(anterior.descuento),
+        }
+        if (nuevo.descuento !== null && nuevo.descuento > nuevo.aguaMonto) {
+          throw peticionMala('El descuento no puede ser mayor que el monto de la factura.')
+        }
+        await tx.recibo.update({
+          where: { mes },
+          data: {
+            aguaM3: nuevo.aguaM3,
+            aguaMonto: aDecimal2(nuevo.aguaMonto),
+            luz: aDecimal2(nuevo.luz),
+            descuento: nuevo.descuento === null ? null : aDecimal2(nuevo.descuento),
+          },
+        })
+        const antesRecibo: Record<string, number | null> = {
+          aguaM3: anterior.aguaM3,
+          aguaMonto: aNumeroObligatorio(anterior.aguaMonto),
+          luz: aNumeroObligatorio(anterior.luz),
+          descuento: aNumero(anterior.descuento),
+        }
+        for (const campo of ['aguaM3', 'aguaMonto', 'luz', 'descuento'] as const) {
+          if (antesRecibo[campo] === nuevo[campo]) continue
+          await auditar(tx, {
+            usuario: ADMIN, accion: 'corregir', entidad: 'recibo', entidadId: mes,
+            campo, valorAnterior: antesRecibo[campo], valorNuevo: nuevo[campo], mes,
+          })
+          cambios.push({
+            que: `el ${campo === 'aguaM3' ? 'consumo del recibo' : campo === 'aguaMonto' ? 'monto del agua' : campo === 'luz' ? 'recibo de luz' : 'descuento'}`,
+            de: String(antesRecibo[campo] ?? '—'),
+            a: String(nuevo[campo] ?? '—'),
+          })
+        }
+      }
 
-    // Recalcular con lo ya escrito, dentro de la misma transacción.
-    // Se recalcula con **la misma** función que usa el resto de la app, leyendo
-    // dentro de la transacción para ver lo que se acaba de escribir. Aquí vivía
-    // una segunda copia de `entradasDeMes`, y las dos se separaron: la de aquí
-    // no heredaba la marca del lavado del mes anterior, así que el aviso a los
-    // siete citaba un monto que la app no cobraba.
-    const despues = await resultadoDeMes(mes, {}, tx)
-    if (!despues.valido || !despues.cuadra) {
-      throw conflicto('Con esa corrección el mes deja de cuadrar, así que no se guarda.', {
-        motivo: despues.motivoInvalido, motivos: despues.motivosSanidad,
+      if (datos.extras) {
+        const escrito = await escribirExtras(tx, mes, datos.extras, 'corregir')
+        if (escrito) {
+          cambios.push({
+            que: 'los gastos puntuales',
+            de: escrito.antes || 'ninguno',
+            a: escrito.despues || 'ninguno',
+          })
+        }
+      }
+
+      for (const f of await ajustarFijosDeUnMes(tx, mes, datos.fijos ?? [])) {
+        cambios.push({
+          que: `el gasto fijo ${f.concepto}`,
+          de: f.activoDe ? String(f.de ?? 'por confirmar') : 'inactivo',
+          a: f.activoA ? String(f.a ?? 'por confirmar') : 'inactivo',
+        })
+      }
+
+      if (datos.lavado) {
+        const reasignacion = await tx.reasignacionAgua.findFirst({
+          where: { desde: { lte: mes } },
+          orderBy: [{ desde: 'desc' }, { creadoEn: 'desc' }],
+        })
+        if (!reasignacion) throw peticionMala('No hay ninguna reasignación de agua configurada.')
+        const marcado = (await lavadoM3En(mes, tx)) > 0
+        if (marcado !== datos.lavado.activa) {
+          // Al reactivarlo se congela el valor de hoy, como hace publicar.
+          await tx.reasignacionActivaEnMes.upsert({
+            where: { reasignacionId_mes: { reasignacionId: reasignacion.id, mes } },
+            create: {
+              reasignacionId: reasignacion.id, mes, activa: datos.lavado.activa,
+              m3: datos.lavado.activa ? reasignacion.m3 : null,
+            },
+            update: { activa: datos.lavado.activa, m3: datos.lavado.activa ? reasignacion.m3 : null },
+          })
+          await auditar(tx, {
+            usuario: ADMIN, accion: 'corregir', entidad: 'reasignacionAgua',
+            entidadId: `${reasignacion.dptoId}/${mes}`, campo: 'activa',
+            valorAnterior: String(marcado), valorNuevo: String(datos.lavado.activa), mes,
+          })
+          cambios.push({
+            que: 'el lavado de vehículo',
+            de: marcado ? 'activo' : 'desactivado',
+            a: datos.lavado.activa ? 'activo' : 'desactivado',
+          })
+        }
+      }
+
+      if (cambios.length === 0) throw peticionMala('No hay nada que corregir: los valores son los mismos.')
+
+      // Recalcular con lo ya escrito, dentro de la misma transacción.
+      // Se recalcula con **la misma** función que usa el resto de la app, leyendo
+      // dentro de la transacción para ver lo que se acaba de escribir. Aquí vivía
+      // una segunda copia de `entradasDeMes`, y las dos se separaron: la de aquí
+      // no heredaba la marca del lavado del mes anterior, así que el aviso a los
+      // siete citaba un monto que la app no cobraba.
+      const despues = await resultadoDeMes(mes, {}, tx)
+      if (!despues.valido || !despues.cuadra) {
+        throw conflicto('Con esa corrección el mes deja de cuadrar, así que no se guarda.', {
+          motivo: despues.motivoInvalido, motivos: despues.motivosSanidad,
+        })
+      }
+
+      // El bloqueo optimista, también aquí: dos correcciones a la vez sobre el
+      // mismo mes salían las dos bien y cada aviso citaba un "pasó de S/ …" que
+      // solo era cierto para la primera.
+      await tomarVersion(tx, mes, datos.version)
+
+      // La instantánea queda con el resultado corregido: es la cuota oficial de
+      // ahora, y el "antes" de la próxima corrección. Así deja de ser peso muerto.
+      await tx.cierre.update({
+        where: { mes },
+        data: { instantanea: JSON.parse(JSON.stringify(despues)) },
       })
-    }
 
-    // El bloqueo optimista, también aquí: dos correcciones a la vez sobre el
-    // mismo mes salían las dos bien y cada aviso citaba un "pasó de S/ …" que
-    // solo era cierto para la primera.
-    await tomarVersion(tx, mes, datos.version)
+      // Quien ya pagó queda con lo que de verdad puso. Ver el docstring.
+      const cuotas: VistaCuota[] = []
+      for (const d of DPTO_IDS) {
+        const cuotaAntes = antes.valido ? antes.cuotas[d].total : despues.cuotas[d].total
+        const cuotaDespues = despues.cuotas[d].total
+        const pago = await tx.pago.findUnique({ where: { mes_dptoId: { mes, dptoId: d } } })
+        let pagado: number | null = null
+        if (pago?.estado === 'confirmado') {
+          pagado = aNumero(pago.monto) ?? cuotaAntes
+          if (pago.monto === null && cuotaAntes !== cuotaDespues) {
+            await tx.pago.update({
+              where: { mes_dptoId: { mes, dptoId: d } },
+              data: { monto: aDecimal2(cuotaAntes) },
+            })
+            await auditar(tx, {
+              usuario: ADMIN, accion: 'corregir', entidad: 'pago', entidadId: `${mes}/${d}`,
+              campo: 'monto', valorAnterior: null, valorNuevo: cuotaAntes, mes,
+            })
+          }
+        }
+        cuotas.push({
+          dpto: d, antes: cuotaAntes, despues: cuotaDespues, pagado,
+          falta: pagado === null ? 0 : Math.max(0, round2(cuotaDespues - pagado)),
+        })
+      }
 
-    // La instantánea queda con el resultado corregido: es la cuota oficial de
-    // ahora, y el "antes" de la próxima corrección. Así deja de ser peso muerto.
-    await tx.cierre.update({
-      where: { mes },
-      data: { instantanea: JSON.parse(JSON.stringify(despues)) },
+      // El aviso a los siete, con el monto anterior y el nuevo de quien cambió.
+      const cambiaron = cuotas.filter((c) => c.antes !== c.despues)
+      const detalleCuotas = cambiaron
+        .map((c) => `El ${c.dpto} pasó de S/ ${fmt(c.antes)} a S/ ${fmt(c.despues)}.`)
+        .join(' ')
+      const aQuienPago = cambiaron.some((c) => c.pagado !== null && c.falta > 0)
+        ? ' A quien ya había pagado le queda por poner solo la diferencia.'
+        : ''
+      const hecha: CorreccionHecha = {
+        cambios, cuotasQueCambiaron: cambiaron.length, totalMes: despues.totalMes, cuotas,
+      }
+      if (opciones.simular) throw new SimulacionTerminada(hecha)
+
+      await tx.aviso.create({
+        data: {
+          tipo: 'correccion',
+          titulo: tituloDeCorreccion(cambios, mes),
+          detalle: `${datos.motivo}${detalleCuotas ? ` ${detalleCuotas}${aQuienPago}` : ' Ninguna cuota cambió de monto.'}`,
+          mes,
+        },
+      })
+      return hecha
     })
-
-    // El aviso a los siete, con el monto anterior y el nuevo de quien cambió.
-    const cambiaron = DPTO_IDS.filter(
-      (d) => antes.valido && antes.cuotas[d].total !== despues.cuotas[d].total,
-    )
-    const detalleCuotas = cambiaron
-      .map((d) => `El ${d} pasó de S/ ${fmt(antes.cuotas[d].total)} a S/ ${fmt(despues.cuotas[d].total)}.`)
-      .join(' ')
-    await tx.aviso.create({
-      data: {
-        tipo: 'correccion',
-        titulo: tituloDeCorreccion(cambios, mes),
-        detalle: `${datos.motivo}${detalleCuotas ? ` ${detalleCuotas}` : ' Ninguna cuota cambió de monto.'}`,
-        mes,
-      },
-    })
-
-    return { cambios, cuotasQueCambiaron: cambiaron.length, totalMes: despues.totalMes }
-  })
+  } catch (e) {
+    if (e instanceof SimulacionTerminada) return e.hecha
+    throw e
+  }
 
   // Push tras confirmar la transacción. Solo si de verdad cambió alguna cuota:
   // una corrección que no mueve dinero no merece pinchar siete teléfonos.
-  if (corregido.cuotasQueCambiaron > 0) {
+  if (!opciones.simular && corregido.cuotasQueCambiaron > 0) {
     void enviarPushATodos({
       titulo: `Se corrigió ${nombreMes(mes)}`,
       cuerpo: 'Tu cuota pudo cambiar. Míralo en la app.',
@@ -546,7 +709,10 @@ function tituloDeCorreccion(
   else if (dptos.length > 1) partes.push(`las lecturas del ${enumerar(dptos)}`)
   partes.push(...otros)
 
-  const verbo = cambios.length === 1 ? 'Se corrigió' : 'Se corrigieron'
+  // Plural también cuando es una sola cosa pero en plural —«los gastos
+  // puntuales»—: «Se corrigió los gastos puntuales» es lo que salía.
+  const plural = cambios.length > 1 || /^(los|las) /.test(partes[0] ?? '')
+  const verbo = plural ? 'Se corrigieron' : 'Se corrigió'
   return `${verbo} ${enumerar(partes)} en ${nombreMes(mes)}`
 }
 

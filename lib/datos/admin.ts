@@ -11,6 +11,7 @@ import { etiquetaMes, mesSiguiente, nombreMes, comoMes } from '@/lib/calculo/mes
 import type { DptoId, MesId, PagosMes } from '@/lib/calculo/tipos'
 import { modoDeBob, porQueEseModo } from '@/lib/bob'
 import { almanaqueFresco } from './almanaque'
+import { faltaDelMes } from '@/lib/estados'
 import { fijosVigentesDeLasFilas } from './filas'
 
 export interface FilaPago {
@@ -21,6 +22,8 @@ export interface FilaPago {
   fecha: string | null
   operacion: string | null
   texto: string | null
+  /** Lo que le falta de este mes si pagó menos de la cuota; 0 si no. Ver `faltaDelMes`. */
+  falta: number
 }
 
 export interface DatosAdmin {
@@ -147,6 +150,7 @@ export async function panelDeAdmin(): Promise<DatosAdmin> {
         fecha: p?.fecha ?? null,
         operacion: p?.op ?? null,
         texto: p?.texto ?? null,
+        falta: faltaDelMes(p, resultado?.valido ? resultado.cuotas[d.id].total : null),
       }
     }),
     gastosFijos: vigentes

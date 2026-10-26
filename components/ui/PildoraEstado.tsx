@@ -14,6 +14,7 @@ const CLARO: Record<EstadoCuota, string> = {
   'sin-cobro': 'bg-neutro-apenas text-gris',
   'sin-registrar': 'bg-ambar-suave text-ambar',
   'en-verificacion': 'bg-neutro-suave text-gris',
+  'falta-parte': 'bg-ambar-suave text-ambar',
 }
 
 const SOBRE_NOCHE: Record<EstadoCuota, string> = {
@@ -21,6 +22,7 @@ const SOBRE_NOCHE: Record<EstadoCuota, string> = {
   'sin-cobro': 'bg-sobre-noche-boton text-sobre-noche-cuerpo',
   'sin-registrar': 'bg-pildora-sin text-ambar-claro',
   'en-verificacion': 'bg-pildora-verificacion text-agua-claro',
+  'falta-parte': 'bg-pildora-sin text-ambar-claro',
 }
 
 export function PildoraEstado({

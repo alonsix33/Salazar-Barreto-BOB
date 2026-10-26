@@ -43,7 +43,7 @@ export function MiDepartamento({
   const mia = resultado.cuotas[dpto]
   const miPago = pagos[dpto] ?? null
   const estado = estadoCuota(miPago, mia.total)
-  const detalle = detalleDe(estado, miPago)
+  const detalle = detalleDe(estado, miPago, mia.total)
 
   // La tira ENE→DIC y los agregados «del año» se toman del año de calendario que
   // se está mirando, no de una ventana móvil de doce meses. Ver `vistaAnual`.

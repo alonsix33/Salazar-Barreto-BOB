@@ -62,15 +62,17 @@ export function Inicio({
   const avisados = porEstado('en-verificacion')
   const sinRegistrar = porEstado('sin-registrar')
   const sinCobro = porEstado('sin-cobro')
+  const faltaParte = porEstado('falta-parte')
 
   const grupos = [
     { titulo: COPYS.inicio.grupoAlDia, dptos: confirmados, estado: 'al-dia' as const },
     { titulo: COPYS.inicio.grupoAvisaron, dptos: avisados, estado: 'en-verificacion' as const },
     { titulo: COPYS.inicio.grupoSinAviso, dptos: sinRegistrar, estado: 'sin-registrar' as const },
+    { titulo: COPYS.inicio.grupoFaltaParte, dptos: faltaParte, estado: 'falta-parte' as const },
     { titulo: COPYS.inicio.grupoSinCobro, dptos: sinCobro, estado: 'sin-cobro' as const },
   ].filter((g) => g.dptos.length > 0)
 
-  const detalle = detalleDe(estado, miPago)
+  const detalle = detalleDe(estado, miPago, mia.total)
 
   const conMonto = resultado.gastos.filter((g) => g.monto).sort((a, b) => (b.monto ?? 0) - (a.monto ?? 0))
   const mayor = conMonto[0]?.monto ?? 1
@@ -270,4 +272,5 @@ const PUNTO = {
   'en-verificacion': 'bg-agua',
   'sin-registrar': 'bg-ambar',
   'sin-cobro': 'bg-neutro-barra',
+  'falta-parte': 'bg-ambar',
 } as const

@@ -7,6 +7,7 @@ import { etiquetaMes } from '@/lib/calculo/mes'
 import type { MesId, PagosMes, ResultadoMes } from '@/lib/calculo/tipos'
 import type { FilaPago } from '@/lib/datos/admin'
 import { COPYS } from '@/lib/copys'
+import { faltaDelMes } from '@/lib/estados'
 import { RegistrarPago } from '@/components/pantallas/RegistrarPago'
 import { Hoja } from './Hoja'
 import { Fallo } from '@/components/ui/Fallo'
@@ -54,6 +55,7 @@ export function HojaPagosPasados({
             fecha: p?.fecha ?? null,
             operacion: p?.op ?? null,
             texto: p?.texto ?? null,
+            falta: faltaDelMes(p, data.resultado.cuotas[d.id].total),
           }
         })
       : null

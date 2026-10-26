@@ -16,7 +16,7 @@
  * motor. Este bug apareció dos veces durante el diseño.
  */
 
-import { fmt } from './calculo/redondeo'
+import { fmt, round2 } from './calculo/redondeo'
 import type { MotivoLectura } from './calculo/correccion'
 import type { EstadoPago } from './calculo/tipos'
 import type { EstadoCuota } from './estados'
@@ -63,6 +63,7 @@ export const COPYS = {
     'sin-cobro': 'Nada que pagar',
     'sin-registrar': 'Sin registrar',
     'en-verificacion': 'En verificación',
+    'falta-parte': 'Falta una parte',
   } satisfies Record<EstadoCuota, string>,
 
   /**
@@ -111,6 +112,7 @@ export const COPYS = {
       'en-verificacion': 'Por confirmar',
       'sin-registrar': 'Sin aviso',
       'sin-cobro': 'Sin nada que pagar',
+      'falta-parte': 'Falta una parte',
     } satisfies Record<EstadoCuota, string>,
     tuDepartamento: 'Tu departamento',
     enQueSeGasto: 'En qué se gastó',
@@ -148,8 +150,16 @@ export const COPYS = {
     /** Cuota en cero: no es que falte el pago, es que no había nada que pagar. */
     detalleSinCobro: 'Este mes tu cuota quedó en cero. No tienes nada que depositar.',
     grupoSinCobro: 'Sin nada que pagar',
+    grupoFaltaParte: 'Falta una parte',
     detalleEnVerificacion: (fecha: string) =>
       `Avisaste el ${fecha}. Falta que lo confirmen contra el estado de cuenta.`,
+    /**
+     * Pagó, está confirmado, y la cuota es mayor que lo que puso: casi siempre
+     * porque el mes se corrigió después de pagar. Se dicen las tres cifras para
+     * que la cuenta se pueda hacer de cabeza, en suave y sin «deuda».
+     */
+    detalleFaltaParte: (puso: number, cuota: number) =>
+      `Pagaste S/ ${fmt(puso)} de tus S/ ${fmt(cuota)}. Te faltan S/ ${fmt(round2(cuota - puso))}, que se suman a lo que te toca poner.`,
     detalleAlDia: (fecha: string, op: string) => `Pagado el ${fecha} · op. ${op}`,
   },
 
@@ -489,6 +499,9 @@ export const COPYS = {
     anadirCredito: 'Añadir un crédito a un departamento',
     anadirCreditoEjemplo: 'alguien adelantó un pago',
     montoGasto: 'Monto del gasto extraordinario',
+    gastoSinNombre: 'Gasto extraordinario',
+    nombreDelGasto: 'Nombre del gasto',
+    cambiarNombre: 'Cambiar el nombre',
     montoCredito: 'Monto del crédito',
     anadidos: (n: number) => `Añadido este mes · ${n}`,
     seRepartte: 'lo pagan los siete',
@@ -550,11 +563,47 @@ export const COPYS = {
   },
 
   // ── Corregir un mes publicado · 04 §"Corregir un mes ya publicado" ─────
+  gastosFijos: {
+    titulo: 'Gastos fijos del edificio',
+    intro: (desde: string) =>
+      `Lo que cambies vale desde ${desde}, y los siete reciben el aviso. Los meses ya publicados no se tocan: para ellos está «Corregir un mes publicado».`,
+    apagado: 'No se cobra',
+  },
+
   correccion: {
     titulo: (mes: string) => `Corregir ${mes}`,
     intro:
       'Está permitido, y deja rastro. Al guardar se recalculan las cuotas y les llega un aviso a los siete con qué cambió.',
+    eligeMes: '¿Qué mes?',
+    otroMes: 'Otro mes',
+    volver: 'Volver',
+    queCorregir: 'Toca lo que quieres corregir. Puedes cambiar varias cosas y guardarlas juntas, con un solo aviso.',
+    parteLecturas: 'Lecturas de los medidores',
+    parteRecibo: 'Recibos de SEDAPAL y de luz',
+    parteFijos: 'Gastos fijos de este mes',
+    partePuntuales: 'Gastos puntuales y créditos',
+    parteLavado: 'Lavado del vehículo',
+    ningunPuntual: 'Ninguno · añade uno si llegó un gasto',
+    cambiado: 'Cambiado',
+    revisar: 'Revisar lo que cambia',
+    listo: 'Listo',
     lecturas: 'Las lecturas de este mes',
+    fijosAviso: (mes: string) =>
+      `Lo que cambies aquí vale solo para ${mes}. Los meses siguientes se quedan como están.`,
+    cobrarEsteMes: 'Cobrar este mes',
+    fijosNuevo:
+      'Para cobrar un gasto que no es de este mes, añádelo como gasto puntual. Para cambiar lo que se cobra de aquí en adelante, usa «Gastos fijos del edificio».',
+    puntualesIntro:
+      'Un gasto que llegó después de cerrar el mes entra aquí, y se reparte entre los departamentos por su porcentaje, como siempre. Toca su nombre para cambiarlo.',
+    revisionTitulo: 'Esto es lo que pasaría',
+    revisionIntro: 'Todavía no se guardó nada. Revisa las cuotas y, si está bien, escribe el motivo.',
+    loQueCambia: 'Lo que cambia',
+    cuotas: 'Cuota de cada departamento',
+    yaPagoYFalta: (pagado: number, falta: number) =>
+      `Ya había pagado S/ ${fmt(pagado)} · le faltan S/ ${fmt(falta)}`,
+    totalMes: (total: string) => `El mes queda en S/ ${total}.`,
+    quienPagoDebeDiferencia: 'A quien ya había pagado le queda por poner solo la diferencia.',
+    sinVistaPrevia: 'Espera el cálculo para poder guardar',
     motivo: 'Qué estás corrigiendo',
     motivoAyuda: 'Lo van a leer los siete en el aviso. Una línea basta.',
     guardar: 'Guardar la corrección y avisar',
@@ -578,6 +627,8 @@ export const COPYS = {
     // `HojaPagosPasados` muestra los siete departamentos de un mes elegido,
     // no solo a quienes les falta, así que hace falta decir "esto ya está".
     confirmadoEl: (fecha: string) => `Confirmado el ${fecha}`,
+    faltaAun: (falta: number) =>
+      `Le faltan S/ ${fmt(falta)} de este mes. Se suman a lo que le toca poner, y se confirman con su próximo pago.`,
   },
   push: {
     titulo: 'Avisos en este teléfono',
@@ -599,6 +650,20 @@ export const COPYS = {
       `Vecinos, corregí el cierre de ${mes}. Revisen su cuota actualizada acá: ${url}`,
   },
   admin: {
+    cerrarSiguiente: 'Cerrar el mes siguiente',
+    cierrePasos: 'Siete pasos: lecturas, SEDAPAL, luz, gastos fijos, lo puntual, revisión y publicar. Se guarda solo en cada uno.',
+    cierrePaso: (paso: number) => `Vas por el paso ${paso} de 7. Se guarda solo en cada uno.`,
+    pagosDe: (mes: string) => `Pagos de ${mes}`,
+    pagosAlDia: 'Nada por atender: todos los pagos de este mes están al día.',
+    avisaronConfirmar: 'Avisaron · falta confirmar',
+    sinAvisoTodavia: 'Sin aviso todavía',
+    faltaUnaParte: 'Pagaron, pero falta una parte',
+    confirmados: (n: number) => `Confirmados · ${n}`,
+    masAcciones: 'Todo lo demás',
+    notaCorregir: 'Lecturas, recibos, gastos, lo que sea',
+    accesoFijos: 'Gastos fijos',
+    conceptos: 'conceptos',
+    notaExportar: 'Un libro con todos los meses',
     entrar: 'Administrar el edificio',
     pinTitulo: 'Administrar el edificio',
     pinTexto: 'La clave la tiene quien administra.',
@@ -628,8 +693,10 @@ export type Copys = typeof COPYS
  */
 export function detalleDe(
   estado: EstadoCuota,
-  pago: { estado: EstadoPago; fecha: string; op?: string | null } | null | undefined,
+  pago: { estado: EstadoPago; fecha: string; op?: string | null; monto?: number | null } | null | undefined,
+  cuota?: number,
 ): string {
+  if (estado === 'falta-parte') return COPYS.inicio.detalleFaltaParte(pago!.monto ?? 0, cuota ?? 0)
   if (estado === 'sin-cobro') return COPYS.inicio.detalleSinCobro
   if (estado === 'sin-registrar') return COPYS.inicio.detalleSinRegistrar
   if (estado === 'en-verificacion') return COPYS.inicio.detalleEnVerificacion(fechaCorta(pago!.fecha))

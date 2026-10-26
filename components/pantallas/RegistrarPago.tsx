@@ -89,9 +89,19 @@ export function RegistrarPago({ pago, mes }: { pago: FilaPago; mes: MesId }) {
       </div>
       {pago.texto && <p className="tipo-contexto text-gris admin-pago-texto">«{pago.texto}»</p>}
       {pago.estado === 'confirmado' ? (
-        <p className="admin-pago-confirmado tipo-cuerpo-chico">
-          {COPYS.pagos.confirmadoEl(fechaCorta(pago.fecha))}
-        </p>
+        <>
+          <p className="admin-pago-confirmado tipo-cuerpo-chico">
+            {COPYS.pagos.confirmadoEl(fechaCorta(pago.fecha))}
+          </p>
+          {/* Pagó y está confirmado, pero la cuota es mayor que lo que entró
+              —casi siempre porque el mes se corrigió después—. Lo que falta se
+              suma a lo que le toca poner; aquí se dice en ámbar y en suave. */}
+          {pago.falta > 0 && (
+            <p className="tipo-contexto-chico text-ambar admin-pago-detalle">
+              {COPYS.pagos.faltaAun(pago.falta)}
+            </p>
+          )}
+        </>
       ) : (
         <>
           {confirmar.isError && <Fallo>{mensajeDeError(confirmar.error)}</Fallo>}
