@@ -15,7 +15,7 @@ import { confirmarPago } from '@/lib/servicios/pagos'
 import { round2 } from '@/lib/calculo/redondeo'
 import { DPTO_IDS } from '@/lib/calculo/constantes'
 import type { MesId, ResultadoMes } from '@/lib/calculo/tipos'
-import { prisma, resembrar } from './entorno'
+import { cargarMesEnCurso, prisma, resembrar } from './entorno'
 
 const MES = '2026-06' as MesId
 const SIGUIENTE = '2026-07' as MesId
@@ -271,9 +271,17 @@ describe('recibo, lavado y los bordes', () => {
   })
 
   it('un mes sin publicar no se corrige: se edita desde el cierre', async () => {
+    // Con julio **completo**: vacío, la corrección se caía igual por «no cuadra»
+    // y el test pasaba aunque la guarda de «está publicado» no existiera. La
+    // prueba negativa lo destapó.
+    await cargarMesEnCurso(SIGUIENTE)
+    const avisos = await prisma.aviso.count()
     await expect(corregirMes(SIGUIENTE, { extras: gasto450, motivo: 'a' })).rejects.toMatchObject({
       estado: 409,
+      message: expect.stringContaining('no está publicado'),
     })
+    expect(await prisma.gastoExtra.count({ where: { mes: SIGUIENTE } })).toBe(0)
+    expect(await prisma.aviso.count()).toBe(avisos)
   })
 
   it('una versión vieja se rechaza', async () => {
